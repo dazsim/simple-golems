@@ -124,6 +124,32 @@ public class LumberWork implements JobWork {
                 && s.getValue(LeavesBlock.DISTANCE) == dist;
     }
 
+    // the stump of the natural tree whose trunk or branch this log belongs to
+    public static @Nullable BlockPos baseUnder(ServerLevel level, BlockPos log) {
+        if (!level.getBlockState(log).is(BlockTags.LOGS)) return null;
+        for (int y = 1; y <= 24; y++) {
+            for (BlockPos p : BlockPos.betweenClosed(log.offset(-3, -y, -3), log.offset(3, -y, 3))) {
+                BlockState s = level.getBlockState(p);
+                if (!isBase(level, p, s)) continue;
+                Tree t = tree(level, p.immutable());
+                if (t != null && t.logs().contains(log)) return p.immutable();
+            }
+        }
+        return null;
+    }
+
+    public static boolean isTreeLeaf(ServerLevel level, BlockPos pos) {
+        BlockState s = level.getBlockState(pos);
+        return s.getBlock() instanceof LeavesBlock && s.hasProperty(LeavesBlock.PERSISTENT) && !s.getValue(LeavesBlock.PERSISTENT);
+    }
+
+    public static void breakLeaf(GolemEntity golem, ServerLevel level, BlockPos pos) {
+        BlockState s = level.getBlockState(pos);
+        List<ItemStack> drops = Block.getDrops(s, level, pos, null, golem, golem.getTool());
+        breakQuietly(level, pos, s, true);
+        for (ItemStack d : merge(drops)) Storage.collectOrDrop(golem, level, Vec3.atCenterOf(pos), d);
+    }
+
     @Override
     public boolean isValid(ServerLevel level, BlockPos pos) {
         return level.getBlockState(pos).is(BlockTags.LOGS);

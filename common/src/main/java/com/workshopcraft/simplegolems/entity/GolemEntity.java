@@ -3,6 +3,7 @@ package com.workshopcraft.simplegolems.entity;
 import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
+import com.workshopcraft.simplegolems.entity.goal.GetOffTreeGoal;
 import com.workshopcraft.simplegolems.entity.work.JobWork;
 import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
@@ -34,6 +35,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.golem.AbstractGolem;
@@ -87,6 +89,11 @@ public class GolemEntity extends AbstractGolem {
         setDropChance(EquipmentSlot.MAINHAND, 0.0F);
     }
 
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new GolemNavigation(this, level);
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 48.0)
@@ -97,6 +104,7 @@ public class GolemEntity extends AbstractGolem {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(0, new FetchToolGoal(this));
+        goalSelector.addGoal(2, new GetOffTreeGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
         goalSelector.addGoal(3, new FollowOwnerGoal(this));
         goalSelector.addGoal(4, new WorkGoal(this));
