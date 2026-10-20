@@ -30,6 +30,7 @@ A golem made without a card is a blank golem. It follows its owner around and do
 - Use the golem item on a block to place it. Whoever places it owns it.
 - Sneak and use an empty hand on it to pick it up again. It keeps its job, colour, tool, cookies, carried items, area and name.
 - Use a tool on it to hand it over. The tool wears like it would for a player. When it breaks the golem stops and waits for a new one.
+- Tools work like they do for a player. The tier decides what can be harvested and how fast, and Efficiency, Unbreaking, Fortune and Silk Touch all apply. A miner with a stone pickaxe leaves diamond ore alone, and nothing short of diamond touches obsidian.
 - Use clay cookies on it to fill its cookie tin (one stack). One cookie powers about 5 minutes of work. Walking around idle and following you cost nothing.
 - Use a dye on it to colour it. All 16 dyes work.
 - Use a name tag to name it.
