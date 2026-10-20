@@ -8,10 +8,10 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.LivingEntityEmissiveLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
@@ -37,7 +37,16 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         });
         addLayer(new LivingEntityEmissiveLayer<>(this, s -> GLOW, (s, age) -> s.powered ? 1.0F : 0.3F,
                 new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.BODY), RenderTypes::eyes, false));
-        addLayer(new ItemInHandLayer<>(this));
+        addLayer(new RenderLayer<>(this) {
+            @Override
+            public void submit(PoseStack pose, SubmitNodeCollector out, int light, GolemRenderState state, float yRot, float xRot) {
+                if (state.tool.isEmpty()) return;
+                pose.pushPose();
+                getParentModel().poseTool(pose);
+                state.tool.submit(pose, out, light, OverlayTexture.NO_OVERLAY, state.outlineColor);
+                pose.popPose();
+            }
+        });
     }
 
     @Override
@@ -58,7 +67,8 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
     @Override
     public void extractRenderState(GolemEntity golem, GolemRenderState state, float partialTicks) {
         super.extractRenderState(golem, state, partialTicks);
-        ArmedEntityRenderState.extractArmedEntityRenderState(golem, state, itemModelResolver, partialTicks);
+        itemModelResolver.updateForLiving(state.tool, golem.getTool(), ItemDisplayContext.FIXED, golem);
+        state.attackTime = golem.getAttackAnim(partialTicks);
         state.job = golem.getJob();
         state.colour = tint(golem.getColour());
         state.powered = golem.isPowered();

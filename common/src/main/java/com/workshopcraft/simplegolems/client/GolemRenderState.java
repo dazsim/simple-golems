@@ -1,9 +1,12 @@
 package com.workshopcraft.simplegolems.client;
 
 import com.workshopcraft.simplegolems.entity.Job;
-import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 
-public class GolemRenderState extends ArmedEntityRenderState {
+public class GolemRenderState extends LivingEntityRenderState {
+    public final ItemStackRenderState tool = new ItemStackRenderState();
+    public float attackTime;
     public Job job = Job.BLANK;
     public int colour = 0xFFFFFF;
     public boolean powered;

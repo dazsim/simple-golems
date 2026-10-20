@@ -2,18 +2,17 @@ package com.workshopcraft.simplegolems.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.workshopcraft.simplegolems.entity.Job;
-import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.HumanoidArm;
+import com.mojang.math.Axis;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class GolemModel extends EntityModel<GolemRenderState> implements ArmedModel<GolemRenderState> {
+public class GolemModel extends EntityModel<GolemRenderState> {
     public enum Pass { BODY, CARD }
 
     private final Pass pass;
@@ -82,12 +81,16 @@ public class GolemModel extends EntityModel<GolemRenderState> implements ArmedMo
         }
     }
 
-    @Override
-    public void translateToHand(GolemRenderState state, HumanoidArm arm, PoseStack poseStack) {
-        root().translateAndRotate(poseStack);
-        body.translateAndRotate(poseStack);
-        toolArm.translateAndRotate(poseStack);
-        poseStack.scale(0.6F, 0.6F, 0.6F);
-        poseStack.translate(1.0F / 16.0F, 1.0F / 16.0F, 0.7F / 16.0F);
+    public void poseTool(PoseStack pose) {
+        root().translateAndRotate(pose);
+        body.translateAndRotate(pose);
+        toolArm.translateAndRotate(pose);
+        pose.translate(0.0F, 6.4F / 16.0F, -0.8F / 16.0F);
+        pose.mulPose(Axis.ZP.rotationDegrees(TOOL_TILT));
+        pose.scale(TOOL_SCALE, TOOL_SCALE, TOOL_SCALE);
+        pose.translate(-0.38F, 0.38F, 0.0F);
     }
+
+    private static final float TOOL_TILT = 105.0F;
+    private static final float TOOL_SCALE = 0.62F;
 }
