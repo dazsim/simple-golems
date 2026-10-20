@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 
 public final class Storage {
     public static final String WORK_TAG = "simplegolems_work";
+    public static final int NEARBY = 2;
     public static final TagKey<Block> EXTRA_STORAGE = TagKey.create(Registries.BLOCK, SimpleGolems.id("storage"));
 
     private Storage() {
@@ -40,16 +41,16 @@ public final class Storage {
         return HopperBlockEntity.getContainerAt(level, pos);
     }
 
-    // nearest storage in the area to 'from' that matches the test
+    // nearest storage in or just around the area to 'from' that matches the test
     public static @Nullable BlockPos nearest(ServerLevel level, WorkArea area, Vec3 from, Predicate<Container> test, Predicate<BlockPos> skip) {
         BlockPos best = null;
         double bestDist = Double.MAX_VALUE;
-        for (int cx = area.min().getX() >> 4; cx <= area.max().getX() >> 4; cx++) {
-            for (int cz = area.min().getZ() >> 4; cz <= area.max().getZ() >> 4; cz++) {
+        for (int cx = (area.min().getX() - NEARBY) >> 4; cx <= (area.max().getX() + NEARBY) >> 4; cx++) {
+            for (int cz = (area.min().getZ() - NEARBY) >> 4; cz <= (area.max().getZ() + NEARBY) >> 4; cz++) {
                 if (!level.hasChunk(cx, cz)) continue;
                 for (BlockEntity be : level.getChunk(cx, cz).getBlockEntities().values()) {
                     BlockPos pos = be.getBlockPos();
-                    if (!area.contains(pos) || !isStorage(be) || skip.test(pos)) continue;
+                    if (!area.near(pos, NEARBY) || !isStorage(be) || skip.test(pos)) continue;
                     double d = from.distanceToSqr(Vec3.atCenterOf(pos));
                     if (d >= bestDist) continue;
                     Container c = HopperBlockEntity.getContainerAt(level, pos);
