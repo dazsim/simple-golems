@@ -1,0 +1,947 @@
+{
+ "id": "B",
+ "name": "Brick",
+ "units": "pixels (16 = 1 block)",
+ "axes": "y up, golem faces +z, origin at feet centre; rotations in degrees applied Z then Y then X (vanilla ModelPart order)",
+ "texture": "textures/golem_b.png",
+ "emissive_texture": "textures/golem_b_glow.png",
+ "dye": {
+  "tint_layer": "textures/golem_b_tint.png",
+  "overlay_layer": "textures/golem_b_overlay.png",
+  "note": "cubes with tint=dye: draw the greyscale tint layer multiplied by the dye colour, then the untinted overlay (eyes, blush) on top",
+  "dye_multipliers": {
+   "undyed": [
+    190,
+    120,
+    88
+   ],
+   "white": [
+    255,
+    222,
+    201
+   ],
+   "orange": [
+    201,
+    106,
+    51
+   ],
+   "magenta": [
+    186,
+    112,
+    136
+   ],
+   "light_blue": [
+    143,
+    136,
+    172
+   ],
+   "yellow": [
+    231,
+    166,
+    49
+   ],
+   "lime": [
+    131,
+    148,
+    69
+   ],
+   "pink": [
+    201,
+    100,
+    100
+   ],
+   "gray": [
+    75,
+    57,
+    49
+   ],
+   "light_gray": [
+    170,
+    134,
+    123
+   ],
+   "cyan": [
+    110,
+    116,
+    116
+   ],
+   "purple": [
+    149,
+    91,
+    110
+   ],
+   "blue": [
+    95,
+    78,
+    116
+   ],
+   "brown": [
+    99,
+    68,
+    49
+   ],
+   "green": [
+    98,
+    106,
+    57
+   ],
+   "red": [
+    179,
+    80,
+    62
+   ],
+   "black": [
+    51,
+    32,
+    25
+   ]
+  }
+ },
+ "texture_size": [
+  64,
+  128
+ ],
+ "job_colours": {
+  "lumber": [
+   88,
+   170,
+   64
+  ],
+  "farmer": [
+   236,
+   192,
+   58
+  ],
+  "miner": [
+   206,
+   70,
+   58
+  ],
+  "courier": [
+   62,
+   120,
+   214
+  ],
+  "sweeper": [
+   166,
+   92,
+   196
+  ],
+  "blank": [
+   240,
+   240,
+   240
+  ]
+ },
+ "job_tools": {
+  "lumber": "axe",
+  "farmer": "hoe",
+  "miner": "pickaxe",
+  "courier": "bundle",
+  "sweeper": "brush",
+  "blank": null
+ },
+ "held_item": {
+  "bone": "arm_left",
+  "grip_point": [
+   -6.0,
+   0.4,
+   0.8
+  ],
+  "note": "rendered by an item-in-hand layer; preview uses placeholder sprites"
+ },
+ "bones": [
+  {
+   "name": "body",
+   "pivot": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "cubes": [
+    {
+     "name": "chest_core",
+     "origin": [
+      -4.5,
+      2.0,
+      -3.0
+     ],
+     "size": [
+      9,
+      5,
+      5
+     ],
+     "uv": [
+      0,
+      28
+     ],
+     "inflate": 0.0,
+     "material": "tclay_socket",
+     "tint": "dye"
+    },
+    {
+     "name": "chest_front_l",
+     "origin": [
+      -4.5,
+      2.0,
+      2.0
+     ],
+     "size": [
+      3,
+      5,
+      1
+     ],
+     "uv": [
+      56,
+      48
+     ],
+     "inflate": 0.0,
+     "material": "tclay_wall_r",
+     "tint": "dye"
+    },
+    {
+     "name": "chest_front_r",
+     "origin": [
+      1.5,
+      2.0,
+      2.0
+     ],
+     "size": [
+      3,
+      5,
+      1
+     ],
+     "uv": [
+      0,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "tclay_wall_l",
+     "tint": "dye"
+    },
+    {
+     "name": "chest_front_t",
+     "origin": [
+      -1.5,
+      6.0,
+      2.0
+     ],
+     "size": [
+      3,
+      1,
+      1
+     ],
+     "uv": [
+      18,
+      64
+     ],
+     "inflate": 0.0,
+     "material": "tclay_wall_b",
+     "tint": "dye"
+    },
+    {
+     "name": "chest_front_b",
+     "origin": [
+      -1.5,
+      2.0,
+      2.0
+     ],
+     "size": [
+      3,
+      1,
+      1
+     ],
+     "uv": [
+      26,
+      64
+     ],
+     "inflate": 0.0,
+     "material": "tclay_wall_t",
+     "tint": "dye"
+    }
+   ]
+  },
+  {
+   "name": "head",
+   "pivot": [
+    0.0,
+    7.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": "body",
+   "cubes": [
+    {
+     "name": "head",
+     "origin": [
+      -5.0,
+      7.0,
+      -4.5
+     ],
+     "size": [
+      10,
+      7,
+      8
+     ],
+     "uv": [
+      0,
+      0
+     ],
+     "inflate": 0.0,
+     "material": "tclay",
+     "tint": "dye"
+    },
+    {
+     "name": "nose",
+     "origin": [
+      -1.0,
+      8.0,
+      3.3
+     ],
+     "size": [
+      2,
+      2,
+      1
+     ],
+     "uv": [
+      0,
+      61
+     ],
+     "inflate": 0.0,
+     "material": "tclay_dark",
+     "tint": "dye"
+    }
+   ]
+  },
+  {
+   "name": "leg_left",
+   "pivot": [
+    -2.0,
+    2.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "cubes": [
+    {
+     "name": "leg_left",
+     "origin": [
+      -3.5,
+      0.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      2,
+      3
+     ],
+     "uv": [
+      12,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "tclay_dark",
+     "tint": "dye"
+    }
+   ]
+  },
+  {
+   "name": "leg_right",
+   "pivot": [
+    2.0,
+    2.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "cubes": [
+    {
+     "name": "leg_right",
+     "origin": [
+      0.5,
+      0.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      2,
+      3
+     ],
+     "uv": [
+      24,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "tclay_dark",
+     "tint": "dye"
+    }
+   ]
+  },
+  {
+   "name": "arm_left",
+   "pivot": [
+    -6.0,
+    7.0,
+    0.0
+   ],
+   "rotation": [
+    -30.0,
+    0.0,
+    -5.0
+   ],
+   "parent": "body",
+   "cubes": [
+    {
+     "name": "arm_left",
+     "origin": [
+      -7.5,
+      0.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      7,
+      3
+     ],
+     "uv": [
+      28,
+      28
+     ],
+     "inflate": 0.0,
+     "material": "tclay",
+     "tint": "dye"
+    }
+   ]
+  },
+  {
+   "name": "arm_right",
+   "pivot": [
+    6.0,
+    7.0,
+    0.0
+   ],
+   "rotation": [
+    6.0,
+    0.0,
+    5.0
+   ],
+   "parent": "body",
+   "cubes": [
+    {
+     "name": "arm_right",
+     "origin": [
+      4.5,
+      0.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      7,
+      3
+     ],
+     "uv": [
+      40,
+      28
+     ],
+     "inflate": 0.0,
+     "material": "tclay",
+     "tint": "dye"
+    },
+    {
+     "name": "card_band",
+     "origin": [
+      4.5,
+      3.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      2,
+      3
+     ],
+     "uv": [
+      36,
+      55
+     ],
+     "inflate": 0.3,
+     "material": "strap"
+    }
+   ]
+  },
+  {
+   "name": "card",
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": "arm_right",
+   "visible_for_job": "card",
+   "cubes": [
+    {
+     "name": "card",
+     "origin": [
+      7.0,
+      2.4,
+      -1.0
+     ],
+     "size": [
+      1,
+      3,
+      2
+     ],
+     "uv": [
+      48,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "card",
+     "tint": "job"
+    }
+   ]
+  },
+  {
+   "name": "acc_lumber",
+   "pivot": [
+    0.0,
+    14.0,
+    -0.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    -8.0
+   ],
+   "parent": "head",
+   "visible_for_job": "lumber",
+   "cubes": [
+    {
+     "name": "sprout_stem",
+     "origin": [
+      -0.5,
+      14.0,
+      -1.0
+     ],
+     "size": [
+      1,
+      2,
+      1
+     ],
+     "uv": [
+      6,
+      61
+     ],
+     "inflate": 0.0,
+     "material": "stem"
+    }
+   ]
+  },
+  {
+   "name": "acc_lumber_leaf_l",
+   "pivot": [
+    -0.5,
+    15.5,
+    -0.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    -22.0
+   ],
+   "parent": "acc_lumber",
+   "visible_for_job": "lumber",
+   "cubes": [
+    {
+     "name": "leaf_l",
+     "origin": [
+      -3.5,
+      15.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      1,
+      2
+     ],
+     "uv": [
+      10,
+      61
+     ],
+     "inflate": 0.0,
+     "material": "leaf"
+    }
+   ]
+  },
+  {
+   "name": "acc_lumber_leaf_r",
+   "pivot": [
+    0.5,
+    15.5,
+    -0.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    22.0
+   ],
+   "parent": "acc_lumber",
+   "visible_for_job": "lumber",
+   "cubes": [
+    {
+     "name": "leaf_r",
+     "origin": [
+      0.5,
+      15.0,
+      -1.5
+     ],
+     "size": [
+      3,
+      1,
+      2
+     ],
+     "uv": [
+      20,
+      61
+     ],
+     "inflate": 0.0,
+     "material": "leaf"
+    }
+   ]
+  },
+  {
+   "name": "acc_farmer",
+   "pivot": [
+    0.0,
+    14.0,
+    -0.5
+   ],
+   "rotation": [
+    -4.0,
+    0.0,
+    5.0
+   ],
+   "parent": "head",
+   "visible_for_job": "farmer",
+   "cubes": [
+    {
+     "name": "hat_brim",
+     "origin": [
+      -7.0,
+      14.0,
+      -6.5
+     ],
+     "size": [
+      14,
+      1,
+      12
+     ],
+     "uv": [
+      0,
+      15
+     ],
+     "inflate": 0.0,
+     "material": "straw"
+    },
+    {
+     "name": "hat_crown",
+     "origin": [
+      -3.5,
+      15.0,
+      -3.5
+     ],
+     "size": [
+      7,
+      1,
+      6
+     ],
+     "uv": [
+      0,
+      48
+     ],
+     "inflate": 0.0,
+     "material": "straw_crown"
+    }
+   ]
+  },
+  {
+   "name": "acc_miner",
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": "head",
+   "visible_for_job": "miner",
+   "cubes": [
+    {
+     "name": "helmet",
+     "origin": [
+      -5.0,
+      13.0,
+      -4.5
+     ],
+     "size": [
+      10,
+      2,
+      8
+     ],
+     "uv": [
+      0,
+      38
+     ],
+     "inflate": 0.35,
+     "material": "hardhat"
+    },
+    {
+     "name": "helmet_ridge",
+     "origin": [
+      -1.0,
+      15.3,
+      -4.0
+     ],
+     "size": [
+      2,
+      1,
+      7
+     ],
+     "uv": [
+      36,
+      38
+     ],
+     "inflate": 0.0,
+     "material": "hardhat"
+    },
+    {
+     "name": "helmet_lip",
+     "origin": [
+      -5.0,
+      13.0,
+      3.5
+     ],
+     "size": [
+      10,
+      1,
+      2
+     ],
+     "uv": [
+      30,
+      61
+     ],
+     "inflate": 0.1,
+     "material": "hatlip"
+    },
+    {
+     "name": "headlamp",
+     "origin": [
+      -1.0,
+      13.9,
+      3.8
+     ],
+     "size": [
+      2,
+      2,
+      1
+     ],
+     "uv": [
+      54,
+      61
+     ],
+     "inflate": 0.0,
+     "material": "lamp"
+    }
+   ]
+  },
+  {
+   "name": "acc_courier",
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": "body",
+   "visible_for_job": "courier",
+   "cubes": [
+    {
+     "name": "satchel",
+     "origin": [
+      1.5,
+      0.3,
+      3.0
+     ],
+     "size": [
+      3,
+      2,
+      2
+     ],
+     "uv": [
+      54,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "leather"
+    },
+    {
+     "name": "satchel_flap",
+     "origin": [
+      1.5,
+      2.0,
+      3.0
+     ],
+     "size": [
+      3,
+      1,
+      2
+     ],
+     "uv": [
+      0,
+      64
+     ],
+     "inflate": 0.15,
+     "material": "flap"
+    },
+    {
+     "name": "satchel_letter",
+     "origin": [
+      2.0,
+      2.6,
+      3.6
+     ],
+     "size": [
+      2,
+      1,
+      1
+     ],
+     "uv": [
+      34,
+      64
+     ],
+     "inflate": 0.0,
+     "material": "letter"
+    },
+    {
+     "name": "satchel_strap",
+     "origin": [
+      3.4,
+      2.5,
+      2.7
+     ],
+     "size": [
+      1,
+      5,
+      1
+     ],
+     "uv": [
+      8,
+      55
+     ],
+     "inflate": 0.0,
+     "material": "strap"
+    }
+   ]
+  },
+  {
+   "name": "acc_sweeper",
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": "body",
+   "visible_for_job": "sweeper",
+   "cubes": [
+    {
+     "name": "kerchief_band",
+     "origin": [
+      -4.5,
+      6.0,
+      -3.0
+     ],
+     "size": [
+      9,
+      1,
+      6
+     ],
+     "uv": [
+      26,
+      48
+     ],
+     "inflate": 0.35,
+     "material": "kerchief"
+    },
+    {
+     "name": "kerchief_tip",
+     "origin": [
+      -4.5,
+      4.4,
+      3.1
+     ],
+     "size": [
+      3,
+      2,
+      1
+     ],
+     "uv": [
+      10,
+      64
+     ],
+     "inflate": 0.0,
+     "material": "kerchief"
+    },
+    {
+     "name": "kerchief_tip2",
+     "origin": [
+      -3.5,
+      3.5,
+      3.2
+     ],
+     "size": [
+      1,
+      1,
+      1
+     ],
+     "uv": [
+      40,
+      64
+     ],
+     "inflate": 0.0,
+     "material": "kerchief"
+    }
+   ]
+  }
+ ]
+}
