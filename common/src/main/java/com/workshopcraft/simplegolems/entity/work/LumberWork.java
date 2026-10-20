@@ -47,7 +47,7 @@ public class LumberWork implements JobWork {
     }
 
     private static boolean isBase(ServerLevel level, BlockPos pos, BlockState state) {
-        return state.is(BlockTags.LOGS) && level.getBlockState(pos.below()).is(BlockTags.DIRT);
+        return state.is(BlockTags.LOGS) && level.getBlockState(pos.below()).is(BlockTags.SUBSTRATE_OVERWORLD);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class LumberWork implements JobWork {
         }
         List<BlockPos> bases = new ArrayList<>();
         for (BlockPos log : logs) {
-            if (level.getBlockState(log.below()).is(BlockTags.DIRT)) bases.add(log);
+            if (level.getBlockState(log.below()).is(BlockTags.SUBSTRATE_OVERWORLD)) bases.add(log);
         }
         List<BlockPos> sorted = new ArrayList<>(logs);
         sorted.sort(Comparator.comparingInt((BlockPos p) -> -p.getY()));
@@ -148,6 +148,11 @@ public class LumberWork implements JobWork {
         List<ItemStack> drops = Block.getDrops(s, level, pos, null, golem, golem.getTool());
         breakQuietly(level, pos, s, true);
         for (ItemStack d : merge(drops)) Storage.collectOrDrop(golem, level, Vec3.atCenterOf(pos), d);
+    }
+
+    @Override
+    public boolean fromGround() {
+        return true;
     }
 
     @Override

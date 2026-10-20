@@ -30,6 +30,11 @@ public interface JobWork {
         return Storage.nearest(level, area, golem.position(), c -> Storage.hasRoom(c, carried), skip);
     }
 
+    // walk to the ground beside the target rather than onto it
+    default boolean fromGround() {
+        return false;
+    }
+
     static @Nullable JobWork of(Job job) {
         return switch (job) {
             case LUMBER -> LumberWork.INSTANCE;

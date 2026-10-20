@@ -36,6 +36,6 @@ public class GolemNavigation extends GroundPathNavigation {
 
     private boolean offLimits(BlockState floor, BlockState under) {
         if (floor.getBlock() instanceof LeavesBlock) return true;
-        return golem.getJob() == Job.LUMBER && floor.is(BlockTags.LOGS) && (under.is(BlockTags.LOGS) || under.is(BlockTags.DIRT));
+        return golem.getJob() == Job.LUMBER && floor.is(BlockTags.LOGS) && (under.is(BlockTags.LOGS) || under.is(BlockTags.SUBSTRATE_OVERWORLD));
     }
 }

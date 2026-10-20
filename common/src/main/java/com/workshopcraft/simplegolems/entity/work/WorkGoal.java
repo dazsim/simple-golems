@@ -3,6 +3,7 @@ package com.workshopcraft.simplegolems.entity.work;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -132,12 +134,35 @@ public class WorkGoal extends Goal {
     }
 
     private void moveTo() {
-        Path path = task == Task.PICKUP ? golem.getNavigation().createPath(item, 0) : golem.getNavigation().createPath(pos, 1);
+        Path path = task == Task.PICKUP ? golem.getNavigation().createPath(item, 0)
+                : task == Task.WORK && work.fromGround() ? groundPath(pos) : golem.getNavigation().createPath(pos, 1);
         if (path == null) {
             if (golem.onGround() && !golem.isInWater()) failed = true;
             return;
         }
         golem.getNavigation().moveTo(path, 1.0);
+    }
+
+    // ground navigation aims at the first open block above a solid target, which for a trunk is the treetop,
+    // so walk to an open spot beside it instead
+    private @Nullable Path groundPath(BlockPos target) {
+        ServerLevel level = level();
+        Path fallback = null;
+        List<BlockPos> spots = new ArrayList<>();
+        for (BlockPos p : BlockPos.betweenClosed(target.offset(-1, 0, -1), target.offset(1, 0, 1))) {
+            if (p.equals(target)) continue;
+            BlockPos below = p.below();
+            if (level.getBlockState(p).getCollisionShape(level, p).isEmpty() && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)) {
+                spots.add(p.immutable());
+            }
+        }
+        spots.sort(Comparator.comparingDouble(p -> golem.distanceToSqr(Vec3.atBottomCenterOf(p))));
+        for (BlockPos p : spots) {
+            Path path = golem.getNavigation().createPath(p, 0);
+            if (path != null && path.canReach()) return path;
+            if (fallback == null) fallback = path;
+        }
+        return fallback;
     }
 
     private boolean inReach() {
