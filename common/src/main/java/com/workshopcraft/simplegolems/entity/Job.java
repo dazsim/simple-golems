@@ -42,7 +42,7 @@ public enum Job implements StringRepresentable {
             case LUMBER -> stack.is(ItemTags.AXES);
             case FARMER -> stack.is(ItemTags.HOES);
             case MINER -> stack.is(ItemTags.PICKAXES);
-            case SWEEPER -> stack.is(Items.BRUSH);
+            case SWEEPER -> stack.is(Items.BRUSH) || stack.is(ItemTags.SHOVELS);
             default -> false;
         };
     }

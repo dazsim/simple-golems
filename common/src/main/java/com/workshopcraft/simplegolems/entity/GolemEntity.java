@@ -4,6 +4,7 @@ import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
+import com.workshopcraft.simplegolems.entity.work.WorkGoal;
 import com.workshopcraft.simplegolems.item.CardItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
@@ -76,6 +77,7 @@ public class GolemEntity extends AbstractGolem {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
         goalSelector.addGoal(3, new FollowOwnerGoal(this));
+        goalSelector.addGoal(4, new WorkGoal(this));
         goalSelector.addGoal(6, new StrollInAreaGoal(this));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 6.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));

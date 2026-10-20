@@ -117,7 +117,7 @@ LANG = {
     "message.simplegolems.wrong_tool.farmer": "A farmer golem works with a hoe",
     "message.simplegolems.wrong_tool.miner": "A miner golem works with a pickaxe",
     "message.simplegolems.wrong_tool.courier": "A courier golem needs no tool",
-    "message.simplegolems.wrong_tool.sweeper": "A sweeper golem only takes a brush",
+    "message.simplegolems.wrong_tool.sweeper": "A sweeper golem only takes a brush or a shovel",
     "message.simplegolems.status.blank": "Blank golem, following you. Give it a card to put it to work",
     "message.simplegolems.status.no_tool": "%s waiting for a tool",
     "message.simplegolems.status.no_power": "%s out of power, feed it clay cookies",
