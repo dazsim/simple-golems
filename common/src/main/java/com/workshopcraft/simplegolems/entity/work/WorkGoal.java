@@ -117,7 +117,7 @@ public class WorkGoal extends Goal {
     private void moveTo() {
         Path path = task == Task.PICKUP ? golem.getNavigation().createPath(item, 0) : golem.getNavigation().createPath(pos, 1);
         if (path == null) {
-            failed = true;
+            if (golem.onGround() && !golem.isInWater()) failed = true;
             return;
         }
         golem.getNavigation().moveTo(path, 1.0);
