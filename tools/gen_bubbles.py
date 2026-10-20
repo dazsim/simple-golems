@@ -14,9 +14,22 @@ PAL = {
     "h": (220, 220, 222, 255), "H": (140, 140, 146, 255), "w": (150, 104, 52, 255), "W": (92, 62, 28, 255),
     "A": (74, 44, 32, 255), "B": (226, 156, 116, 255), "C": (164, 96, 66, 255), "D": (206, 132, 94, 255),
     "E": (190, 116, 82, 255), "F": (232, 196, 96, 255),
+    "x": (96, 18, 30, 255), "R": (226, 52, 68, 255), "r": (170, 28, 44, 255), "P": (255, 178, 186, 255),
 }
 
 ICONS = {
+    "heart": [
+        "..........",
+        ".xx...xx..",
+        "xPRx.xRRx.",
+        "xPRRxRRRx.",
+        "xRRRRRRrx.",
+        ".xRRRRrx..",
+        "..xRRrx...",
+        "...xrx....",
+        "....x.....",
+        "..........",
+    ],
     "chest": [
         ".oooooooo.",
         "ollllllllo",
@@ -136,7 +149,7 @@ def badge(im, ox, oy):
 
 def make(icon, crossed=False, marked=False):
     im = bubble()
-    ox, oy = 14, 7
+    ox, oy = (15, 7) if icon == "heart" else (14, 7)
     for y, row in enumerate(ICONS[icon]):
         for x, c in enumerate(row[:10]):
             if c != ".":
@@ -156,6 +169,7 @@ if __name__ == "__main__":
         "bubble_axe": make("axe", crossed=True),
         "bubble_pickaxe": make("pickaxe", crossed=True),
         "bubble_hoe": make("hoe", crossed=True),
+        "bubble_thanks": make("heart"),
     }
     for k, v in out.items():
         v.save(f"{OUT}/{k}.png")
