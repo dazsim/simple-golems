@@ -249,7 +249,7 @@ public class GolemEntity extends AbstractGolem {
                 thanks = 0;
             } else if (lastTrouble != Trouble.NONE && getJob() != Job.BLANK && level() instanceof ServerLevel sl) {
                 thanks = 40;
-                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + getBbHeight() + 0.3, getZ(), 2, 0.25, 0.1, 0.25, 0.0);
+                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + getBbHeight() + 0.3, getZ(), 1, 0.25, 0.1, 0.25, 0.0);
             }
             lastTrouble = t;
             entityData.set(DATA_TROUBLE, (t == Trouble.NONE && thanks > 0 ? Trouble.THANKS : t).ordinal());
