@@ -135,6 +135,7 @@ public class WorkGoal extends Goal {
 
     @Override
     public void tick() {
+        if (task == null || failed) return;
         if (!golem.usePower(1)) {
             task = null;
             return;
