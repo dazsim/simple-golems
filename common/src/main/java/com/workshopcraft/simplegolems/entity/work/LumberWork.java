@@ -167,7 +167,7 @@ public class LumberWork implements JobWork {
             }
         }
         Vec3 at = Vec3.atBottomCenterOf(pos).add(0, 0.5, 0);
-        for (ItemStack d : merge(drops)) Storage.spawnWorkDrop(level, at, d);
+        for (ItemStack d : merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }
 
     static void breakQuietly(ServerLevel level, BlockPos pos, BlockState state, boolean effects) {

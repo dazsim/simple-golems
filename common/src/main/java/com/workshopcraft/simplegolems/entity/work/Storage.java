@@ -99,6 +99,20 @@ public final class Storage {
         golem.playSound(SoundEvents.ITEM_PICKUP, 0.3F, 1.6F);
     }
 
+    // what fits the carry slot goes straight in, the rest is dropped for later trips
+    public static void collectOrDrop(GolemEntity golem, ServerLevel level, Vec3 at, ItemStack stack) {
+        ItemStack carried = golem.getCarried();
+        if (carried.isEmpty()) {
+            golem.setCarried(stack.split(stack.getMaxStackSize()));
+        } else if (ItemStack.isSameItemSameComponents(carried, stack)) {
+            int n = Math.min(stack.getCount(), carried.getMaxStackSize() - carried.getCount());
+            carried.grow(n);
+            stack.shrink(n);
+            golem.setCarried(carried);
+        }
+        spawnWorkDrop(level, at, stack);
+    }
+
     public static void spawnWorkDrop(ServerLevel level, Vec3 at, ItemStack stack) {
         if (stack.isEmpty()) return;
         ItemEntity e = new ItemEntity(level, at.x, at.y, at.z, stack);

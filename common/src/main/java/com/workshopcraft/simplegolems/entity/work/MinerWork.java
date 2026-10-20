@@ -95,6 +95,6 @@ public class MinerWork implements JobWork {
         LumberWork.breakQuietly(level, pos, s, true);
         tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
         Vec3 at = Vec3.atCenterOf(pos);
-        for (ItemStack d : LumberWork.merge(drops)) Storage.spawnWorkDrop(level, at, d);
+        for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }
 }

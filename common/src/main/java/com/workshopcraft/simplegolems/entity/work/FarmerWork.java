@@ -89,6 +89,6 @@ public class FarmerWork implements JobWork {
         level.setBlockAndUpdate(pos, replant);
         golem.getTool().hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
         Vec3 at = Vec3.atBottomCenterOf(pos).add(0, 0.3, 0);
-        for (ItemStack d : LumberWork.merge(drops)) Storage.spawnWorkDrop(level, at, d);
+        for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }
 }
