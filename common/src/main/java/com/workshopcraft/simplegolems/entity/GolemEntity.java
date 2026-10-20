@@ -38,6 +38,8 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -76,7 +78,8 @@ public class GolemEntity extends AbstractGolem {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 48.0);
+                .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 48.0)
+                .add(Attributes.MINING_EFFICIENCY);
     }
 
     @Override
@@ -156,6 +159,24 @@ public class GolemEntity extends AbstractGolem {
 
     public WorkArea getArea() {
         return customArea != null ? customArea : WorkArea.around(getHome());
+    }
+
+    // same rules as a player: tool tier speed, Efficiency through the mining_efficiency attribute, Haste
+    public float digSpeed(BlockState state) {
+        float speed = getTool().getDestroySpeed(state);
+        if (speed > 1.0F) speed += (float) getAttributeValue(Attributes.MINING_EFFICIENCY);
+        if (MobEffectUtil.hasDigSpeed(this)) speed *= 1.0F + (MobEffectUtil.getDigSpeedAmplification(this) + 1) * 0.2F;
+        return speed;
+    }
+
+    public int digTicks(BlockState state, BlockPos pos) {
+        float hardness = state.getDestroySpeed(level(), pos);
+        if (hardness <= 0) return 2;
+        return Mth.clamp(Mth.ceil(hardness * 30.0F / Math.max(0.1F, digSpeed(state))), 2, 100) + 2;
+    }
+
+    public boolean canHarvest(BlockState state) {
+        return !state.requiresCorrectToolForDrops() || getTool().isCorrectToolForDrops(state);
     }
 
     public boolean hasTool() {

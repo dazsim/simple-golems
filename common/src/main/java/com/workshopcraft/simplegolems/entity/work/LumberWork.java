@@ -53,7 +53,8 @@ public class LumberWork implements JobWork {
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
         List<BlockPos> bases = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(area.min(), area.max())) {
-            if (isBase(level, p, level.getBlockState(p)) && !skip.test(p)) bases.add(p.immutable());
+            BlockState s = level.getBlockState(p);
+            if (isBase(level, p, s) && golem.canHarvest(s) && !skip.test(p)) bases.add(p.immutable());
         }
         bases.sort(Comparator.comparingDouble(p -> golem.distanceToSqr(Vec3.atCenterOf(p))));
         for (BlockPos p : bases) {
@@ -129,7 +130,9 @@ public class LumberWork implements JobWork {
 
     @Override
     public int workTicks(GolemEntity golem, ServerLevel level, BlockPos pos) {
-        return 40;
+        Tree tree = tree(level, pos);
+        int logs = tree == null ? 1 : tree.logs().size();
+        return Math.min(200, golem.digTicks(level.getBlockState(pos), pos) * (1 + logs / 4));
     }
 
     @Override
@@ -151,7 +154,7 @@ public class LumberWork implements JobWork {
         if (cleared.size() == tree.logs().size()) {
             for (BlockPos leaf : tree.leaves()) {
                 BlockState s = level.getBlockState(leaf);
-                drops.addAll(Block.getDrops(s, level, leaf, null, golem, ItemStack.EMPTY));
+                drops.addAll(Block.getDrops(s, level, leaf, null, golem, golem.getTool()));
                 breakQuietly(level, leaf, s, particles++ < 24);
             }
         }

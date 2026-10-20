@@ -5,7 +5,6 @@ import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -42,10 +41,10 @@ public class MinerWork implements JobWork {
         return p.getX() == area.min().getX() && top - p.getY() > p.getZ() - area.min().getZ();
     }
 
-    static boolean mineable(ServerLevel level, BlockPos p, ItemStack tool) {
+    static boolean mineable(ServerLevel level, BlockPos p, GolemEntity golem) {
         BlockState s = level.getBlockState(p);
         if (s.isAir() || !s.getFluidState().isEmpty() || s.hasBlockEntity() || s.getDestroySpeed(level, p) < 0) return false;
-        if (s.requiresCorrectToolForDrops() && !tool.isCorrectToolForDrops(s)) return false;
+        if (!golem.canHarvest(s)) return false;
         if (level.getBlockEntity(p.above()) != null) return false;
         for (Direction d : Direction.values()) {
             if (d != Direction.DOWN && !level.getFluidState(p.relative(d)).isEmpty()) return false;
@@ -55,13 +54,12 @@ public class MinerWork implements JobWork {
 
     @Override
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
-        ItemStack tool = golem.getTool();
         BlockPos min = area.min(), max = area.max();
         for (int y = max.getY(); y >= min.getY(); y--) {
             BlockPos best = null;
             double bestDist = Double.MAX_VALUE;
             for (BlockPos p : BlockPos.betweenClosed(min.getX(), y, min.getZ(), max.getX(), y, max.getZ())) {
-                if (isStair(area, p) || skip.test(p) || !mineable(level, p, tool)) continue;
+                if (isStair(area, p) || skip.test(p) || !mineable(level, p, golem)) continue;
                 double d = golem.distanceToSqr(Vec3.atCenterOf(p));
                 if (d < bestDist) {
                     best = p.immutable();
@@ -80,16 +78,13 @@ public class MinerWork implements JobWork {
 
     @Override
     public int workTicks(GolemEntity golem, ServerLevel level, BlockPos pos) {
-        ItemStack tool = golem.getTool();
-        BlockState s = level.getBlockState(pos);
-        float speed = Math.max(1.0F, tool.getDestroySpeed(s));
-        return Mth.clamp(Math.round(s.getDestroySpeed(level, pos) * 30.0F / speed) + 4, 4, 80);
+        return golem.digTicks(level.getBlockState(pos), pos);
     }
 
     @Override
     public void finish(GolemEntity golem, ServerLevel level, BlockPos pos) {
         ItemStack tool = golem.getTool();
-        if (tool.isEmpty() || !mineable(level, pos, tool)) return;
+        if (tool.isEmpty() || !mineable(level, pos, golem)) return;
         BlockState s = level.getBlockState(pos);
         var drops = Block.getDrops(s, level, pos, null, golem, tool);
         LumberWork.breakQuietly(level, pos, s, true);
