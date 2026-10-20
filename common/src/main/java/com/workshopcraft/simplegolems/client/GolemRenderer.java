@@ -47,6 +47,16 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
                 pose.popPose();
             }
         });
+        addLayer(new RenderLayer<>(this) {
+            @Override
+            public void submit(PoseStack pose, SubmitNodeCollector out, int light, GolemRenderState state, float yRot, float xRot) {
+                if (state.carried.isEmpty()) return;
+                pose.pushPose();
+                getParentModel().poseCarried(pose);
+                state.carried.submit(pose, out, light, OverlayTexture.NO_OVERLAY, state.outlineColor);
+                pose.popPose();
+            }
+        });
     }
 
     @Override
@@ -73,7 +83,8 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         state.colour = tint(golem.getColour());
         state.powered = golem.isPowered();
         state.waiting = golem.isWaiting();
-        state.carrying = golem.isCarrying();
+        itemModelResolver.updateForLiving(state.carried, golem.getShownCarried(), ItemDisplayContext.GROUND, golem);
+        state.carrying = !state.carried.isEmpty();
     }
 
     // terracotta averages lifted a little so dark dyes stay friendly, from the art colour sheet

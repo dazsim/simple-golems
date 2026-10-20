@@ -50,7 +50,7 @@ public class GolemEntity extends AbstractGolem {
 
     private static final EntityDataAccessor<Integer> DATA_JOB = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_COLOUR = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_CARRYING = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<ItemStack> DATA_CARRIED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Boolean> DATA_POWERED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
 
     private ItemStack cookies = ItemStack.EMPTY;
@@ -87,7 +87,7 @@ public class GolemEntity extends AbstractGolem {
         b.define(DATA_JOB, 0);
         b.define(DATA_COLOUR, -1);
         b.define(DATA_POWERED, false);
-        b.define(DATA_CARRYING, false);
+        b.define(DATA_CARRIED, ItemStack.EMPTY);
     }
 
     public Job getJob() {
@@ -124,11 +124,11 @@ public class GolemEntity extends AbstractGolem {
     public ItemStack getCarried() { return carried; }
     public void setCarried(ItemStack s) {
         carried = s;
-        entityData.set(DATA_CARRYING, !s.isEmpty());
+        entityData.set(DATA_CARRIED, s.copyWithCount(1));
     }
 
-    public boolean isCarrying() {
-        return entityData.get(DATA_CARRYING);
+    public ItemStack getShownCarried() {
+        return entityData.get(DATA_CARRIED);
     }
     public int getFuel() { return fuel; }
     public @Nullable WorkArea getCustomArea() { return customArea; }

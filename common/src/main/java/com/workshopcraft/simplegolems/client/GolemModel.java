@@ -70,14 +70,15 @@ public class GolemModel extends EntityModel<GolemRenderState> {
         cardArm.loadPose(cardArmPose);
         toolArm.xRot += 0.6F * Mth.triangleWave(pos, 8.0F) * speed;
         cardArm.xRot -= 0.8F * Mth.triangleWave(pos, 8.0F) * speed;
-        if (state.carrying) cardArm.xRot = -0.9F;
+        if (state.carrying) cardArm.xRot = -1.1F;
         if (state.attackTime > 0.0F) {
             float swing = Mth.sin(Mth.sqrt(state.attackTime) * Mth.PI);
             toolArm.xRot = toolArmPose.xRot() - 1.6F * swing;
         }
         if (state.waiting) {
-            head.xRot = 0.35F;
+            head.xRot = 0.55F;
             toolArm.xRot = toolArmPose.xRot() * 0.3F;
+            cardArm.zRot = cardArmPose.zRot() * 0.5F;
         }
     }
 
@@ -89,6 +90,15 @@ public class GolemModel extends EntityModel<GolemRenderState> {
         pose.mulPose(Axis.ZP.rotationDegrees(TOOL_TILT));
         pose.scale(TOOL_SCALE, TOOL_SCALE, TOOL_SCALE);
         pose.translate(-0.38F, 0.38F, 0.0F);
+    }
+
+    public void poseCarried(PoseStack pose) {
+        root().translateAndRotate(pose);
+        body.translateAndRotate(pose);
+        cardArm.translateAndRotate(pose);
+        pose.translate(0.0F, 7.0F / 16.0F, -1.0F / 16.0F);
+        pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        pose.scale(0.75F, 0.75F, 0.75F);
     }
 
     private static final float TOOL_TILT = 105.0F;

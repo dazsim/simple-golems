@@ -12,4 +12,5 @@ public class GolemRenderState extends LivingEntityRenderState {
     public boolean powered;
     public boolean waiting;
     public boolean carrying;
+    public final ItemStackRenderState carried = new ItemStackRenderState();
 }
