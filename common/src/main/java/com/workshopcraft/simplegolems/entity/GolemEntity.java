@@ -18,6 +18,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -75,6 +76,8 @@ public class GolemEntity extends AbstractGolem {
     private @Nullable UUID owner;
     private boolean storageTrouble;
     private boolean saplingTrouble;
+    private Trouble lastTrouble = Trouble.NONE;
+    private int thanks;
     public float bubble, bubbleO;
     public Trouble shownTrouble = Trouble.NONE;
 
@@ -238,9 +241,18 @@ public class GolemEntity extends AbstractGolem {
             return;
         }
         if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
+        if (thanks > 0) thanks--;
         if (tickCount % 10 == 0) {
             entityData.set(DATA_WAITING, isWaiting());
-            entityData.set(DATA_TROUBLE, getTrouble().ordinal());
+            Trouble t = getTrouble();
+            if (t != Trouble.NONE) {
+                thanks = 0;
+            } else if (lastTrouble != Trouble.NONE && getJob() != Job.BLANK && level() instanceof ServerLevel sl) {
+                thanks = 40;
+                sl.sendParticles(ParticleTypes.HEART, getX(), getY() + getBbHeight() + 0.3, getZ(), 2, 0.25, 0.1, 0.25, 0.0);
+            }
+            lastTrouble = t;
+            entityData.set(DATA_TROUBLE, (t == Trouble.NONE && thanks > 0 ? Trouble.THANKS : t).ordinal());
         }
     }
 
@@ -481,6 +493,7 @@ public class GolemEntity extends AbstractGolem {
         out.store("job", Job.CODEC, getJob());
         if (getColour() != null) out.store("colour", DyeColor.CODEC, getColour());
         out.store("cookies", ItemStack.OPTIONAL_CODEC, cookies);
+        if (thanks > 0) out.putInt("thanks", thanks);
         out.store("carried", ItemStack.OPTIONAL_CODEC, carried);
         out.putInt("fuel", fuel);
         if (customArea != null) out.store("area", WorkArea.CODEC, customArea);
