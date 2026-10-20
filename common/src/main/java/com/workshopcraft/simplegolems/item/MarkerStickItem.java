@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import net.minecraft.sounds.SoundSource;
 
 public class MarkerStickItem extends Item {
     private static final int FIRST_COLOUR = 0xE0C040;
@@ -49,14 +50,14 @@ public class MarkerStickItem extends Item {
         if (m == null || m.second().isPresent()) {
             stack.set(ModContent.MARKER, new MarkerCorners(pos.immutable(), Optional.empty()));
             tell(player, "marker.first", pos.getX(), pos.getY(), pos.getZ());
-            context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.2F);
+            context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.2F);
         } else if (!WorkArea.fits(m.first(), pos)) {
             tell(player, "marker.too_big", WorkArea.MAX_SIZE);
         } else {
             stack.set(ModContent.MARKER, new MarkerCorners(m.first(), Optional.of(pos.immutable())));
             WorkArea a = WorkArea.of(m.first(), pos);
             tell(player, "marker.second", a.sizeX(), a.sizeY(), a.sizeZ());
-            context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.6F);
+            context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.6F);
         }
         return InteractionResult.SUCCESS;
     }

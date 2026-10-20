@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
+import net.minecraft.core.Direction;
 
 public class FollowOwnerGoal extends Goal {
     private final GolemEntity golem;
@@ -64,7 +65,7 @@ public class FollowOwnerGoal extends Goal {
     private void teleportNear(BlockPos pos) {
         for (int i = 0; i < 10; i++) {
             BlockPos p = pos.offset(golem.getRandom().nextInt(5) - 2, golem.getRandom().nextInt(3) - 1, golem.getRandom().nextInt(5) - 2);
-            if (golem.level().getBlockState(p.below()).isFaceSturdy(golem.level(), p.below(), net.minecraft.core.Direction.UP)
+            if (golem.level().getBlockState(p.below()).isFaceSturdy(golem.level(), p.below(), Direction.UP)
                     && golem.level().noCollision(golem, golem.getDimensions(golem.getPose()).makeBoundingBox(p.getBottomCenter()))) {
                 golem.snapTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, golem.getYRot(), golem.getXRot());
                 golem.getNavigation().stop();

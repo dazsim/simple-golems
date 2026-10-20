@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.AABB;
+import io.netty.buffer.ByteBuf;
 
 // first and second are kept in click order; the courier takes from the first corner and delivers to the second
 public record WorkArea(BlockPos first, BlockPos second) {
@@ -14,7 +15,7 @@ public record WorkArea(BlockPos first, BlockPos second) {
     public static final Codec<WorkArea> CODEC = RecordCodecBuilder.create(i -> i.group(
             BlockPos.CODEC.fieldOf("first").forGetter(WorkArea::first),
             BlockPos.CODEC.fieldOf("second").forGetter(WorkArea::second)).apply(i, WorkArea::new));
-    public static final StreamCodec<io.netty.buffer.ByteBuf, WorkArea> STREAM_CODEC = StreamCodec.composite(
+    public static final StreamCodec<ByteBuf, WorkArea> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, WorkArea::first, BlockPos.STREAM_CODEC, WorkArea::second, WorkArea::new);
 
     public WorkArea {

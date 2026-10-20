@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.Collections;
 
 public class FarmerWork implements JobWork {
     public static final FarmerWork INSTANCE = new FarmerWork();
@@ -43,7 +44,7 @@ public class FarmerWork implements JobWork {
     static boolean ripe(BlockState state) {
         if (state.getBlock() instanceof CropBlock crop) return crop.isMaxAge(state);
         IntegerProperty age = age(state);
-        return age != null && state.getValue(age) >= java.util.Collections.max(age.getPossibleValues());
+        return age != null && state.getValue(age) >= Collections.max(age.getPossibleValues());
     }
 
     @Override
@@ -84,7 +85,7 @@ public class FarmerWork implements JobWork {
                 break;
             }
         }
-        BlockState replant = state.getBlock() instanceof CropBlock crop ? crop.getStateForAge(0) : state.setValue(age(state), java.util.Collections.min(age(state).getPossibleValues()));
+        BlockState replant = state.getBlock() instanceof CropBlock crop ? crop.getStateForAge(0) : state.setValue(age(state), Collections.min(age(state).getPossibleValues()));
         level.levelEvent(2001, pos, Block.getId(state));
         level.setBlockAndUpdate(pos, replant);
         golem.getTool().hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);

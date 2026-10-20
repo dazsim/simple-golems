@@ -47,6 +47,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.tags.ItemTags;
 
 public class GolemEntity extends AbstractGolem {
     public static final int COOKIE_TICKS = 6000;
@@ -305,7 +308,7 @@ public class GolemEntity extends AbstractGolem {
                     tell(player, "marker.given", marked.sizeX(), marked.sizeY(), marked.sizeZ());
                     playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
                 }
-                if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                if (player instanceof ServerPlayer sp) {
                     MarkerStickItem.outline((ServerLevel) level(), sp, getArea(), 0x60E060);
                 }
             }
@@ -313,7 +316,7 @@ public class GolemEntity extends AbstractGolem {
         }
 
         DyeColor dye = held.get(DataComponents.DYE);
-        if (dye != null && held.getItem() instanceof net.minecraft.world.item.DyeItem) {
+        if (dye != null && held.getItem() instanceof DyeItem) {
             if (dye == getColour()) return InteractionResult.PASS;
             if (server) {
                 setColour(dye);
@@ -371,7 +374,7 @@ public class GolemEntity extends AbstractGolem {
 
     public static boolean isTool(ItemStack stack) {
         for (Job j : Job.values()) if (j.usesTool(stack)) return true;
-        return stack.is(net.minecraft.tags.ItemTags.SHOVELS);
+        return stack.is(ItemTags.SHOVELS);
     }
 
     public void tellStatus(Player player) {
