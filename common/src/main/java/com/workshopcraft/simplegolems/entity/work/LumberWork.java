@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -161,6 +162,8 @@ public class LumberWork implements JobWork {
         for (BlockPos base : tree.bases()) {
             if (!cleared.contains(base) || !level.getBlockState(base).isAir()) continue;
             if (plant(level, base, drops)) continue;
+            List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ItemTags.SAPLINGS));
+            if (near.stream().anyMatch(e -> plantFrom(level, base, e))) continue;
             ItemStack carried = golem.getCarried();
             if (plant(level, base, List.of(carried))) {
                 golem.setCarried(carried);
@@ -195,6 +198,14 @@ public class LumberWork implements JobWork {
             }
         }
         return false;
+    }
+
+    private static boolean plantFrom(ServerLevel level, BlockPos pos, ItemEntity e) {
+        ItemStack s = e.getItem().copy();
+        if (!plant(level, pos, List.of(s))) return false;
+        if (s.isEmpty()) e.discard();
+        else e.setItem(s);
+        return true;
     }
 
     private static int saplingSlot(Container c, ServerLevel level, BlockPos pos) {

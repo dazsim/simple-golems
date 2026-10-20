@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -68,14 +69,23 @@ public class WorkGoal extends Goal {
         WorkArea area = work.area(golem);
         if (!level.hasChunksAt(area.min(), area.max())) return false;
         skipped.values().removeIf(t -> t <= level.getGameTime());
+        List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, itemBox(area),
+                e -> e.isAlive() && work.wants(e) && !skip(e.blockPosition()));
+        for (ItemEntity e : loose) {
+            if (e.getAge() > 3000) e.setExtendedLifetime();
+        }
         ItemStack carried = golem.getCarried();
         boolean full = !carried.isEmpty() && carried.getCount() >= carried.getMaxStackSize();
-        ItemEntity loose = full ? null : nearestItem(area, carried);
-        if (!full && loose != null) return begin(Task.PICKUP, loose.blockPosition(), loose);
-        if (!carried.isEmpty() && work.deliverFirst() && (full || otherItems(area, carried))) {
+        ItemEntity next = full ? null : loose.stream()
+                .filter(e -> !e.hasPickUpDelay() && Storage.fits(carried, e.getItem()))
+                .min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
+        if (next != null) return begin(Task.PICKUP, next.blockPosition(), next);
+        // one item type per trip, and every drop is cleared before the next tree, crop or block
+        if (!carried.isEmpty() && (full || !loose.isEmpty())) {
             BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
             if (chest != null) return begin(Task.DELIVER, chest, null);
         }
+        if (!loose.isEmpty()) return false;
         if (!full) {
             BlockPos target = work.findTarget(golem, level, area, this::skip);
             if (target != null) return begin(Task.WORK, target, null);
@@ -87,15 +97,8 @@ public class WorkGoal extends Goal {
         return false;
     }
 
-    private @Nullable ItemEntity nearestItem(WorkArea area, ItemStack carried) {
-        List<ItemEntity> items = golem.level().getEntitiesOfClass(ItemEntity.class, area.box(),
-                e -> e.isAlive() && !e.hasPickUpDelay() && work.wants(e) && Storage.fits(carried, e.getItem()) && !skip(e.blockPosition()));
-        return items.stream().min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
-    }
-
-    private boolean otherItems(WorkArea area, ItemStack carried) {
-        return !golem.level().getEntitiesOfClass(ItemEntity.class, area.box(),
-                e -> e.isAlive() && work.wants(e) && !Storage.fits(carried, e.getItem())).isEmpty();
+    private static AABB itemBox(WorkArea area) {
+        return area.box().inflate(2, 1, 2);
     }
 
     private boolean begin(Task t, BlockPos p, @Nullable ItemEntity e) {

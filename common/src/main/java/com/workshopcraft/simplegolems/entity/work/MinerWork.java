@@ -31,11 +31,6 @@ public class MinerWork implements JobWork {
         return a.sizeY() == 1 ? a.down(FLAT_DEPTH) : a;
     }
 
-    @Override
-    public boolean deliverFirst() {
-        return true;
-    }
-
     static boolean isStair(WorkArea area, BlockPos p) {
         int top = area.max().getY();
         return p.getX() == area.min().getX() && top - p.getY() > p.getZ() - area.min().getZ();

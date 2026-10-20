@@ -30,11 +30,6 @@ public interface JobWork {
         return Storage.nearest(level, area, golem.position(), c -> Storage.hasRoom(c, carried), skip);
     }
 
-    // empty the carry slot before picking up a different item instead of leaving piles behind
-    default boolean deliverFirst() {
-        return false;
-    }
-
     static @Nullable JobWork of(Job job) {
         return switch (job) {
             case LUMBER -> LumberWork.INSTANCE;
