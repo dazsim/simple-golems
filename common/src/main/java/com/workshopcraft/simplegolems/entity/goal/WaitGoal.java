@@ -5,7 +5,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
-// holds the golem still while it has no power or no tool
+// holds the golem still while it has no power, no tool or nowhere to put what it carries
 public class WaitGoal extends Goal {
     private final GolemEntity golem;
 
@@ -16,7 +16,7 @@ public class WaitGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return golem.isWaiting();
+        return golem.isWaiting() || golem.hasStorageTrouble();
     }
 
     @Override

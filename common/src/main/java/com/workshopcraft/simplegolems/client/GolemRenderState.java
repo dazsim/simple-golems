@@ -1,6 +1,7 @@
 package com.workshopcraft.simplegolems.client;
 
 import com.workshopcraft.simplegolems.entity.Job;
+import com.workshopcraft.simplegolems.entity.Trouble;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 
@@ -13,4 +14,6 @@ public class GolemRenderState extends LivingEntityRenderState {
     public boolean waiting;
     public boolean carrying;
     public final ItemStackRenderState carried = new ItemStackRenderState();
+    public Trouble trouble = Trouble.NONE;
+    public float bubble;
 }

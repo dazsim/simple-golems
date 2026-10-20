@@ -3,7 +3,11 @@ package com.workshopcraft.simplegolems.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.workshopcraft.simplegolems.entity.Job;
+import com.workshopcraft.simplegolems.entity.Trouble;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.util.Mth;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -85,6 +89,52 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         state.waiting = golem.isWaiting();
         itemModelResolver.updateForLiving(state.carried, golem.getShownCarried(), ItemDisplayContext.GROUND, golem);
         state.carrying = !state.carried.isEmpty();
+        state.trouble = golem.shownTrouble;
+        state.bubble = Mth.lerp(partialTicks, golem.bubbleO, golem.bubble);
+    }
+
+    @Override
+    public void submit(GolemRenderState state, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
+        super.submit(state, pose, out, camera);
+        if (state.bubble <= 0.0F || state.trouble == Trouble.NONE) return;
+        pose.pushPose();
+        pose.translate(0.0F, state.boundingBoxHeight + 0.42F + Mth.sin(state.ageInTicks * 0.08F) * 0.04F, 0.0F);
+        pose.mulPose(camera.orientation);
+        float a = state.bubble * state.bubble * (3 - 2 * state.bubble);
+        pose.scale(0.75F, 0.75F, 0.75F);
+        // the trailing dots sit in the lower left of the texture, so shift the cloud up and right of the head
+        pose.translate(0.32F, 0.3F, 0.0F);
+        int alpha = (int) (a * 255);
+        out.submitCustomGeometry(pose, RenderTypes.entityTranslucent(bubbleTexture(state)), (p, vc) -> {
+            quad(p, vc, alpha, false);
+            quad(p, vc, alpha, true);
+        });
+        pose.popPose();
+    }
+
+    private static void quad(PoseStack.Pose p, VertexConsumer vc, int alpha, boolean back) {
+        float[][] v = {{-0.5F, -0.5F, 0, 1}, {0.5F, -0.5F, 1, 1}, {0.5F, 0.5F, 1, 0}, {-0.5F, 0.5F, 0, 0}};
+        for (int i = 0; i < 4; i++) {
+            float[] c = v[back ? 3 - i : i];
+            vc.addVertex(p, c[0], c[1], 0.0F).setColor(255, 255, 255, alpha).setUv(c[2], c[3])
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(FULL_BRIGHT).setNormal(p, 0.0F, 0.0F, back ? -1.0F : 1.0F);
+        }
+    }
+
+    private static final int FULL_BRIGHT = 0xF000F0;
+
+    private static Identifier bubbleTexture(GolemRenderState state) {
+        String name = switch (state.trouble) {
+            case STORAGE -> "storage";
+            case SAPLING -> "sapling";
+            case FOOD -> "food";
+            default -> switch (state.job) {
+                case FARMER -> "hoe";
+                case MINER -> "pickaxe";
+                default -> "axe";
+            };
+        };
+        return SimpleGolems.id("textures/entity/golem/bubble_" + name + ".png");
     }
 
     // terracotta averages lifted a little so dark dyes stay friendly, from the art colour sheet

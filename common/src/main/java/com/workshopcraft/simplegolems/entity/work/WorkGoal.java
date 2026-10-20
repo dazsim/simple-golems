@@ -81,9 +81,14 @@ public class WorkGoal extends Goal {
                 .min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
         if (next != null) return begin(Task.PICKUP, next.blockPosition(), next);
         // one item type per trip, and every drop is cleared before the next tree, crop or block
-        if (!carried.isEmpty() && (full || !loose.isEmpty())) {
+        if (!carried.isEmpty()) {
             BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
-            if (chest != null) return begin(Task.DELIVER, chest, null);
+            // nowhere to put it: stop and wait rather than spill more drops
+            golem.setStorageTrouble(chest == null);
+            if (chest == null) return false;
+            if (full || !loose.isEmpty()) return begin(Task.DELIVER, chest, null);
+        } else {
+            golem.setStorageTrouble(false);
         }
         if (!loose.isEmpty()) return false;
         if (!full) {

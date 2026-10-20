@@ -161,25 +161,28 @@ public class LumberWork implements JobWork {
         }
         for (BlockPos base : tree.bases()) {
             if (!cleared.contains(base) || !level.getBlockState(base).isAir()) continue;
-            if (plant(level, base, drops)) continue;
-            List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ItemTags.SAPLINGS));
-            if (near.stream().anyMatch(e -> plantFrom(level, base, e))) continue;
-            ItemStack carried = golem.getCarried();
-            if (plant(level, base, List.of(carried))) {
-                golem.setCarried(carried);
-                continue;
-            }
-            // nothing dropped, so borrow a sapling from storage in the area
-            BlockPos chest = Storage.nearest(level, golem.getArea(), golem.position(), c -> saplingSlot(c, level, base) >= 0, p -> false);
-            Container c = chest == null ? null : Storage.containerAt(level, chest);
-            if (c != null) {
-                int slot = saplingSlot(c, level, base);
-                plant(level, base, List.of(c.getItem(slot)));
-                c.setChanged();
-            }
+            golem.setSaplingTrouble(!replant(golem, level, base, drops));
         }
         Vec3 at = Vec3.atBottomCenterOf(pos).add(0, 0.5, 0);
         for (ItemStack d : merge(drops)) Storage.collectOrDrop(golem, level, at, d);
+    }
+
+    private static boolean replant(GolemEntity golem, ServerLevel level, BlockPos base, List<ItemStack> drops) {
+        if (plant(level, base, drops)) return true;
+        List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ItemTags.SAPLINGS));
+        if (near.stream().anyMatch(e -> plantFrom(level, base, e))) return true;
+        ItemStack carried = golem.getCarried();
+        if (plant(level, base, List.of(carried))) {
+            golem.setCarried(carried);
+            return true;
+        }
+        // nothing dropped, so borrow a sapling from storage in the area
+        BlockPos chest = Storage.nearest(level, golem.getArea(), golem.position(), c -> saplingSlot(c, level, base) >= 0, p -> false);
+        Container c = chest == null ? null : Storage.containerAt(level, chest);
+        if (c == null) return false;
+        plant(level, base, List.of(c.getItem(saplingSlot(c, level, base))));
+        c.setChanged();
+        return true;
     }
 
     private static @Nullable BlockState saplingFor(ItemStack stack, ServerLevel level, BlockPos pos) {

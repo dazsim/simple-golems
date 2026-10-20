@@ -1,7 +1,10 @@
 package com.workshopcraft.simplegolems.entity;
 
 import com.workshopcraft.simplegolems.item.GolemSettings;
+import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
+import com.workshopcraft.simplegolems.entity.work.JobWork;
+import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
 import com.workshopcraft.simplegolems.entity.work.CourierWork;
@@ -62,6 +65,7 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<ItemStack> DATA_CARRIED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Boolean> DATA_POWERED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WAITING = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_TROUBLE = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
 
     private ItemStack cookies = ItemStack.EMPTY;
     private ItemStack carried = ItemStack.EMPTY;
@@ -69,6 +73,10 @@ public class GolemEntity extends AbstractGolem {
     private @Nullable WorkArea customArea;
     private @Nullable BlockPos home;
     private @Nullable UUID owner;
+    private boolean storageTrouble;
+    private boolean saplingTrouble;
+    public float bubble, bubbleO;
+    public Trouble shownTrouble = Trouble.NONE;
 
     public GolemEntity(EntityType<? extends GolemEntity> type, Level level) {
         super(type, level);
@@ -85,6 +93,7 @@ public class GolemEntity extends AbstractGolem {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new FetchToolGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
         goalSelector.addGoal(3, new FollowOwnerGoal(this));
         goalSelector.addGoal(4, new WorkGoal(this));
@@ -100,6 +109,7 @@ public class GolemEntity extends AbstractGolem {
         b.define(DATA_COLOUR, -1);
         b.define(DATA_POWERED, false);
         b.define(DATA_WAITING, false);
+        b.define(DATA_TROUBLE, 0);
         b.define(DATA_CARRIED, ItemStack.EMPTY);
     }
 
@@ -194,10 +204,54 @@ public class GolemEntity extends AbstractGolem {
         return job != Job.MINER || !(level() instanceof ServerLevel sl) || sl.getGameRules().get(GameRules.MOB_GRIEFING);
     }
 
+    public boolean hasStorageTrouble() {
+        return storageTrouble;
+    }
+
+    public void setStorageTrouble(boolean b) {
+        storageTrouble = b;
+    }
+
+    public void setSaplingTrouble(boolean b) {
+        saplingTrouble = b;
+    }
+
+    public Trouble getTrouble() {
+        if (level().isClientSide()) return Trouble.byId(entityData.get(DATA_TROUBLE));
+        Job job = getJob();
+        if (job == Job.BLANK) return Trouble.NONE;
+        if (!isPowered()) return Trouble.FOOD;
+        if (!hasTool()) return Trouble.TOOL;
+        if (storageTrouble) return Trouble.STORAGE;
+        if (saplingTrouble && job == Job.LUMBER) return Trouble.SAPLING;
+        return Trouble.NONE;
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!level().isClientSide() && tickCount % 10 == 0) entityData.set(DATA_WAITING, isWaiting());
+        if (level().isClientSide()) {
+            Trouble t = getTrouble();
+            bubbleO = bubble;
+            if (t != Trouble.NONE) shownTrouble = t;
+            bubble = Mth.clamp(bubble + (t != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
+            return;
+        }
+        if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
+        if (tickCount % 10 == 0) {
+            entityData.set(DATA_WAITING, isWaiting());
+            entityData.set(DATA_TROUBLE, getTrouble().ordinal());
+        }
+    }
+
+    // storage may have been emptied or added, and a sapling may have turned up
+    private void recheckTrouble(ServerLevel sl) {
+        JobWork work = JobWork.of(getJob());
+        if (storageTrouble && (carried.isEmpty() || work == null
+                || work.dropOff(this, sl, work.area(this), carried, p -> false) != null)) storageTrouble = false;
+        if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ItemTags.SAPLINGS)), p -> false) != null) {
+            saplingTrouble = false;
+        }
     }
 
     @Override
