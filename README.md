@@ -45,7 +45,7 @@ A golem works in an area around the spot where it was placed: 8 blocks each way,
 
 To set an area, use a Marker Stick on two blocks for opposite corners, then use it on the golem. An area can be at most 32 blocks each way. Holding the stick shows the marked area. Sneak and use the stick in the air to clear it. Sneak and use it on a golem to put the golem back on its default area.
 
-Golems put what they collect in the nearest chest, barrel or shulker box in the area or right next to it (two blocks). Other containers can be added with the `simplegolems:storage` block tag. Without a container the golem keeps one stack and leaves the rest on the ground for later.
+Golems put what they collect in the nearest chest, barrel or shulker box in the area or right next to it (two blocks). Other containers can be added with the `simplegolems:storage` block tag. Without a container, or when every container is full, the golem keeps what it carries and waits.
 
 ## Jobs
 
@@ -57,8 +57,19 @@ Golems put what they collect in the nearest chest, barrel or shulker box in the 
 
 Working golems pick up every drop in their area before moving on to the next tree, crop or block, taking one item type per trip to storage. Those drops do not despawn while the golem is at work.
 
+## Thought bubbles
+
+A golem that cannot get on with its job shows a small thought bubble above its head:
+
+- a chest when there is no storage in its area or all of it is full. The golem stops and waits until there is room, so nothing gets spilled.
+- a sapling crossed out when a lumber golem had no sapling to replant a stump.
+- a clay cookie crossed out when it has run out of cookies.
+- its tool crossed out when its tool broke or is missing. A golem first looks for a matching tool in storage in its area and takes the best one (highest tier, so iron beats gold), and only shows the bubble if there is none.
+
+The bubble fades away once the problem is sorted out.
+
 Golems do not despawn, do not attack, take no fall damage and drop their core, card, tool, cookies and carried items if they die.
 
 Minecraft 26.1 to 26.1.2, NeoForge and Fabric.
 
-Build with `./gradlew build`. The entity model is made from `tools/golem_b.json` by `python3 tools/gen_model.py`, item textures by `python3 tools/gen_textures.py` and the json files by `python3 tools/gen_resources.py`.
+Build with `./gradlew build`. The entity model is made from `tools/golem_b.json` by `python3 tools/gen_model.py`, item textures by `python3 tools/gen_textures.py`, the thought bubbles by `python3 tools/gen_bubbles.py` and the json files by `python3 tools/gen_resources.py`.
