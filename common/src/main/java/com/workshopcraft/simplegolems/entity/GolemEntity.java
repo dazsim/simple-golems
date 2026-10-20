@@ -4,6 +4,7 @@ import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
+import com.workshopcraft.simplegolems.entity.work.CourierWork;
 import com.workshopcraft.simplegolems.entity.work.WorkGoal;
 import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.MarkerStickItem;
@@ -390,6 +391,8 @@ public class GolemEntity extends AbstractGolem {
             tell(player, "status.no_area", name);
         } else if (!canWorkHere()) {
             tell(player, "status.no_griefing", name);
+        } else if (job == Job.COURIER && level() instanceof ServerLevel sl && !CourierWork.hasRoute(sl, customArea)) {
+            tell(player, "status.no_route", name);
         } else {
             WorkArea a = getArea();
             int minutes = (fuel + cookies.getCount() * COOKIE_TICKS) / 1200;

@@ -31,6 +31,11 @@ public class CourierWork implements JobWork {
         return Storage.nearest(level, area, Vec3.atCenterOf(area.second()), c -> true, p -> false);
     }
 
+    public static boolean hasRoute(ServerLevel level, WorkArea area) {
+        BlockPos from = source(level, area), to = destination(level, area);
+        return from != null && to != null && !sameContainer(level, from, to);
+    }
+
     private static int slotToMove(Container from, Container to) {
         for (int i = 0; i < from.getContainerSize(); i++) {
             ItemStack s = from.getItem(i);
