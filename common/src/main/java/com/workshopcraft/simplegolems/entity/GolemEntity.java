@@ -68,6 +68,7 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<ItemStack> DATA_CARRIED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Boolean> DATA_POWERED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WAITING = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_COOKIES = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TROUBLE = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
 
     private ItemStack cookies = ItemStack.EMPTY;
@@ -121,6 +122,7 @@ public class GolemEntity extends AbstractGolem {
         b.define(DATA_POWERED, false);
         b.define(DATA_WAITING, false);
         b.define(DATA_TROUBLE, 0);
+        b.define(DATA_COOKIES, 0);
         b.define(DATA_CARRIED, ItemStack.EMPTY);
     }
 
@@ -154,6 +156,7 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public ItemStack getCookies() { return cookies; }
+    public int getShownCookies() { return entityData.get(DATA_COOKIES); }
     public void setCookies(ItemStack s) { cookies = s; updatePowered(); }
     public ItemStack getCarried() { return carried; }
     public void setCarried(ItemStack s) {
@@ -280,7 +283,9 @@ public class GolemEntity extends AbstractGolem {
     }
 
     protected void updatePowered() {
-        if (!level().isClientSide()) entityData.set(DATA_POWERED, fuel > 0 || !cookies.isEmpty());
+        if (level().isClientSide()) return;
+        entityData.set(DATA_POWERED, fuel > 0 || !cookies.isEmpty());
+        entityData.set(DATA_COOKIES, cookies.getCount());
     }
 
     // one cookie is eaten when the last one runs out, so a golem fed n cookies works for n * COOKIE_TICKS

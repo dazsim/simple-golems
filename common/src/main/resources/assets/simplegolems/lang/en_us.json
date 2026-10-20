@@ -28,6 +28,7 @@
   "message.simplegolems.programmed": "Now a %s",
   "message.simplegolems.cookies_full": "The cookie tin is full",
   "message.simplegolems.fed": "%s clay cookies in the tin",
+  "hud.simplegolems.cookies": "Cookies: %s/%s",
   "message.simplegolems.wrong_tool.blank": "A blank golem has no use for tools, give it a card first",
   "message.simplegolems.wrong_tool.lumber": "A lumber golem works with an axe",
   "message.simplegolems.wrong_tool.farmer": "A farmer golem works with a hoe",
