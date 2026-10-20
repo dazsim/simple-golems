@@ -37,5 +37,18 @@
   "message.simplegolems.status.blank": "Blank golem, following you. Give it a card to put it to work",
   "message.simplegolems.status.no_tool": "%s waiting for a tool",
   "message.simplegolems.status.no_power": "%s out of power, feed it clay cookies",
-  "message.simplegolems.status.working": "%s, about %s min of power, area %s x %s x %s"
+  "message.simplegolems.status.working": "%s, about %s min of power, area %s x %s x %s",
+  "message.simplegolems.status.no_area": "%s needs an area, mark one with a marker stick",
+  "message.simplegolems.status.no_griefing": "%s is resting, mob griefing is off",
+  "message.simplegolems.status.no_route": "%s needs a container near each corner of its area",
+  "message.simplegolems.marker.first": "First corner set at %s %s %s",
+  "message.simplegolems.marker.second": "Area %s x %s x %s marked, use it on a golem",
+  "message.simplegolems.marker.too_big": "Too big, an area can be at most %s blocks each way",
+  "message.simplegolems.marker.cleared": "Marker cleared",
+  "message.simplegolems.marker.unfinished": "Mark two corners first",
+  "message.simplegolems.marker.given": "Area %s x %s x %s given to the golem",
+  "message.simplegolems.marker.reset": "Back to the default area around here",
+  "tooltip.simplegolems.marker.first": "First corner %s %s %s",
+  "tooltip.simplegolems.marker.area": "Area %s x %s x %s",
+  "tooltip.simplegolems.marker.help": "Use on two blocks, then on a golem"
 }

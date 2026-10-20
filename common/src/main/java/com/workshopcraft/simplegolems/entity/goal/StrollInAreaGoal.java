@@ -25,7 +25,10 @@ public class StrollInAreaGoal extends Goal {
         if (golem.getJob() == Job.BLANK || golem.isWaiting()) return false;
         WorkArea area = golem.getArea();
         if (!area.contains(golem.blockPosition())) {
-            target = Vec3.atBottomCenterOf(golem.getHome());
+            BlockPos min = area.min(), max = area.max();
+            BlockPos p = golem.blockPosition();
+            target = golem.getCustomArea() == null ? Vec3.atBottomCenterOf(golem.getHome())
+                    : Vec3.atBottomCenterOf(new BlockPos(Math.clamp(p.getX(), min.getX(), max.getX()), Math.clamp(p.getY(), min.getY(), max.getY()), Math.clamp(p.getZ(), min.getZ(), max.getZ())));
             return true;
         }
         if (golem.getRandom().nextInt(120) != 0) return false;

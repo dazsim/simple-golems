@@ -47,6 +47,10 @@ public enum Job implements StringRepresentable {
         };
     }
 
+    public boolean needsArea() {
+        return this == MINER || this == COURIER;
+    }
+
     public boolean needsTool() {
         return this == LUMBER || this == FARMER || this == MINER;
     }

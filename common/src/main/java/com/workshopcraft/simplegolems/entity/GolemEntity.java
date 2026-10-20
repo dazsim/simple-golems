@@ -6,6 +6,7 @@ import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
 import com.workshopcraft.simplegolems.entity.work.WorkGoal;
 import com.workshopcraft.simplegolems.item.CardItem;
+import com.workshopcraft.simplegolems.item.MarkerStickItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -36,6 +37,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -53,6 +55,7 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<Integer> DATA_COLOUR = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<ItemStack> DATA_CARRIED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Boolean> DATA_POWERED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_WAITING = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
 
     private ItemStack cookies = ItemStack.EMPTY;
     private ItemStack carried = ItemStack.EMPTY;
@@ -89,6 +92,7 @@ public class GolemEntity extends AbstractGolem {
         b.define(DATA_JOB, 0);
         b.define(DATA_COLOUR, -1);
         b.define(DATA_POWERED, false);
+        b.define(DATA_WAITING, false);
         b.define(DATA_CARRIED, ItemStack.EMPTY);
     }
 
@@ -155,7 +159,25 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public boolean isWaiting() {
-        return getJob() != Job.BLANK && (!isPowered() || !hasTool());
+        if (level().isClientSide()) return entityData.get(DATA_WAITING);
+        return getJob() != Job.BLANK && (!isPowered() || !hasTool() || !canWorkHere());
+    }
+
+    public boolean canWorkHere() {
+        Job job = getJob();
+        if (job.needsArea() && customArea == null) return false;
+        return job != Job.MINER || !(level() instanceof ServerLevel sl) || sl.getGameRules().get(GameRules.MOB_GRIEFING);
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (!level().isClientSide() && tickCount % 10 == 0) entityData.set(DATA_WAITING, isWaiting());
+    }
+
+    @Override
+    public boolean causeFallDamage(double fallDistance, float damageModifier, DamageSource damageSource) {
+        return false;
     }
 
     protected void updatePowered() {
@@ -267,6 +289,29 @@ public class GolemEntity extends AbstractGolem {
             return InteractionResult.SUCCESS;
         }
 
+        if (held.getItem() instanceof MarkerStickItem) {
+            if (server) {
+                WorkArea marked = MarkerStickItem.area(held);
+                if (!canBeChangedBy(player)) {
+                    tell(player, "not_yours");
+                } else if (player.isSecondaryUseActive()) {
+                    customArea = null;
+                    setHome(blockPosition());
+                    tell(player, "marker.reset");
+                } else if (marked == null) {
+                    tell(player, "marker.unfinished");
+                } else {
+                    customArea = marked;
+                    tell(player, "marker.given", marked.sizeX(), marked.sizeY(), marked.sizeZ());
+                    playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
+                }
+                if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    MarkerStickItem.outline((ServerLevel) level(), sp, getArea(), 0x60E060);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         DyeColor dye = held.get(DataComponents.DYE);
         if (dye != null && held.getItem() instanceof net.minecraft.world.item.DyeItem) {
             if (dye == getColour()) return InteractionResult.PASS;
@@ -338,6 +383,10 @@ public class GolemEntity extends AbstractGolem {
             tell(player, "status.no_tool", name);
         } else if (fuel <= 0 && cookies.isEmpty()) {
             tell(player, "status.no_power", name);
+        } else if (job.needsArea() && customArea == null) {
+            tell(player, "status.no_area", name);
+        } else if (!canWorkHere()) {
+            tell(player, "status.no_griefing", name);
         } else {
             WorkArea a = getArea();
             int minutes = (fuel + cookies.getCount() * COOKIE_TICKS) / 1200;
