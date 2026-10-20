@@ -75,7 +75,7 @@ public class GolemModel extends EntityModel<GolemRenderState> {
             float swing = Mth.sin(Mth.sqrt(state.attackTime) * Mth.PI);
             toolArm.xRot = toolArmPose.xRot() - 1.6F * swing;
         }
-        if (!state.powered && state.job != Job.BLANK) {
+        if (state.waiting) {
             head.xRot = 0.35F;
             toolArm.xRot = toolArmPose.xRot() * 0.3F;
         }

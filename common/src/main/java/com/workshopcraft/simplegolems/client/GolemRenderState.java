@@ -10,5 +10,6 @@ public class GolemRenderState extends LivingEntityRenderState {
     public Job job = Job.BLANK;
     public int colour = 0xFFFFFF;
     public boolean powered;
+    public boolean waiting;
     public boolean carrying;
 }

@@ -72,7 +72,8 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         state.job = golem.getJob();
         state.colour = tint(golem.getColour());
         state.powered = golem.isPowered();
-        state.carrying = !golem.getCarried().isEmpty();
+        state.waiting = golem.isWaiting();
+        state.carrying = golem.isCarrying();
     }
 
     // terracotta averages lifted a little so dark dyes stay friendly, from the art colour sheet
