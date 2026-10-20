@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ARA",
+    "LDL",
+    "ERE"
+  ],
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "R": "minecraft:redstone",
+    "L": "minecraft:lapis_lazuli",
+    "D": "minecraft:diamond",
+    "E": "minecraft:emerald"
+  },
+  "result": {
+    "id": "simplegolems:golem_core",
+    "count": 1
+  }
+}

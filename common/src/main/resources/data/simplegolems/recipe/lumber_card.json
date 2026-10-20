@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "#minecraft:saplings"
+  ],
+  "result": {
+    "id": "simplegolems:lumber_card",
+    "count": 1
+  }
+}

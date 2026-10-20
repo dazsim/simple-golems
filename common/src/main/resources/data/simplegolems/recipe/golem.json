@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "BCB",
+    "b b"
+  ],
+  "key": {
+    "B": "minecraft:clay",
+    "C": "simplegolems:golem_core",
+    "b": "minecraft:clay_ball"
+  },
+  "result": {
+    "id": "simplegolems:golem",
+    "count": 1
+  }
+}

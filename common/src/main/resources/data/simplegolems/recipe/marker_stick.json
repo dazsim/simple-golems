@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:redstone",
+    "minecraft:clay_ball"
+  ],
+  "result": {
+    "id": "simplegolems:marker_stick",
+    "count": 1
+  }
+}

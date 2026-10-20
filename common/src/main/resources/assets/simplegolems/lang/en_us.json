@@ -1,0 +1,20 @@
+{
+  "itemGroup.simplegolems": "Simple Golems",
+  "entity.simplegolems.golem": "Golem",
+  "item.simplegolems.golem_core": "Golem Core",
+  "item.simplegolems.golem": "Golem",
+  "item.simplegolems.golem.blank": "Blank Golem",
+  "item.simplegolems.golem.lumber": "Lumber Golem",
+  "item.simplegolems.golem.farmer": "Farmer Golem",
+  "item.simplegolems.golem.miner": "Miner Golem",
+  "item.simplegolems.golem.courier": "Courier Golem",
+  "item.simplegolems.golem.sweeper": "Sweeper Golem",
+  "item.simplegolems.clay_cookie": "Clay Cookie",
+  "item.simplegolems.marker_stick": "Marker Stick",
+  "item.simplegolems.lumber_card": "Lumber Card",
+  "item.simplegolems.farmer_card": "Farming Card",
+  "item.simplegolems.miner_card": "Mining Card",
+  "item.simplegolems.courier_card": "Carrying Card",
+  "item.simplegolems.sweeper_card": "Sweeping Card",
+  "tooltip.simplegolems.area": "Work area %s x %s x %s"
+}

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "BCB",
+    "bKb"
+  ],
+  "key": {
+    "B": "minecraft:clay",
+    "C": "simplegolems:golem_core",
+    "b": "minecraft:clay_ball",
+    "K": "simplegolems:lumber_card"
+  },
+  "result": {
+    "id": "simplegolems:golem",
+    "count": 1,
+    "components": {
+      "simplegolems:job": "lumber"
+    }
+  }
+}
