@@ -68,7 +68,7 @@ public class FarmerWork implements JobWork {
     }
 
     @Override
-    public int workTicks(ServerLevel level, BlockPos pos) {
+    public int workTicks(GolemEntity golem, ServerLevel level, BlockPos pos) {
         return 10;
     }
 

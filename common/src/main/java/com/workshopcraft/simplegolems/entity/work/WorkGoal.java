@@ -65,19 +65,23 @@ public class WorkGoal extends Goal {
 
     private boolean plan() {
         ServerLevel level = level();
-        WorkArea area = golem.getArea();
+        WorkArea area = work.area(golem);
         if (!level.hasChunksAt(area.min(), area.max())) return false;
         skipped.values().removeIf(t -> t <= level.getGameTime());
         ItemStack carried = golem.getCarried();
         boolean full = !carried.isEmpty() && carried.getCount() >= carried.getMaxStackSize();
         ItemEntity loose = full ? null : nearestItem(area, carried);
         if (!full && loose != null) return begin(Task.PICKUP, loose.blockPosition(), loose);
+        if (!carried.isEmpty() && work.deliverFirst() && (full || otherItems(area, carried))) {
+            BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
+            if (chest != null) return begin(Task.DELIVER, chest, null);
+        }
         if (!full) {
             BlockPos target = work.findTarget(golem, level, area, this::skip);
             if (target != null) return begin(Task.WORK, target, null);
         }
         if (!carried.isEmpty()) {
-            BlockPos chest = Storage.nearest(level, area, golem.position(), c -> Storage.hasRoom(c, carried), this::skip);
+            BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
             if (chest != null) return begin(Task.DELIVER, chest, null);
         }
         return false;
@@ -87,6 +91,11 @@ public class WorkGoal extends Goal {
         List<ItemEntity> items = golem.level().getEntitiesOfClass(ItemEntity.class, area.box(),
                 e -> e.isAlive() && !e.hasPickUpDelay() && work.wants(e) && Storage.fits(carried, e.getItem()) && !skip(e.blockPosition()));
         return items.stream().min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
+    }
+
+    private boolean otherItems(WorkArea area, ItemStack carried) {
+        return !golem.level().getEntitiesOfClass(ItemEntity.class, area.box(),
+                e -> e.isAlive() && work.wants(e) && !Storage.fits(carried, e.getItem())).isEmpty();
     }
 
     private boolean begin(Task t, BlockPos p, @Nullable ItemEntity e) {
@@ -170,7 +179,7 @@ public class WorkGoal extends Goal {
                 task = null;
             }
             case WORK -> {
-                int need = work.workTicks(level(), pos);
+                int need = work.workTicks(golem, level(), pos);
                 if (workTicks % 10 == 0) golem.swing(InteractionHand.MAIN_HAND);
                 workTicks++;
                 if (need > 20) level().destroyBlockProgress(golem.getId(), pos, workTicks * 10 / need);
