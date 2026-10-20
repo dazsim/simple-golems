@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
@@ -156,18 +157,48 @@ public class LumberWork implements JobWork {
         }
         for (BlockPos base : tree.bases()) {
             if (!cleared.contains(base) || !level.getBlockState(base).isAir()) continue;
-            for (ItemStack d : drops) {
-                if (d.isEmpty() || !d.is(ItemTags.SAPLINGS) || !(d.getItem() instanceof BlockItem bi)) continue;
-                BlockState sapling = bi.getBlock().defaultBlockState();
-                if (sapling.canSurvive(level, base)) {
-                    level.setBlockAndUpdate(base, sapling);
-                    d.shrink(1);
-                    break;
-                }
+            if (plant(level, base, drops)) continue;
+            ItemStack carried = golem.getCarried();
+            if (plant(level, base, List.of(carried))) {
+                golem.setCarried(carried);
+                continue;
+            }
+            // nothing dropped, so borrow a sapling from storage in the area
+            BlockPos chest = Storage.nearest(level, golem.getArea(), golem.position(), c -> saplingSlot(c, level, base) >= 0, p -> false);
+            Container c = chest == null ? null : Storage.containerAt(level, chest);
+            if (c != null) {
+                int slot = saplingSlot(c, level, base);
+                plant(level, base, List.of(c.getItem(slot)));
+                c.setChanged();
             }
         }
         Vec3 at = Vec3.atBottomCenterOf(pos).add(0, 0.5, 0);
         for (ItemStack d : merge(drops)) Storage.collectOrDrop(golem, level, at, d);
+    }
+
+    private static @Nullable BlockState saplingFor(ItemStack stack, ServerLevel level, BlockPos pos) {
+        if (stack.isEmpty() || !stack.is(ItemTags.SAPLINGS) || !(stack.getItem() instanceof BlockItem bi)) return null;
+        BlockState sapling = bi.getBlock().defaultBlockState();
+        return sapling.canSurvive(level, pos) ? sapling : null;
+    }
+
+    private static boolean plant(ServerLevel level, BlockPos pos, List<ItemStack> stacks) {
+        for (ItemStack s : stacks) {
+            BlockState sapling = saplingFor(s, level, pos);
+            if (sapling != null) {
+                level.setBlockAndUpdate(pos, sapling);
+                s.shrink(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int saplingSlot(Container c, ServerLevel level, BlockPos pos) {
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            if (saplingFor(c.getItem(i), level, pos) != null) return i;
+        }
+        return -1;
     }
 
     static void breakQuietly(ServerLevel level, BlockPos pos, BlockState state, boolean effects) {
