@@ -66,7 +66,7 @@ A golem that cannot get on with its job shows a small thought bubble above its h
 - a clay cookie crossed out when it has run out of cookies.
 - its tool crossed out when its tool broke or is missing. A golem first looks for a matching tool in storage in its area and takes the best one (highest tier, so iron beats gold), and only shows the bubble if there is none.
 
-The bubble fades away once the problem is sorted out.
+Once the problem is sorted out, whether you handed it over or the golem fetched it, the bubble shows a little heart as a thank-you for about two seconds and then fades away.
 
 Golems do not despawn, do not attack, take no fall damage and drop their core, card, tool, cookies and carried items if they die.
 
