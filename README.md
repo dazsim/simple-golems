@@ -39,6 +39,8 @@ A golem made without a card is a blank golem. It follows its owner around and do
 
 Only the owner (or someone in creative) can pick a golem up, take its card or change its area.
 
+Hold clay cookies and look at a golem to see how full its cookie tin is on the action bar, for example `Cookies: 12/64`.
+
 ## Work area
 
 A golem works in an area around the spot where it was placed: 8 blocks each way, 4 down and 8 up.
@@ -49,7 +51,7 @@ Golems put what they collect in the nearest chest, barrel or shulker box in the 
 
 ## Jobs
 
-- **Lumber**: fells trees that grow on dirt and still have natural leaves, so log houses are left alone. Breaks the logs and the leaves of that tree and replants a sapling from the drops or one lying at the stump. If none dropped it uses one it carries or one from storage in the area.
+- **Lumber**: fells trees that grow on dirt, grass, moss or mud and still have natural leaves, so log houses are left alone. It walks to the ground beside the stump, under low leaves if needed, and fells the whole tree from there; one that ends up on top of a tree chops its way down. Breaks the logs and the leaves of that tree and replants a sapling from the drops or one lying at the stump. If none dropped it uses one it carries or one from storage in the area.
 - **Farmer**: harvests fully grown crops and replants them for free. Works with any crop that uses the vanilla crop block or sits in `#minecraft:crops` with an age, so modded crops work too. Stems and tall crops are left alone.
 - **Miner**: needs a marked area. Digs it out from the top down and leaves a staircase along the west edge to climb out. If the marked area is flat it digs 8 layers down from it. Skips containers and other block entities, blocks under them, blocks next to water or lava and blocks its pickaxe cannot harvest. Rests while the `mob_griefing` game rule is off.
 - **Courier**: needs a marked area. Takes from the container nearest the first corner and fills the container nearest the second corner, one stack at a time.
