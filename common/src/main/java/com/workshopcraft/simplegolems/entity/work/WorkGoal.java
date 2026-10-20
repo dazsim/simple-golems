@@ -71,14 +71,16 @@ public class WorkGoal extends Goal {
         ItemStack carried = golem.getCarried();
         boolean full = !carried.isEmpty() && carried.getCount() >= carried.getMaxStackSize();
         ItemEntity loose = full ? null : nearestItem(area, carried);
-        if (!carried.isEmpty() && (full || loose == null)) {
+        if (!full && loose != null) return begin(Task.PICKUP, loose.blockPosition(), loose);
+        if (!full) {
+            BlockPos target = work.findTarget(golem, level, area, this::skip);
+            if (target != null) return begin(Task.WORK, target, null);
+        }
+        if (!carried.isEmpty()) {
             BlockPos chest = Storage.nearest(level, area, golem.position(), c -> Storage.hasRoom(c, carried), this::skip);
             if (chest != null) return begin(Task.DELIVER, chest, null);
         }
-        if (loose != null) return begin(Task.PICKUP, loose.blockPosition(), loose);
-        if (full) return false;
-        BlockPos target = work.findTarget(golem, level, area, this::skip);
-        return target != null && begin(Task.WORK, target, null);
+        return false;
     }
 
     private @Nullable ItemEntity nearestItem(WorkArea area, ItemStack carried) {
@@ -151,6 +153,10 @@ public class WorkGoal extends Goal {
         switch (task) {
             case PICKUP -> {
                 Storage.pickUp(golem, item);
+                for (ItemEntity near : golem.level().getEntitiesOfClass(ItemEntity.class, golem.getBoundingBox().inflate(2.5),
+                        e -> e.isAlive() && !e.hasPickUpDelay() && work.wants(e))) {
+                    Storage.pickUp(golem, near);
+                }
                 task = null;
             }
             case DELIVER -> {
