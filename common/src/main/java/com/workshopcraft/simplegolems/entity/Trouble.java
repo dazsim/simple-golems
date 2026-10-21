@@ -8,6 +8,8 @@ public enum Trouble {
     FOOD,
     TOOL,
     BLOCKS,
+    // a program is missing something it works with: torches, feed, bottles, fuel, a mesh
+    SUPPLIES,
     // not a problem: a short thank-you once the last problem is sorted
     THANKS;
 

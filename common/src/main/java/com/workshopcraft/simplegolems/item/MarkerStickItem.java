@@ -23,6 +23,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.sounds.SoundSource;
@@ -48,17 +50,23 @@ public class MarkerStickItem extends Item {
         if (player != null && player.isSecondaryUseActive()) return clear(player, stack);
         if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
         MarkerCorners m = stack.get(ModContent.MARKER);
-        if (m == null || m.second().isPresent()) {
+        if (m == null || m.points().size() >= MarkerCorners.MAX_POINTS) {
             stack.set(ModContent.MARKER, new MarkerCorners(pos.immutable(), Optional.empty()));
             tell(player, "marker.first", pos.getX(), pos.getY(), pos.getZ());
             context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.2F);
         } else if (!WorkArea.fits(m.first(), pos)) {
             tell(player, "marker.too_big", Config.maxAreaWidth);
-        } else {
+        } else if (m.second().isEmpty()) {
             stack.set(ModContent.MARKER, new MarkerCorners(m.first(), Optional.of(pos.immutable())));
             WorkArea a = WorkArea.of(m.first(), pos);
             tell(player, "marker.second", a.sizeX(), a.sizeY(), a.sizeZ());
             context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.6F);
+        } else {
+            List<BlockPos> more = new ArrayList<>(m.more());
+            more.add(pos.immutable());
+            stack.set(ModContent.MARKER, new MarkerCorners(m.first(), m.second(), more));
+            tell(player, "marker.point", more.size() + 2, pos.getX(), pos.getY(), pos.getZ());
+            context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.8F);
         }
         return InteractionResult.SUCCESS;
     }
@@ -89,6 +97,7 @@ public class MarkerStickItem extends Item {
         if (m == null) return;
         WorkArea a = m.second().map(s -> WorkArea.of(m.first(), s)).orElse(WorkArea.of(m.first(), m.first()));
         outline(level, player, a, m.second().isPresent() ? AREA_COLOUR : FIRST_COLOUR);
+        for (BlockPos p : m.points()) outline(level, player, WorkArea.of(p, p), FIRST_COLOUR);
     }
 
     public static void outline(ServerLevel level, ServerPlayer player, WorkArea a, int colour) {
@@ -119,6 +128,7 @@ public class MarkerStickItem extends Item {
         } else {
             WorkArea a = WorkArea.of(m.first(), m.second().get());
             out.accept(Component.translatable("tooltip.simplegolems.marker.area", a.sizeX(), a.sizeY(), a.sizeZ()).withStyle(ChatFormatting.GRAY));
+            if (!m.more().isEmpty()) out.accept(Component.translatable("tooltip.simplegolems.marker.points", m.points().size()).withStyle(ChatFormatting.GRAY));
         }
     }
 }
