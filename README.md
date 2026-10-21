@@ -101,7 +101,7 @@ Once the problem is sorted out, whether you handed it over or the golem fetched 
 
 ## Config
 
-The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. A config from 1.0.0 keeps working: the new settings are added with their defaults, so every program is on. The defaults are:
+The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. An older config file keeps working: missing settings are added with their defaults. The defaults are:
 
 ```
 maxAreaWidth = 32        # largest marked area, in blocks across (4 to 128)
