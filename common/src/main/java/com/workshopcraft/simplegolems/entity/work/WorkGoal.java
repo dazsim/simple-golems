@@ -115,7 +115,8 @@ public class WorkGoal extends Goal {
             // nowhere to put it: stop and wait rather than spill more drops
             BlockPos chest = storageFor(level, area, load);
             if (chest == null) return false;
-            if (full || !loose.isEmpty()) return begin(Task.DELIVER, chest, null);
+            boolean stuck = !loose.isEmpty() && loose.stream().noneMatch(e -> golem.canCarry(e.getItem()));
+            if (full || stuck) return begin(Task.DELIVER, chest, null);
         } else {
             golem.setStorageTrouble(false);
         }

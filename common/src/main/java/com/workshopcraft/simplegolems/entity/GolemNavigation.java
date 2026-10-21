@@ -28,7 +28,7 @@ public class GolemNavigation extends GroundPathNavigation {
                 PathType type = super.getPathType(context, x, y, z);
                 if (type == PathType.LAVA || type == PathType.FIRE) return PathType.BLOCKED;
                 // a miner stays out of water it might not climb out of
-                if (golem.getJob() == Job.MINER && (type == PathType.WATER || type == PathType.WATER_BORDER)) return PathType.BLOCKED;
+                if (golem.getJob() == Job.MINER && type == PathType.WATER) return PathType.BLOCKED;
                 if (type != PathType.WALKABLE) return type;
                 BlockPos below = new BlockPos(x, y - 1, z);
                 return offLimits(context.getBlockState(below), context.getBlockState(below.below())) ? PathType.BLOCKED : type;
