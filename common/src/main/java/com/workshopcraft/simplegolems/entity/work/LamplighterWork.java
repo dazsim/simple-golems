@@ -44,8 +44,9 @@ public class LamplighterWork implements JobWork {
         return -1;
     }
 
+    // dark ground with room above it, where a monster could stand; not a gap under the floor
     private static boolean dark(ServerLevel level, BlockPos p, BlockState torch) {
-        if (!level.getBlockState(p).isAir() || level.getBrightness(LightLayer.BLOCK, p) > 0) return false;
+        if (!level.getBlockState(p).isAir() || !level.getBlockState(p.above()).isAir() || level.getBrightness(LightLayer.BLOCK, p) > 0) return false;
         BlockPos below = p.below();
         BlockState floor = level.getBlockState(below);
         return floor.isFaceSturdy(level, below, Direction.UP) && floor.getFluidState().isEmpty() && !floor.hasBlockEntity() && torch.canSurvive(level, p);
