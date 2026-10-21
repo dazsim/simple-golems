@@ -47,6 +47,8 @@ public class WorkGoal extends Goal {
     private int workTicks;
     private int cooldown;
     private boolean failed;
+    // only out of reach from where it got to, so worth another go soon
+    private boolean outOfReach;
 
     public WorkGoal(GolemEntity golem) {
         this.golem = golem;
@@ -151,6 +153,7 @@ public class WorkGoal extends Goal {
         best = Double.MAX_VALUE;
         workTicks = 0;
         failed = false;
+        outOfReach = false;
         return true;
     }
 
@@ -246,6 +249,7 @@ public class WorkGoal extends Goal {
             // walked as far as it can and got no closer: out of reach for now
             if (ticks > STUCK && golem.getNavigation().isDone()) {
                 failed = true;
+                outOfReach = true;
                 return;
             }
             if (golem.getNavigation().isDone() || ticks % 40 == 0) moveTo();
@@ -318,7 +322,7 @@ public class WorkGoal extends Goal {
             if (task == Task.WORK) level().destroyBlockProgress(golem.getId(), pos, -1);
             if (task != null && (failed || ticks > GIVE_UP || trip > MAX_TRIP)) {
                 if (task == Task.DELIVER || task == Task.FETCH) unreachable.put(pos, level().getGameTime() + RETRY_ROUTE);
-                else skipped.put(pos, level().getGameTime() + SKIP_FOR);
+                else skipped.put(pos, level().getGameTime() + (outOfReach ? RETRY_ROUTE : SKIP_FOR));
             }
         }
         task = null;
