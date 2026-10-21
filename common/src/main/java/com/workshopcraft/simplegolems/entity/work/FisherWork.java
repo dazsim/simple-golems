@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 public class FisherWork implements JobWork {
     public static final FisherWork INSTANCE = new FisherWork();
     private static final int CAST = 300;
+    private static final int TRIP = 4;
 
     @Override
     public boolean wants(ItemEntity item) {
@@ -51,6 +52,10 @@ public class FisherWork implements JobWork {
 
     @Override
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
+        // takes every few catches to storage rather than waiting for four kinds
+        int caught = 0;
+        for (ItemStack c : golem.getCarried()) caught += c.getCount();
+        if (caught >= TRIP) return null;
         BlockPos best = null;
         double bd = Double.MAX_VALUE;
         for (BlockPos p : BlockPos.betweenClosed(area.min(), area.max())) {
