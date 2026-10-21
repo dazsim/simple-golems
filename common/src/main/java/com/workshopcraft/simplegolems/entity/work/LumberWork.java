@@ -248,12 +248,12 @@ public class LumberWork implements JobWork {
         return -1;
     }
 
-    static void breakQuietly(ServerLevel level, BlockPos pos, BlockState state, boolean effects) {
+    public static void breakQuietly(ServerLevel level, BlockPos pos, BlockState state, boolean effects) {
         if (effects) level.levelEvent(2001, pos, Block.getId(state));
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     }
 
-    static List<ItemStack> merge(List<ItemStack> drops) {
+    public static List<ItemStack> merge(List<ItemStack> drops) {
         List<ItemStack> out = new ArrayList<>();
         for (ItemStack d : drops) {
             if (d.isEmpty()) continue;

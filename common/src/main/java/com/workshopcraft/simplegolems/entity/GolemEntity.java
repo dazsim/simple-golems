@@ -11,6 +11,7 @@ import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
 import com.workshopcraft.simplegolems.entity.work.CourierWork;
+import com.workshopcraft.simplegolems.entity.work.DigOutGoal;
 import com.workshopcraft.simplegolems.entity.work.WorkGoal;
 import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.MarkerStickItem;
@@ -21,6 +22,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.UUIDUtil;
@@ -116,6 +122,7 @@ public class GolemEntity extends AbstractGolem {
         goalSelector.addGoal(0, new EscapeHazardGoal(this));
         goalSelector.addGoal(0, new FetchToolGoal(this));
         goalSelector.addGoal(2, new GetOffTreeGoal(this));
+        goalSelector.addGoal(2, new DigOutGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
         goalSelector.addGoal(3, new FollowOwnerGoal(this));
         goalSelector.addGoal(4, new WorkGoal(this));
@@ -327,6 +334,7 @@ public class GolemEntity extends AbstractGolem {
             bubble = Mth.clamp(bubble + (t != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
             return;
         }
+        if (getY() < level().getMinY()) rescueFromVoid();
         if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
         if (thanks > 0) thanks--;
         if (tickCount % 10 == 0) {
@@ -353,6 +361,54 @@ public class GolemEntity extends AbstractGolem {
         if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ItemTags.SAPLINGS)), p -> false) != null) {
             saplingTrouble = false;
         }
+    }
+
+    @Override
+    protected void onBelowWorld() {
+        rescueFromVoid();
+    }
+
+    // fell out of the world: back up on the highest safe spot nearby, or home if there is none
+    private void rescueFromVoid() {
+        BlockPos at = safeSpotNear(getBlockX(), getBlockZ());
+        if (at == null) at = safeSpotNear(getHome().getX(), getHome().getZ());
+        if (at == null) at = getHome().getY() > level().getMinY() ? getHome() : level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, getHome());
+        getNavigation().stop();
+        teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        setDeltaMovement(Vec3.ZERO);
+        resetFallDistance();
+    }
+
+    private @Nullable BlockPos safeSpotNear(int x, int z) {
+        Level level = level();
+        for (int r = 0; r <= 32; r++) {
+            BlockPos best = null;
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r || !level.hasChunkAt(new BlockPos(x + dx, 0, z + dz))) continue;
+                    BlockPos p = highestStand(level, x + dx, z + dz);
+                    if (p != null && (best == null || p.getY() > best.getY())) best = p;
+                }
+            }
+            if (best != null) return best;
+        }
+        return null;
+    }
+
+    private static @Nullable BlockPos highestStand(Level level, int x, int z) {
+        int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        for (int y = top; y > level.getMinY(); y--) {
+            BlockPos p = new BlockPos(x, y, z), below = p.below();
+            if (!clear(level, p) || !clear(level, p.above())) continue;
+            BlockState floor = level.getBlockState(below);
+            if (floor.isFaceSturdy(level, below, Direction.UP) && floor.getFluidState().isEmpty() && !floor.is(BlockTags.FIRE) && !floor.is(Blocks.MAGMA_BLOCK)) return p;
+        }
+        return null;
+    }
+
+    private static boolean clear(Level level, BlockPos p) {
+        BlockState s = level.getBlockState(p);
+        return s.getCollisionShape(level, p).isEmpty() && s.getFluidState().isEmpty() && !s.is(BlockTags.FIRE);
     }
 
     @Override
