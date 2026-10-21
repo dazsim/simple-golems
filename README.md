@@ -101,15 +101,16 @@ Once the problem is sorted out, whether you handed it over or the golem fetched 
 
 ## Config
 
-The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. The defaults are:
+The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. A config from 1.0.0 keeps working: the new settings are added with their defaults, so every program is on. The defaults are:
 
 ```
 maxAreaWidth = 32        # largest marked area, in blocks across (4 to 128)
 workSpeed = 1.0          # 2.0 digs, chops and harvests twice as fast
 cookieTicks = 6000       # how long one clay cookie lasts (20 ticks = 1 second)
 blockReserve = 64        # building blocks a miner keeps back (0 to 64)
-enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper", "cobblegen", "sifter", "hammer",
-               "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter"]   # a golem with a job not listed waits
+enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper"]   # a golem with a job not listed waits
+enabledPrograms = ["cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter",
+                   "smelter", "beekeeper", "fisher", "lamplighter"]   # the same for programs
 voidRescue = true        # golems that fall into the void are put back on safe ground
 digOut = true            # stuck golems dig their way back to their area
 moddedStorage = true     # use other mods' storage blocks

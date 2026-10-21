@@ -14,6 +14,7 @@ final class NeoForgeConfig {
     private static final ModConfigSpec.IntValue COOKIE_TICKS;
     private static final ModConfigSpec.IntValue BLOCK_RESERVE;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> ENABLED_JOBS;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> ENABLED_PROGRAMS;
     private static final ModConfigSpec.BooleanValue VOID_RESCUE;
     private static final ModConfigSpec.BooleanValue DIG_OUT;
     private static final ModConfigSpec.BooleanValue MODDED_STORAGE;
@@ -28,6 +29,8 @@ final class NeoForgeConfig {
         BLOCK_RESERVE = b.comment("Building blocks a miner keeps back for steps and sealing (0 to 64)").defineInRange("blockReserve", 64, 0, 64);
         ENABLED_JOBS = b.comment("Jobs golems may do; a golem with a job not listed here waits")
                 .defineList("enabledJobs", Config.JOBS, () -> "lumber", o -> o instanceof String s && Config.JOBS.contains(s));
+        ENABLED_PROGRAMS = b.comment("Programs golems may run; a golem with a program not listed here waits")
+                .defineList("enabledPrograms", Config.PROGRAMS, () -> "cobblegen", o -> o instanceof String s && Config.PROGRAMS.contains(s));
         VOID_RESCUE = b.comment("Put golems that fall into the void back on safe ground").define("voidRescue", true);
         DIG_OUT = b.comment("Let stuck golems dig their way back to their area").define("digOut", true);
         MODDED_STORAGE = b.comment("Use storage blocks from other mods that offer an item inventory").define("moddedStorage", true);
@@ -44,7 +47,8 @@ final class NeoForgeConfig {
         Config.workSpeed = WORK_SPEED.get();
         Config.cookieTicks = COOKIE_TICKS.get();
         Config.blockReserve = BLOCK_RESERVE.get();
-        Config.setJobs(ENABLED_JOBS.get());
+        Config.setJobs(Config.JOBS, ENABLED_JOBS.get());
+        Config.setJobs(Config.PROGRAMS, ENABLED_PROGRAMS.get());
         Config.voidRescue = VOID_RESCUE.get();
         Config.digOut = DIG_OUT.get();
         Config.moddedStorage = MODDED_STORAGE.get();

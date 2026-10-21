@@ -29,8 +29,9 @@ public final class Config {
     public static int rancherMaxAnimals = 8;
     public static boolean skyblockPrograms = true;
 
-    public static final List<String> JOBS = List.of("lumber", "farmer", "miner", "courier", "sweeper",
-            "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter");
+    public static final List<String> JOBS = List.of("lumber", "farmer", "miner", "courier", "sweeper");
+    // a list of their own, so a 1.0.0 config without them leaves every program on
+    public static final List<String> PROGRAMS = List.of("cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter");
 
     private Config() {}
 
@@ -39,10 +40,14 @@ public final class Config {
         return job == Job.BLANK || enabledJobs.contains(job);
     }
 
-    public static void setJobs(List<? extends String> names) {
-        Set<Job> jobs = EnumSet.of(Job.BLANK);
+    // sets the jobs out of the given group that are on, leaving the rest as they are
+    public static void setJobs(List<String> group, List<? extends String> names) {
+        Set<Job> jobs = EnumSet.copyOf(enabledJobs);
+        jobs.add(Job.BLANK);
         for (Job j : Job.values()) {
+            if (!group.contains(j.getSerializedName())) continue;
             if (names.contains(j.getSerializedName())) jobs.add(j);
+            else jobs.remove(j);
         }
         enabledJobs = jobs;
     }
@@ -74,13 +79,30 @@ public final class Config {
             moddedStorage = !"false".equals(v.get("moddedStorage"));
             skyblockPrograms = !"false".equals(v.get("skyblockPrograms"));
             rancherMaxAnimals = clamp(intOf(v, "rancherMaxAnimals", 8), 2, 64);
-            String jobs = v.get("enabledJobs");
-            if (jobs != null) {
-                setJobs(List.of(jobs.replaceAll("[\\[\\]\"\\s]", "").toLowerCase(Locale.ROOT).split(",")));
-            }
+            addMissing(file, v);
+            enabledJobs = EnumSet.allOf(Job.class);
+            list(v, "enabledJobs", JOBS);
+            list(v, "enabledPrograms", PROGRAMS);
         } catch (IOException | RuntimeException e) {
             LOG.warn("Could not read {}, using defaults: {}", file, e.toString());
         }
+    }
+
+    // settings added in a newer version go on the end of an older file, with their defaults
+    private static void addMissing(Path file, Map<String, String> v) throws IOException {
+        StringBuilder add = new StringBuilder();
+        String comment = "";
+        for (String line : defaults().split("\n")) {
+            int eq = line.indexOf('=');
+            if (line.startsWith("#")) comment = line;
+            else if (eq > 0 && !v.containsKey(line.substring(0, eq).strip())) add.append('\n').append(comment).append('\n').append(line).append('\n');
+        }
+        if (!add.isEmpty()) Files.writeString(file, Files.readString(file).stripTrailing() + "\n" + add);
+    }
+
+    private static void list(Map<String, String> v, String key, List<String> group) {
+        String s = v.get(key);
+        if (s != null) setJobs(group, List.of(s.replaceAll("[\\[\\]\"\\s]", "").toLowerCase(Locale.ROOT).split(",")));
     }
 
     // work time after the speed multiplier
@@ -110,7 +132,9 @@ public final class Config {
                 # Building blocks a miner keeps back for steps and sealing (0 to 64)
                 blockReserve = 64
                 # Jobs golems may do; a golem with a job not listed here waits
-                enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper", "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter"]
+                enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper"]
+                # Programs golems may run; a golem with a program not listed here waits
+                enabledPrograms = ["cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter"]
                 # Put golems that fall into the void back on safe ground
                 voidRescue = true
                 # Let stuck golems dig their way back to their area
