@@ -38,6 +38,9 @@ public class WorkGoal extends Goal {
     private final Map<BlockPos, Long> skipped = new HashMap<>();
     // storage it could not get to: tried again soon, and not a reason for the chest bubble
     private final Map<BlockPos, Long> unreachable = new HashMap<>();
+    // how often a block has been out of reach: it waits longer each time so the rest of the work goes on
+    private final Map<BlockPos, Integer> misses = new HashMap<>();
+    private long retryMissed;
     private @Nullable Task task;
     private @Nullable JobWork work;
     private @Nullable BlockPos pos;
@@ -50,6 +53,9 @@ public class WorkGoal extends Goal {
     private boolean failed;
     // only out of reach from where it got to, so worth another go soon
     private boolean outOfReach;
+    // where it last moved to, and how long it has stood there
+    private @Nullable Vec3 lastSpot;
+    private int still;
 
     public WorkGoal(GolemEntity golem) {
         this.golem = golem;
@@ -127,6 +133,11 @@ public class WorkGoal extends Goal {
         if (!loose.isEmpty()) return false;
         if (!full) {
             BlockPos target = work.findTarget(golem, level, area, this::skip);
+            // nothing else left: blocks that were out of reach get another go, the way may be open now
+            if (target == null && level.getGameTime() >= retryMissed && skipped.keySet().removeIf(misses::containsKey)) {
+                retryMissed = level.getGameTime() + RETRY_ROUTE;
+                target = work.findTarget(golem, level, area, this::skip);
+            }
             if (target != null) return begin(Task.WORK, target, null);
         }
         if (!load.isEmpty()) {
@@ -155,6 +166,8 @@ public class WorkGoal extends Goal {
         workTicks = 0;
         failed = false;
         outOfReach = false;
+        lastSpot = null;
+        still = 0;
         return true;
     }
 
@@ -263,7 +276,11 @@ public class WorkGoal extends Goal {
         golem.getLookControl().setLookAt(Vec3.atCenterOf(pos));
         if (!inReach()) {
             // walked as far as it can and got no closer: out of reach for now
-            if (ticks > STUCK && golem.getNavigation().isDone()) {
+            if (lastSpot == null || golem.position().distanceToSqr(lastSpot) > 0.25) {
+                lastSpot = golem.position();
+                still = 0;
+            }
+            if (ticks > STUCK && golem.getNavigation().isDone() || ++still > STUCK) {
                 failed = true;
                 outOfReach = true;
                 return;
@@ -338,7 +355,11 @@ public class WorkGoal extends Goal {
             if (task == Task.WORK) level().destroyBlockProgress(golem.getId(), pos, -1);
             if (task != null && (failed || ticks > GIVE_UP || trip > MAX_TRIP)) {
                 if (task == Task.DELIVER || task == Task.FETCH) unreachable.put(pos, level().getGameTime() + RETRY_ROUTE);
-                else skipped.put(pos, level().getGameTime() + (outOfReach ? RETRY_ROUTE : SKIP_FOR));
+                else if (outOfReach) {
+                    if (misses.size() > 1024) misses.clear();
+                    int n = misses.merge(pos, 1, Integer::sum);
+                    skipped.put(pos, level().getGameTime() + Math.min(RETRY_ROUTE << Math.min(n - 1, 5), SKIP_FOR * 5));
+                } else skipped.put(pos, level().getGameTime() + SKIP_FOR);
             }
         }
         task = null;
