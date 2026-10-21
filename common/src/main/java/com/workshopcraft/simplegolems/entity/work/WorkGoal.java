@@ -30,6 +30,7 @@ public class WorkGoal extends Goal {
     private static final int GIVE_UP = 400;
     private static final int SKIP_FOR = 1200;
     private static final int RETRY_ROUTE = 200;
+    private static final int STUCK = 80;
     private static final int MAX_TRIP = 9000;
 
     private final GolemEntity golem;
@@ -216,7 +217,7 @@ public class WorkGoal extends Goal {
         if (task == Task.PICKUP) return golem.distanceToSqr(item) < 2.0;
         Vec3 c = Vec3.atCenterOf(pos);
         double dx = golem.getX() - c.x, dz = golem.getZ() - c.z, dy = c.y - golem.getY();
-        return dx * dx + dz * dz < 6.25 && dy > -2.0 && dy < 3.0;
+        return dx * dx + dz * dz < 6.25 && dy > -2.0 && dy < (task == Task.WORK ? 4.0 : 3.0);
     }
 
     @Override
@@ -242,6 +243,11 @@ public class WorkGoal extends Goal {
         }
         golem.getLookControl().setLookAt(Vec3.atCenterOf(pos));
         if (!inReach()) {
+            // walked as far as it can and got no closer: out of reach for now
+            if (ticks > STUCK && golem.getNavigation().isDone()) {
+                failed = true;
+                return;
+            }
             if (golem.getNavigation().isDone() || ticks % 40 == 0) moveTo();
             return;
         }
