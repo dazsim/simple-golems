@@ -244,6 +244,18 @@ public class GolemEntity extends AbstractGolem {
     public void setCustomArea(@Nullable WorkArea area) { customArea = area; }
     public List<BlockPos> getPoints() { return points; }
     public void setPoints(List<BlockPos> p) { points = List.copyOf(p); }
+
+    // the blocks clicked in a marker setup: the program's blocks, or the corners of its area
+    public void applySetup(List<BlockPos> clicked) {
+        Job job = getJob();
+        if (job.points() > 0) {
+            points = List.copyOf(clicked.subList(0, job.points()));
+            customArea = null;
+        } else {
+            customArea = WorkArea.of(clicked.get(0), clicked.get(1));
+        }
+        playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
+    }
     public @Nullable UUID getOwner() { return owner; }
     public void setOwner(@Nullable UUID uuid) { owner = uuid; }
 
@@ -564,26 +576,28 @@ public class GolemEntity extends AbstractGolem {
         if (held.getItem() instanceof MarkerStickItem) {
             if (server) {
                 WorkArea marked = MarkerStickItem.area(held);
+                MarkerCorners m = held.get(ModContent.MARKER);
+                List<BlockPos> clicked = m == null ? List.of() : m.points();
+                boolean ready = job.points() > 0 ? clicked.size() >= job.points() : marked != null;
                 if (!canBeChangedBy(player)) {
                     tell(player, "not_yours");
+                    return InteractionResult.SUCCESS;
                 } else if (player.isSecondaryUseActive()) {
                     customArea = null;
                     points = List.of();
                     setHome(blockPosition());
                     tell(player, "marker.reset");
-                } else if (job.points() > 0) {
-                    MarkerCorners m = held.get(ModContent.MARKER);
-                    List<BlockPos> clicked = m == null ? List.of() : m.points();
-                    if (clicked.size() < job.points()) {
-                        tell(player, "marker.points_needed." + job.getSerializedName());
-                    } else {
-                        points = List.copyOf(clicked.subList(0, job.points()));
-                        customArea = null;
-                        tell(player, "marker.points_given", job.points());
-                        playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
-                    }
-                } else if (marked == null) {
+                } else if (job == Job.BLANK && marked == null) {
                     tell(player, "marker.unfinished");
+                } else if (job != Job.BLANK && (held.has(ModContent.MARKER_SETUP) || !ready)) {
+                    MarkerStickItem.startSetup(player, held, this);
+                    playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.2F);
+                    return InteractionResult.SUCCESS;
+                } else if (job.points() > 0) {
+                    points = List.copyOf(clicked.subList(0, job.points()));
+                    customArea = null;
+                    tell(player, "marker.points_given", job.points());
+                    playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
                 } else {
                     customArea = marked;
                     tell(player, "marker.given", marked.sizeX(), marked.sizeY(), marked.sizeZ());

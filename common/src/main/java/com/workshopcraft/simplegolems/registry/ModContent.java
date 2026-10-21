@@ -8,6 +8,7 @@ import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.GolemItem;
 import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.item.MarkerCorners;
+import com.workshopcraft.simplegolems.item.MarkerSetup;
 import com.workshopcraft.simplegolems.item.MarkerStickItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
@@ -32,6 +33,7 @@ public final class ModContent {
     public static final DataComponentType<DyeColor> COLOUR = DataComponentType.<DyeColor>builder().persistent(DyeColor.CODEC).networkSynchronized(DyeColor.STREAM_CODEC).build();
     public static final DataComponentType<GolemSettings> SETTINGS = DataComponentType.<GolemSettings>builder().persistent(GolemSettings.CODEC).networkSynchronized(GolemSettings.STREAM_CODEC).build();
     public static final DataComponentType<MarkerCorners> MARKER = DataComponentType.<MarkerCorners>builder().persistent(MarkerCorners.CODEC).networkSynchronized(MarkerCorners.STREAM_CODEC).build();
+    public static final DataComponentType<MarkerSetup> MARKER_SETUP = DataComponentType.<MarkerSetup>builder().persistent(MarkerSetup.CODEC).networkSynchronized(MarkerSetup.STREAM_CODEC).build();
 
     public static final ResourceKey<EntityType<?>> GOLEM_KEY = ResourceKey.create(Registries.ENTITY_TYPE, SimpleGolems.id("golem"));
     public static EntityType<GolemEntity> GOLEM_ENTITY;
@@ -50,6 +52,7 @@ public final class ModContent {
         r.accept(SimpleGolems.id("colour"), COLOUR);
         r.accept(SimpleGolems.id("settings"), SETTINGS);
         r.accept(SimpleGolems.id("marker"), MARKER);
+        r.accept(SimpleGolems.id("marker_setup"), MARKER_SETUP);
     }
 
     public static void registerEntities(BiConsumer<Identifier, EntityType<?>> r) {

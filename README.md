@@ -55,7 +55,7 @@ Hold clay cookies and look at a golem to see how full its cookie tin is on the a
 
 A golem works in an area around the spot where it was placed: 8 blocks each way, 4 down and 8 up.
 
-To set an area, use a Marker Stick on two blocks for opposite corners, then use it on the golem. An area can be at most 32 blocks across (see `maxAreaWidth` below). Miners and couriers can use an area of any height; other jobs use at most 32 blocks of it, from the bottom. Holding the stick shows the marked area. Sneak and use the stick in the air to clear it. Sneak and use it on a golem to put the golem back on its default area.
+To set an area, use a Marker Stick on the golem, then on two blocks for opposite corners; the action bar says which click comes next. Using it on two blocks first and then on the golem works too. An area can be at most 32 blocks across (see `maxAreaWidth` below). Miners and couriers can use an area of any height; other jobs use at most 32 blocks of it, from the bottom. Holding the stick shows the marked area. Sneak and use the stick in the air to clear it. Sneak and use it on a golem to put the golem back on its default area.
 
 Golems put what they collect in the nearest chest, barrel or shulker box in the area or right next to it (two blocks). Storage blocks from other mods work too when they offer an item inventory through the loader's standard API (the NeoForge item handler capability or the Fabric Transfer API), for example Simple Barrels; vanilla furnaces, hoppers and other machines are never used. Without a container, or when every container is full, the golem keeps what it carries and waits.
 
@@ -71,11 +71,11 @@ Golems have four carry slots plus their cookie jar. Working golems pick up every
 
 ## Programs
 
-Cobblegen, sifter, hammer, composter and smelter golems work between blocks you click with a Marker Stick instead of in an area. Click the blocks in order, then use the stick on the golem. The first two clicks still mark an area for the other jobs; the third and fourth click add more blocks (sneak and use the stick in the air to start again).
+Cobblegen, sifter, hammer, composter and smelter golems work between blocks you click with a Marker Stick instead of in an area. Use the stick on the golem, then click the blocks it asks for in the action bar, sneaking or not; chests and furnaces are selected, not opened, and a wrong kind of block is refused. The last click finishes the setup. Sneak and use the stick in the air to cancel.
 
 - **Cobblegen** (2 clicks: the block to mine, then its chest): mines that one block each time it grows back, such as the cobblestone of a lava and water generator, and never breaks anything around it. Works with any block a pickaxe can take, so stone and basalt generators work too.
 - **Sifter** (3 clicks: input chest, sieve, output chest; the output may be the same chest): needs Ex Deorum. Takes only blocks the sieve's mesh can sift, works the sieve like a player and carries the results to the output chest. It never puts in or takes out the mesh: with no mesh it waits and shows the supplies bubble, and the status says it needs a mesh. Works with sieves and compressed sieves, one at a time; Ex Deorum's `automated_sieves` setting is for machines and does not stop it.
-- **Hammer** (3 clicks: input chest, the spot to hammer on, output chest): needs Ex Deorum and one of its hammers (a compressed hammer for compressed blocks). Only takes blocks that have an Ex Deorum hammer recipe for that hammer, such as cobblestone, gravel, sand and dirt, places one on the spot and breaks it, so the results are exactly Ex Deorum's hammer drops.
+- **Hammer** (3 clicks: input chest, the block to hammer on top of, output chest): needs Ex Deorum and one of its hammers (a compressed hammer for compressed blocks). Only takes blocks that have an Ex Deorum hammer recipe for that hammer, such as cobblestone, gravel, sand and dirt, places one on the spot and breaks it, so the results are exactly Ex Deorum's hammer drops.
 - **Composter** (3 clicks: input chest, composter, output chest): fills the composter with anything that composts and takes the bone meal out.
 - **Smelter** (4 clicks: input chest, fuel chest, furnace, output chest): keeps a furnace, smoker or blast furnace fed with things it can cook and with fuel, and empties the output. The fuel chest may be the input chest too; then burnable things such as logs are only used as fuel.
 - **Shepherd**: shears grown sheep in its area; the wool goes to storage.

@@ -10,6 +10,8 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import java.util.List;
+
 public enum Job implements StringRepresentable {
     BLANK("blank", 0xF0F0F0),
     LUMBER("lumber", 0x58AA40),
@@ -77,6 +79,20 @@ public enum Job implements StringRepresentable {
             case SIFTER, HAMMER, COMPOSTER -> 3;
             case SMELTER -> 4;
             default -> 0;
+        };
+    }
+
+    // what each marker click is during setup, in order: points() blocks, or the two corners of an area
+    public List<String> steps() {
+        return switch (this) {
+            case BLANK -> List.of();
+            case COBBLEGEN -> List.of("mine", "drop_chest");
+            case SIFTER -> List.of("input_chest", "sieve", "output_chest");
+            case HAMMER -> List.of("input_chest", "spot", "output_chest");
+            case COMPOSTER -> List.of("input_chest", "composter", "output_chest");
+            case SMELTER -> List.of("input_chest", "fuel_chest", "furnace", "output_chest");
+            case COURIER -> List.of("from_corner", "to_corner");
+            default -> List.of("corner", "opposite_corner");
         };
     }
 

@@ -26,6 +26,10 @@ public record MarkerCorners(BlockPos first, Optional<BlockPos> second, List<Bloc
         this(first, second, List.of());
     }
 
+    public static MarkerCorners of(List<BlockPos> p) {
+        return new MarkerCorners(p.get(0), p.size() > 1 ? Optional.of(p.get(1)) : Optional.empty(), p.size() > 2 ? List.copyOf(p.subList(2, p.size())) : List.of());
+    }
+
     public List<BlockPos> points() {
         List<BlockPos> out = new ArrayList<>();
         out.add(first);
