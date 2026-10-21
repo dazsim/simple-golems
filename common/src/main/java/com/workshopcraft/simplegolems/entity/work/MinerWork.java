@@ -22,6 +22,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 
 // digs the marked box layer by layer from the top. A flat marked area goes all the way down to bedrock.
@@ -142,17 +145,16 @@ public class MinerWork implements JobWork {
                 return null;
             }
             if (y > max.getY()) continue;
-            BlockPos best = null;
-            double bestDist = Double.MAX_VALUE;
+            List<BlockPos> dig = new ArrayList<>();
             for (BlockPos p : BlockPos.betweenClosed(min.getX(), y, min.getZ(), max.getX(), y, max.getZ())) {
                 if (st.isStair(p) || skip.test(p) || !mineable(level, p, golem) || underFoot(level, golem, p)) continue;
-                double d = golem.distanceToSqr(Vec3.atCenterOf(p));
-                if (d < bestDist) {
-                    best = p.immutable();
-                    bestDist = d;
-                }
+                dig.add(p.immutable());
             }
-            if (best != null) return best;
+            dig.sort(Comparator.comparingDouble(p -> golem.distanceToSqr(Vec3.atCenterOf(p))));
+            // nowhere to stand within reach, such as a ledge over a cave: leave it and carry on down
+            for (BlockPos p : dig) {
+                if (hasStand(level, p)) return p;
+            }
         }
         return null;
     }
@@ -170,6 +172,16 @@ public class MinerWork implements JobWork {
             }
         }
         return fix;
+    }
+
+    private static boolean hasStand(ServerLevel level, BlockPos target) {
+        for (BlockPos p : BlockPos.betweenClosed(target.offset(-2, -3, -2), target.offset(2, 2, 2))) {
+            int dx = p.getX() - target.getX(), dz = p.getZ() - target.getZ();
+            if (dx * dx + dz * dz > 5 || p.equals(target)) continue;
+            BlockPos below = p.below();
+            if (dry(level, p) && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)) return true;
+        }
+        return false;
     }
 
     // the block it stands on, with a drop below it

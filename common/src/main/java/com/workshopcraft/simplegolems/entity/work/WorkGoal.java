@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -177,10 +178,16 @@ public class WorkGoal extends Goal {
         Path path = task == Task.PICKUP ? golem.getNavigation().createPath(item, 0)
                 : task == Task.WORK && work.fromGround() ? groundPath(pos) : workPath();
         // too far or too deep for one path: hop along the way (the miner's own staircase)
-        if (path == null || !path.canReach()) {
+        if (path == null || !path.canReach() && !endsInReach(path)) {
             BlockPos hop = work.waypoint(golem, level(), task == Task.PICKUP ? item.blockPosition() : pos);
-            Path p = hop == null ? null : golem.getNavigation().createPath(hop, 0);
-            if (p != null) path = p;
+            Path p = hop == null || golem.blockPosition().closerThan(hop, 1.5) ? null : golem.getNavigation().createPath(hop, 0);
+            if (p != null && p.canReach()) path = p;
+            else if (task == Task.WORK && golem.onGround()) {
+                // no way to get near this block from here: on to the next one
+                failed = true;
+                outOfReach = true;
+                return;
+            } else if (p != null) path = p;
         }
         if (path == null) {
             if (golem.onGround() && !golem.isInWater()) failed = true;
@@ -216,10 +223,19 @@ public class WorkGoal extends Goal {
         return fallback;
     }
 
+    private boolean endsInReach(Path path) {
+        Node end = path.getEndNode();
+        return end != null && inReach(end.x + 0.5, end.y, end.z + 0.5);
+    }
+
     private boolean inReach() {
         if (task == Task.PICKUP) return golem.distanceToSqr(item) < 2.0;
+        return inReach(golem.getX(), golem.getY(), golem.getZ());
+    }
+
+    private boolean inReach(double x, double y, double z) {
         Vec3 c = Vec3.atCenterOf(pos);
-        double dx = golem.getX() - c.x, dz = golem.getZ() - c.z, dy = c.y - golem.getY();
+        double dx = x - c.x, dz = z - c.z, dy = c.y - y;
         return dx * dx + dz * dz < 6.25 && dy > -2.0 && dy < (task == Task.WORK ? 4.0 : 3.0);
     }
 
