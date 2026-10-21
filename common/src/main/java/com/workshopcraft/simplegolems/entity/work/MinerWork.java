@@ -133,6 +133,9 @@ public class MinerWork implements JobWork {
             BlockPos step = st.step(st.depth(y));
             if (fix == null && step != null && open(level, step) && !skip.test(step)) fix = step;
             if (fix == null && y > min.getY()) fix = fluidToSeal(golem, level, min, max, y - 1, skip);
+            // the next step down too, so a cave under this layer never cuts it off from the rest
+            BlockPos below = st.step(st.depth(y - 1));
+            if (fix == null && hasBlocks && below != null && y > min.getY() && open(level, below) && !skip.test(below)) fix = below;
             if (fix != null) {
                 if (hasBlocks) return fix;
                 golem.setNeedsBlocks(true);
