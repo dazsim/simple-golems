@@ -129,6 +129,7 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
             case SAPLING -> "sapling";
             case FOOD -> "food";
             case THANKS -> "thanks";
+            case BLOCKS -> "blocks";
             default -> switch (state.job) {
                 case FARMER -> "hoe";
                 case MINER -> "pickaxe";

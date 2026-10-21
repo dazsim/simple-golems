@@ -22,20 +22,27 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class WorkGoal extends Goal {
-    private enum Task { PICKUP, DELIVER, WORK }
+    private enum Task { PICKUP, DELIVER, WORK, FETCH }
 
     private static final int GIVE_UP = 400;
     private static final int SKIP_FOR = 1200;
+    private static final int RETRY_ROUTE = 200;
+    private static final int MAX_TRIP = 9000;
 
     private final GolemEntity golem;
     private final Map<BlockPos, Long> skipped = new HashMap<>();
+    // storage it could not get to: tried again soon, and not a reason for the chest bubble
+    private final Map<BlockPos, Long> unreachable = new HashMap<>();
     private @Nullable Task task;
     private @Nullable JobWork work;
     private @Nullable BlockPos pos;
     private @Nullable ItemEntity item;
     private int ticks;
+    private int trip;
+    private double best;
     private int workTicks;
     private int cooldown;
     private boolean failed;
@@ -52,6 +59,18 @@ public class WorkGoal extends Goal {
     private boolean skip(BlockPos p) {
         Long until = skipped.get(p);
         return until != null && until > golem.level().getGameTime();
+    }
+
+    private boolean skipOrAway(BlockPos p) {
+        Long until = unreachable.get(p);
+        return skip(p) || until != null && until > golem.level().getGameTime();
+    }
+
+    // a container it can use, or null; the chest bubble only shows when there is none at all, not when it is out of reach
+    private @Nullable BlockPos storageFor(ServerLevel level, WorkArea area, ItemStack carried) {
+        BlockPos chest = work.dropOff(golem, level, area, carried, this::skipOrAway);
+        golem.setStorageTrouble(chest == null && work.dropOff(golem, level, area, carried, this::skip) == null);
+        return chest;
     }
 
     @Override
@@ -71,6 +90,7 @@ public class WorkGoal extends Goal {
         WorkArea area = work.area(golem);
         if (!level.hasChunksAt(area.min(), area.max())) return false;
         skipped.values().removeIf(t -> t <= level.getGameTime());
+        unreachable.values().removeIf(t -> t <= level.getGameTime());
         List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, itemBox(area),
                 e -> e.isAlive() && work.wants(e) && !skip(e.blockPosition()));
         for (ItemEntity e : loose) {
@@ -84,9 +104,8 @@ public class WorkGoal extends Goal {
         if (next != null) return begin(Task.PICKUP, next.blockPosition(), next);
         // one item type per trip, and every drop is cleared before the next tree, crop or block
         if (!carried.isEmpty()) {
-            BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
             // nowhere to put it: stop and wait rather than spill more drops
-            golem.setStorageTrouble(chest == null);
+            BlockPos chest = storageFor(level, area, carried);
             if (chest == null) return false;
             if (full || !loose.isEmpty()) return begin(Task.DELIVER, chest, null);
         } else {
@@ -98,8 +117,13 @@ public class WorkGoal extends Goal {
             if (target != null) return begin(Task.WORK, target, null);
         }
         if (!carried.isEmpty()) {
-            BlockPos chest = work.dropOff(golem, level, area, carried, this::skip);
+            BlockPos chest = storageFor(level, area, carried);
             if (chest != null) return begin(Task.DELIVER, chest, null);
+        } else if (work.restock(golem) != null) {
+            Predicate<ItemStack> want = work.restock(golem);
+            BlockPos chest = Storage.nearest(level, area, golem.position(), c -> c.hasAnyMatching(want), this::skipOrAway);
+            golem.setBlocksTrouble(chest == null);
+            if (chest != null) return begin(Task.FETCH, chest, null);
         }
         return false;
     }
@@ -113,6 +137,8 @@ public class WorkGoal extends Goal {
         pos = p;
         item = e;
         ticks = 0;
+        trip = 0;
+        best = Double.MAX_VALUE;
         workTicks = 0;
         failed = false;
         return true;
@@ -120,11 +146,12 @@ public class WorkGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (task == null || failed || golem.isWaiting() || ticks > GIVE_UP) return false;
+        if (task == null || failed || golem.isWaiting() || ticks > GIVE_UP || trip > MAX_TRIP) return false;
         return switch (task) {
             case PICKUP -> item != null && item.isAlive() && Storage.fits(golem.getCarried(), item.getItem());
             case DELIVER -> Storage.containerAt(level(), pos) != null && !golem.getCarried().isEmpty();
-            case WORK -> work.isValid(level(), pos);
+            case FETCH -> Storage.containerAt(level(), pos) != null && golem.getCarried().isEmpty();
+            case WORK -> work.isValid(golem, level(), pos);
         };
     }
 
@@ -135,7 +162,13 @@ public class WorkGoal extends Goal {
 
     private void moveTo() {
         Path path = task == Task.PICKUP ? golem.getNavigation().createPath(item, 0)
-                : task == Task.WORK && work.fromGround() ? groundPath(pos) : golem.getNavigation().createPath(pos, 1);
+                : task == Task.WORK && work.fromGround() ? groundPath(pos) : workPath();
+        // too far or too deep for one path: hop along the way (the miner's own staircase)
+        if (path == null || !path.canReach()) {
+            BlockPos hop = work.waypoint(golem, level(), task == Task.PICKUP ? item.blockPosition() : pos);
+            Path p = hop == null ? null : golem.getNavigation().createPath(hop, 0);
+            if (p != null) path = p;
+        }
         if (path == null) {
             if (golem.onGround() && !golem.isInWater()) failed = true;
             return;
@@ -145,6 +178,11 @@ public class WorkGoal extends Goal {
 
     // ground navigation aims at the first open block above a solid target, which for a trunk is the treetop,
     // so walk to an open spot beside it instead
+    private @Nullable Path workPath() {
+        BlockPos at = task == Task.WORK ? work.approach(golem, level(), pos) : null;
+        return at != null ? golem.getNavigation().createPath(at, 0) : golem.getNavigation().createPath(pos, 1);
+    }
+
     private @Nullable Path groundPath(BlockPos target) {
         ServerLevel level = level();
         Path fallback = null;
@@ -185,7 +223,14 @@ public class WorkGoal extends Goal {
             return;
         }
         ticks++;
+        trip++;
         if (task == Task.PICKUP && item != null) pos = item.blockPosition();
+        // still getting closer, so a long walk is not a stuck one
+        double d = golem.distanceToSqr(Vec3.atCenterOf(pos));
+        if (d < best - 1.0) {
+            best = d;
+            ticks = 0;
+        }
         golem.getLookControl().setLookAt(Vec3.atCenterOf(pos));
         if (!inReach()) {
             if (golem.getNavigation().isDone() || ticks % 40 == 0) moveTo();
@@ -211,6 +256,23 @@ public class WorkGoal extends Goal {
                 if (!golem.getCarried().isEmpty()) skipped.put(pos, level().getGameTime() + 100);
                 task = null;
             }
+            case FETCH -> {
+                Container c = Storage.containerAt(level(), pos);
+                Predicate<ItemStack> want = work.restock(golem);
+                if (c != null && want != null) {
+                    for (int i = 0; i < c.getContainerSize(); i++) {
+                        ItemStack s = c.getItem(i);
+                        if (!s.isEmpty() && want.test(s)) {
+                            golem.setCarried(c.removeItem(i, Math.min(s.getCount(), 32)));
+                            c.setChanged();
+                            golem.swing(InteractionHand.OFF_HAND);
+                            golem.playSound(SoundEvents.BUNDLE_INSERT, 0.6F, 1.2F);
+                            break;
+                        }
+                    }
+                }
+                task = null;
+            }
             case WORK -> {
                 int need = work.workTicks(golem, level(), pos);
                 if (workTicks % 10 == 0) golem.swing(InteractionHand.MAIN_HAND);
@@ -229,7 +291,10 @@ public class WorkGoal extends Goal {
     public void stop() {
         if (pos != null) {
             if (task == Task.WORK) level().destroyBlockProgress(golem.getId(), pos, -1);
-            if (task != null && (failed || ticks > GIVE_UP)) skipped.put(pos, level().getGameTime() + SKIP_FOR);
+            if (task != null && (failed || ticks > GIVE_UP || trip > MAX_TRIP)) {
+                if (task == Task.DELIVER || task == Task.FETCH) unreachable.put(pos, level().getGameTime() + RETRY_ROUTE);
+                else skipped.put(pos, level().getGameTime() + SKIP_FOR);
+            }
         }
         task = null;
         item = null;

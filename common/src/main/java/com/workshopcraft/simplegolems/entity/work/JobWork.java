@@ -18,6 +18,25 @@ public interface JobWork {
 
     boolean isValid(ServerLevel level, BlockPos pos);
 
+    default boolean isValid(GolemEntity golem, ServerLevel level, BlockPos pos) {
+        return isValid(level, pos);
+    }
+
+    // a spot part of the way to a target that is too far for one path
+    default @Nullable BlockPos waypoint(GolemEntity golem, ServerLevel level, BlockPos target) {
+        return null;
+    }
+
+    // where to stand for a target, when walking at the target itself would go wrong
+    default @Nullable BlockPos approach(GolemEntity golem, ServerLevel level, BlockPos target) {
+        return null;
+    }
+
+    // what to fetch from storage before work can go on, or null
+    default @Nullable Predicate<ItemStack> restock(GolemEntity golem) {
+        return null;
+    }
+
     int workTicks(GolemEntity golem, ServerLevel level, BlockPos pos);
 
     void finish(GolemEntity golem, ServerLevel level, BlockPos pos);

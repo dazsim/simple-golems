@@ -7,6 +7,7 @@ public enum Trouble {
     SAPLING,
     FOOD,
     TOOL,
+    BLOCKS,
     // not a problem: a short thank-you once the last problem is sorted
     THANKS;
 

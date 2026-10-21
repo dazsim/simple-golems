@@ -5,6 +5,7 @@ import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
 import com.workshopcraft.simplegolems.entity.goal.GetOffTreeGoal;
 import com.workshopcraft.simplegolems.entity.work.JobWork;
+import com.workshopcraft.simplegolems.entity.work.MinerWork;
 import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.entity.goal.StrollInAreaGoal;
 import com.workshopcraft.simplegolems.entity.goal.WaitGoal;
@@ -79,6 +80,9 @@ public class GolemEntity extends AbstractGolem {
     private @Nullable UUID owner;
     private boolean storageTrouble;
     private boolean saplingTrouble;
+    private boolean blocksTrouble;
+    private boolean needBlocks;
+    public int minerFrom = Integer.MAX_VALUE;
     private Trouble lastTrouble = Trouble.NONE;
     private int thanks;
     public float bubble, bubbleO;
@@ -131,6 +135,7 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public void setJob(Job job) {
+        minerFrom = Integer.MAX_VALUE;
         entityData.set(DATA_JOB, job.ordinal());
     }
 
@@ -169,7 +174,7 @@ public class GolemEntity extends AbstractGolem {
     }
     public int getFuel() { return fuel; }
     public @Nullable WorkArea getCustomArea() { return customArea; }
-    public void setCustomArea(@Nullable WorkArea area) { customArea = area; }
+    public void setCustomArea(@Nullable WorkArea area) { customArea = area; minerFrom = Integer.MAX_VALUE; }
     public @Nullable UUID getOwner() { return owner; }
     public void setOwner(@Nullable UUID uuid) { owner = uuid; }
 
@@ -226,6 +231,20 @@ public class GolemEntity extends AbstractGolem {
         storageTrouble = b;
     }
 
+    public void setBlocksTrouble(boolean b) {
+        blocksTrouble = b;
+    }
+
+    // the miner has steps to build or water to seal and nothing to do it with
+    public boolean needsBlocks() {
+        return needBlocks;
+    }
+
+    public void setNeedsBlocks(boolean b) {
+        needBlocks = b;
+        if (!b) blocksTrouble = false;
+    }
+
     public void setSaplingTrouble(boolean b) {
         saplingTrouble = b;
     }
@@ -238,6 +257,7 @@ public class GolemEntity extends AbstractGolem {
         if (!hasTool()) return Trouble.TOOL;
         if (storageTrouble) return Trouble.STORAGE;
         if (saplingTrouble && job == Job.LUMBER) return Trouble.SAPLING;
+        if (blocksTrouble && job == Job.MINER) return Trouble.BLOCKS;
         return Trouble.NONE;
     }
 
@@ -272,6 +292,8 @@ public class GolemEntity extends AbstractGolem {
         JobWork work = JobWork.of(getJob());
         if (storageTrouble && (carried.isEmpty() || work == null
                 || work.dropOff(this, sl, work.area(this), carried, p -> false) != null)) storageTrouble = false;
+        if (blocksTrouble && (carried.is(MinerWork.BUILDING) || Storage.nearest(sl, work == null ? getArea() : work.area(this), position(),
+                c -> c.hasAnyMatching(st -> st.is(MinerWork.BUILDING)), p -> false) != null)) blocksTrouble = false;
         if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ItemTags.SAPLINGS)), p -> false) != null) {
             saplingTrouble = false;
         }
