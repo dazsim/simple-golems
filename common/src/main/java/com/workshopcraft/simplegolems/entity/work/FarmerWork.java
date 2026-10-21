@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -34,7 +35,7 @@ public class FarmerWork implements JobWork {
     // CropBlock covers vanilla and most modded crops; anything else in #crops with a plain age property also counts
     static @Nullable IntegerProperty age(BlockState state) {
         if (state.getBlock() instanceof StemBlock || state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) return null;
-        if (!(state.getBlock() instanceof CropBlock) && !state.is(BlockTags.CROPS)) return null;
+        if (!(state.getBlock() instanceof CropBlock) && !state.is(ModTags.CROPS)) return null;
         for (Property<?> p : state.getProperties()) {
             if (p instanceof IntegerProperty ip && p.getName().equals("age")) return ip;
         }

@@ -151,6 +151,13 @@ BUILDING = ["cobblestone", "cobbled_deepslate", "stone", "deepslate", "andesite"
 
 def tags():
     write(f"{DATA}/tags/item/miner_building_blocks.json", {"values": [f"minecraft:{b}" for b in BUILDING]})
+    write(f"{DATA}/tags/block/lumber_logs.json", {"values": ["#minecraft:logs"]})
+    write(f"{DATA}/tags/item/lumber_logs.json", {"values": ["#minecraft:logs"]})
+    write(f"{DATA}/tags/item/lumber_saplings.json", {"values": ["#minecraft:saplings"]})
+    write(f"{DATA}/tags/block/farmer_crops.json", {"values": ["#minecraft:crops"]})
+    write(f"{DATA}/tags/block/miner_never_dig.json", {"values": []})
+    write(f"{DATA}/tags/block/not_storage.json", {"values": []})
+    write(f"{DATA}/tags/block/storage.json", {"values": []})
 
 
 items()

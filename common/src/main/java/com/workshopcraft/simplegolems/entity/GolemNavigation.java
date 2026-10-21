@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.registry.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
@@ -39,6 +40,6 @@ public class GolemNavigation extends GroundPathNavigation {
 
     private boolean offLimits(BlockState floor, BlockState under) {
         if (floor.getBlock() instanceof LeavesBlock) return true;
-        return golem.getJob() == Job.LUMBER && floor.is(BlockTags.LOGS) && (under.is(BlockTags.LOGS) || under.is(BlockTags.SUBSTRATE_OVERWORLD));
+        return golem.getJob() == Job.LUMBER && floor.is(ModTags.LOGS) && (under.is(ModTags.LOGS) || under.is(BlockTags.SUBSTRATE_OVERWORLD));
     }
 }

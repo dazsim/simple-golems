@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
@@ -105,7 +106,7 @@ public class MinerWork implements JobWork {
 
     static boolean mineable(ServerLevel level, BlockPos p, GolemEntity golem) {
         BlockState s = level.getBlockState(p);
-        if (s.isAir() || !s.getFluidState().isEmpty() || s.hasBlockEntity() || s.getDestroySpeed(level, p) < 0) return false;
+        if (s.isAir() || !s.getFluidState().isEmpty() || s.hasBlockEntity() || s.getDestroySpeed(level, p) < 0 || s.is(ModTags.MINER_NEVER_DIG)) return false;
         if (!golem.canHarvest(s)) return false;
         if (level.getBlockEntity(p.above()) != null) return false;
         for (Direction d : Direction.values()) {

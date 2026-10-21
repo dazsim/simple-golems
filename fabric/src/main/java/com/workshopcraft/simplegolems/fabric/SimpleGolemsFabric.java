@@ -2,6 +2,7 @@ package com.workshopcraft.simplegolems.fabric;
 
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
+import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -14,6 +15,7 @@ public class SimpleGolemsFabric implements ModInitializer {
         Config.loadFile(FabricLoader.getInstance().getConfigDir().resolve("simplegolems.toml"));
         ServerLifecycleEvents.SERVER_STARTING.register(server -> Config.loadFile(FabricLoader.getInstance().getConfigDir().resolve("simplegolems.toml")));
         ModContent.registerAllDirect();
+        Storage.external = FabricStore::at;
         FabricDefaultAttributeRegistry.register(ModContent.GOLEM_ENTITY, GolemEntity.createAttributes());
     }
 }

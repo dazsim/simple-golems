@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -42,12 +43,12 @@ public class LumberWork implements JobWork {
     @Override
     public boolean wants(ItemEntity item) {
         ItemStack s = item.getItem();
-        return item.entityTags().contains(Storage.WORK_TAG) || s.is(ItemTags.SAPLINGS) || s.is(ItemTags.LOGS)
+        return item.entityTags().contains(Storage.WORK_TAG) || s.is(ModTags.SAPLINGS) || s.is(ModTags.LOG_ITEMS)
                 || s.is(Items.STICK) || s.is(Items.APPLE);
     }
 
     private static boolean isBase(ServerLevel level, BlockPos pos, BlockState state) {
-        return state.is(BlockTags.LOGS) && level.getBlockState(pos.below()).is(BlockTags.SUBSTRATE_OVERWORLD);
+        return state.is(ModTags.LOGS) && level.getBlockState(pos.below()).is(BlockTags.SUBSTRATE_OVERWORLD);
     }
 
     @Override
@@ -66,7 +67,7 @@ public class LumberWork implements JobWork {
 
     // a grown tree has natural leaves touching its logs; log cabins and stripped builds are left alone
     static @Nullable Tree tree(ServerLevel level, BlockPos base) {
-        if (!level.getBlockState(base).is(BlockTags.LOGS)) return null;
+        if (!level.getBlockState(base).is(ModTags.LOGS)) return null;
         Block kind = level.getBlockState(base).getBlock();
         Set<BlockPos> logs = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
@@ -126,7 +127,7 @@ public class LumberWork implements JobWork {
 
     // the stump of the natural tree whose trunk or branch this log belongs to
     public static @Nullable BlockPos baseUnder(ServerLevel level, BlockPos log) {
-        if (!level.getBlockState(log).is(BlockTags.LOGS)) return null;
+        if (!level.getBlockState(log).is(ModTags.LOGS)) return null;
         for (int y = 1; y <= 24; y++) {
             for (BlockPos p : BlockPos.betweenClosed(log.offset(-3, -y, -3), log.offset(3, -y, 3))) {
                 BlockState s = level.getBlockState(p);
@@ -157,7 +158,7 @@ public class LumberWork implements JobWork {
 
     @Override
     public boolean isValid(ServerLevel level, BlockPos pos) {
-        return level.getBlockState(pos).is(BlockTags.LOGS);
+        return level.getBlockState(pos).is(ModTags.LOGS);
     }
 
     @Override
@@ -200,7 +201,7 @@ public class LumberWork implements JobWork {
 
     private static boolean replant(GolemEntity golem, ServerLevel level, BlockPos base, List<ItemStack> drops) {
         if (plant(level, base, drops)) return true;
-        List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ItemTags.SAPLINGS));
+        List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ModTags.SAPLINGS));
         if (near.stream().anyMatch(e -> plantFrom(level, base, e))) return true;
         if (plant(level, base, golem.getCarried())) {
             golem.carriedChanged();
@@ -210,13 +211,17 @@ public class LumberWork implements JobWork {
         BlockPos chest = Storage.nearest(level, golem.getArea(), golem.position(), c -> saplingSlot(c, level, base) >= 0, p -> false);
         Container c = chest == null ? null : Storage.containerAt(level, chest);
         if (c == null) return false;
-        plant(level, base, List.of(c.getItem(saplingSlot(c, level, base))));
+        int slot = saplingSlot(c, level, base);
+        if (slot < 0) return false;
+        ItemStack one = c.removeItem(slot, 1);
+        plant(level, base, List.of(one));
+        if (!one.isEmpty()) Storage.insert(c, one);
         c.setChanged();
         return true;
     }
 
     private static @Nullable BlockState saplingFor(ItemStack stack, ServerLevel level, BlockPos pos) {
-        if (stack.isEmpty() || !stack.is(ItemTags.SAPLINGS) || !(stack.getItem() instanceof BlockItem bi)) return null;
+        if (stack.isEmpty() || !stack.is(ModTags.SAPLINGS) || !(stack.getItem() instanceof BlockItem bi)) return null;
         BlockState sapling = bi.getBlock().defaultBlockState();
         return sapling.canSurvive(level, pos) ? sapling : null;
     }

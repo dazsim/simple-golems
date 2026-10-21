@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.entity.goal.EscapeHazardGoal;
@@ -359,7 +360,7 @@ public class GolemEntity extends AbstractGolem {
                 .allMatch(c -> work.dropOff(this, sl, work.area(this), c, p -> false) != null))) storageTrouble = false;
         if (blocksTrouble && (carries(MinerWork::isBuildingBlock) || Storage.nearest(sl, work == null ? getArea() : work.area(this), position(),
                 c -> c.hasAnyMatching(st -> st.is(MinerWork.BUILDING)), p -> false) != null)) blocksTrouble = false;
-        if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ItemTags.SAPLINGS)), p -> false) != null) {
+        if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ModTags.SAPLINGS)), p -> false) != null) {
             saplingTrouble = false;
         }
     }

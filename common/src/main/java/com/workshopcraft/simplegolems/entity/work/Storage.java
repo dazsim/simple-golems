@@ -3,7 +3,9 @@ package com.workshopcraft.simplegolems.entity.work;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
+import com.workshopcraft.simplegolems.Config;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -20,25 +22,36 @@ import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public final class Storage {
     public static final String WORK_TAG = "simplegolems_work";
     public static final int NEARBY = 2;
     public static final TagKey<Block> EXTRA_STORAGE = TagKey.create(Registries.BLOCK, SimpleGolems.id("storage"));
+    public static final TagKey<Block> NOT_STORAGE = TagKey.create(Registries.BLOCK, SimpleGolems.id("not_storage"));
+    // set by each loader: another mod's item storage at a block, through the loader's own item API
+    public static BiFunction<ServerLevel, BlockPos, @Nullable Container> external = (level, pos) -> null;
 
     private Storage() {
     }
 
     public static boolean isStorage(BlockEntity be) {
+        if (be.getBlockState().is(NOT_STORAGE)) return false;
         return be instanceof ChestBlockEntity || be instanceof BarrelBlockEntity || be instanceof ShulkerBoxBlockEntity
                 || be.getBlockState().is(EXTRA_STORAGE);
     }
 
+    // vanilla chests, barrels and shulker boxes, blocks in the storage tag, and other mods' blocks with an item inventory
     public static @Nullable Container containerAt(ServerLevel level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be == null || !isStorage(be)) return null;
-        return HopperBlockEntity.getContainerAt(level, pos);
+        if (be == null) return null;
+        if (isStorage(be)) {
+            Container c = HopperBlockEntity.getContainerAt(level, pos);
+            return c != null ? c : Config.moddedStorage ? external.apply(level, pos) : null;
+        }
+        if (!Config.moddedStorage || be.getBlockState().is(NOT_STORAGE) || BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock()).getNamespace().equals("minecraft")) return null;
+        return external.apply(level, pos);
     }
 
     // nearest storage in or just around the area to 'from' that matches the test
@@ -50,10 +63,10 @@ public final class Storage {
                 if (!level.hasChunk(cx, cz)) continue;
                 for (BlockEntity be : level.getChunk(cx, cz).getBlockEntities().values()) {
                     BlockPos pos = be.getBlockPos();
-                    if (!area.near(pos, NEARBY) || !isStorage(be) || skip.test(pos)) continue;
+                    if (!area.near(pos, NEARBY) || skip.test(pos)) continue;
                     double d = from.distanceToSqr(Vec3.atCenterOf(pos));
                     if (d >= bestDist) continue;
-                    Container c = HopperBlockEntity.getContainerAt(level, pos);
+                    Container c = containerAt(level, pos);
                     if (c != null && test.test(c)) {
                         best = pos.immutable();
                         bestDist = d;
@@ -65,6 +78,7 @@ public final class Storage {
     }
 
     public static boolean hasRoom(Container c, ItemStack stack) {
+        if (c instanceof ExternalStore e) return e.put(stack, true) > 0;
         for (int i = 0; i < c.getContainerSize(); i++) {
             if (!c.canPlaceItem(i, stack)) continue;
             ItemStack in = c.getItem(i);
@@ -75,6 +89,11 @@ public final class Storage {
     }
 
     public static ItemStack insert(Container c, ItemStack stack) {
+        if (c instanceof ExternalStore e) {
+            if (stack.isEmpty()) return stack;
+            int in = e.put(stack, false);
+            return stack.copyWithCount(stack.getCount() - in);
+        }
         return HopperBlockEntity.addItem(null, c, stack, null);
     }
 

@@ -2,6 +2,7 @@ package com.workshopcraft.simplegolems.neoforge;
 
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
+import com.workshopcraft.simplegolems.entity.work.Storage;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
@@ -16,6 +17,7 @@ public class SimpleGolemsNeoForge {
     public SimpleGolemsNeoForge(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, NeoForgeConfig.SPEC, "simplegolems.toml");
         modBus.addListener(NeoForgeConfig::onLoad);
+        Storage.external = NeoForgeStore::at;
         modBus.addListener(SimpleGolemsNeoForge::onRegister);
         modBus.addListener((EntityAttributeCreationEvent e) -> e.put(ModContent.GOLEM_ENTITY, GolemEntity.createAttributes().build()));
     }
