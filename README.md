@@ -45,15 +45,15 @@ Hold clay cookies and look at a golem to see how full its cookie tin is on the a
 
 A golem works in an area around the spot where it was placed: 8 blocks each way, 4 down and 8 up.
 
-To set an area, use a Marker Stick on two blocks for opposite corners, then use it on the golem. An area can be at most 32 blocks across. Miners and couriers can use an area of any height; other jobs use at most 32 blocks of it, from the bottom. Holding the stick shows the marked area. Sneak and use the stick in the air to clear it. Sneak and use it on a golem to put the golem back on its default area.
+To set an area, use a Marker Stick on two blocks for opposite corners, then use it on the golem. An area can be at most 32 blocks across (see `maxAreaWidth` below). Miners and couriers can use an area of any height; other jobs use at most 32 blocks of it, from the bottom. Holding the stick shows the marked area. Sneak and use the stick in the air to clear it. Sneak and use it on a golem to put the golem back on its default area.
 
-Golems put what they collect in the nearest chest, barrel or shulker box in the area or right next to it (two blocks). Other containers can be added with the `simplegolems:storage` block tag. Without a container, or when every container is full, the golem keeps what it carries and waits.
+Golems put what they collect in the nearest chest, barrel or shulker box in the area or right next to it (two blocks). Storage blocks from other mods work too when they offer an item inventory through the loader's standard API (the NeoForge item handler capability or the Fabric Transfer API), for example Simple Barrels; vanilla furnaces, hoppers and other machines are never used. Without a container, or when every container is full, the golem keeps what it carries and waits.
 
 ## Jobs
 
 - **Lumber**: fells trees that grow on dirt, grass, moss or mud and still have natural leaves, so log houses are left alone. It walks to the ground beside the stump, under low leaves if needed, and fells the whole tree from there; one that ends up on top of a tree chops its way down. Breaks the logs and the leaves of that tree and replants a sapling from the drops or one lying at the stump. If none dropped it uses one it carries or one from storage in the area.
-- **Farmer**: harvests fully grown crops and replants them for free. Works with any crop that uses the vanilla crop block or sits in `#minecraft:crops` with an age, so modded crops work too. Stems and tall crops are left alone.
-- **Miner**: needs a marked area. Digs it out from the top down and leaves a staircase that winds round the edge of the pit (straight down the west edge if the area is less than 3 blocks wide), with two blocks of headroom over every step. If the marked area is flat it digs all the way down to bedrock (bedrock itself stays); an area marked with a height keeps to that box. A chest at the top, or anywhere else in or next to the pit, counts as its storage at any depth, and it walks its own staircase to get there a few steps at a time. When it digs into a cave or ravine it builds the missing steps, and it seals water and lava in the pit, in its walls and at its rim as soon as they show up, using plain blocks such as cobblestone, cobbled deepslate, stone, dirt or netherrack (the `simplegolems:miner_building_blocks` item tag; never ores, valuables, block entities or falling blocks). It keeps a full stack of those blocks back instead of putting it in storage, and fetches a stack from storage if it runs out. It only steps down one block at a time and keeps out of water, so it does not get stuck in a cave. Skips containers and other block entities, blocks under them and blocks its pickaxe cannot harvest, so a chest in a niche in the pit stays put. Rests while the `mob_griefing` game rule is off.
+- **Farmer**: harvests fully grown crops and replants them for free. Works with any crop that uses the vanilla crop block or sits in `simplegolems:farmer_crops` (by default `#minecraft:crops`) with an age, so modded crops work too. Stems and tall crops are left alone.
+- **Miner**: needs a marked area. Digs it out from the top down and leaves a staircase that winds round the edge of the pit (straight down the west edge if the area is less than 3 blocks wide), with two blocks of headroom over every step. If the marked area is flat it digs all the way down to bedrock (bedrock itself stays); an area marked with a height keeps to that box. A chest at the top, or anywhere else in or next to the pit, counts as its storage at any depth, and it walks its own staircase to get there a few steps at a time. When it digs into a cave or ravine it builds the missing steps, and it seals water and lava in the pit, in its walls and at its rim as soon as they show up, using plain blocks such as cobblestone, cobbled deepslate, stone, dirt or netherrack (the `simplegolems:miner_building_blocks` item tag; never ores, valuables, block entities or falling blocks). It keeps a full stack of those blocks back (`blockReserve`) instead of putting it in storage, and fetches a stack from storage if it runs out. It only steps down one block at a time and keeps out of water, so it does not get stuck in a cave. Skips containers and other block entities, blocks under them and blocks its pickaxe cannot harvest, so a chest in a niche in the pit stays put. Rests while the `mob_griefing` game rule is off.
 - **Courier**: needs a marked area. Takes from the container nearest the first corner and fills the container nearest the second corner, up to four stacks per trip, and finds its way up or down a long staircase between them.
 - **Sweeper**: picks up any dropped item in its area.
 
@@ -70,6 +70,33 @@ A golem that cannot get on with its job shows a small thought bubble above its h
 - its tool crossed out when its tool broke or is missing. A golem first looks for a matching tool in storage in its area and takes the best one (highest tier, so iron beats gold), and only shows the bubble if there is none.
 
 Once the problem is sorted out, whether you handed it over or the golem fetched it, the bubble shows a little heart as a thank-you for about two seconds and then fades away.
+
+## Config
+
+The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. The defaults are:
+
+```
+maxAreaWidth = 32        # largest marked area, in blocks across (4 to 128)
+workSpeed = 1.0          # 2.0 digs, chops and harvests twice as fast
+cookieTicks = 6000       # how long one clay cookie lasts (20 ticks = 1 second)
+blockReserve = 64        # building blocks a miner keeps back (0 to 64)
+enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper"]   # a golem with a job not listed waits
+voidRescue = true        # golems that fall into the void are put back on safe ground
+digOut = true            # stuck golems dig their way back to their area
+moddedStorage = true     # use other mods' storage blocks
+```
+
+## Tags for data packs
+
+- `simplegolems:storage` (block): extra blocks golems treat as storage, for a mod block that is a plain container.
+- `simplegolems:not_storage` (block): blocks golems never put items in or take them from, even if they offer an item inventory.
+- `simplegolems:miner_building_blocks` (item): blocks a miner builds steps and seals water and lava with.
+- `simplegolems:miner_never_dig` (block): blocks a miner leaves alone (empty by default).
+- `simplegolems:lumber_logs` (block and item): what a lumber golem fells and collects (defaults to `#minecraft:logs`).
+- `simplegolems:lumber_saplings` (item): what it replants (defaults to `#minecraft:saplings`).
+- `simplegolems:farmer_crops` (block): crops a farmer harvests besides the vanilla crop block types (defaults to `#minecraft:crops`).
+
+All recipes are normal data pack recipes and show in any recipe viewer.
 
 Golems do not despawn, do not attack, take no fall damage and drop their core, card, tool, cookies and all four carry slots if they die.
 
