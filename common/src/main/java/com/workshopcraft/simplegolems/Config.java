@@ -26,12 +26,16 @@ public final class Config {
     public static boolean voidRescue = true;
     public static boolean digOut = true;
     public static boolean moddedStorage = true;
+    public static int rancherMaxAnimals = 8;
+    public static boolean skyblockPrograms = true;
 
-    public static final List<String> JOBS = List.of("lumber", "farmer", "miner", "courier", "sweeper");
+    public static final List<String> JOBS = List.of("lumber", "farmer", "miner", "courier", "sweeper",
+            "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter");
 
     private Config() {}
 
     public static boolean jobEnabled(Job job) {
+        if (!skyblockPrograms && (job == Job.COBBLEGEN || job.needsExDeorum())) return false;
         return job == Job.BLANK || enabledJobs.contains(job);
     }
 
@@ -68,6 +72,8 @@ public final class Config {
             voidRescue = !"false".equals(v.get("voidRescue"));
             digOut = !"false".equals(v.get("digOut"));
             moddedStorage = !"false".equals(v.get("moddedStorage"));
+            skyblockPrograms = !"false".equals(v.get("skyblockPrograms"));
+            rancherMaxAnimals = clamp(intOf(v, "rancherMaxAnimals", 8), 2, 64);
             String jobs = v.get("enabledJobs");
             if (jobs != null) {
                 setJobs(List.of(jobs.replaceAll("[\\[\\]\"\\s]", "").toLowerCase(Locale.ROOT).split(",")));
@@ -104,13 +110,17 @@ public final class Config {
                 # Building blocks a miner keeps back for steps and sealing (0 to 64)
                 blockReserve = 64
                 # Jobs golems may do; a golem with a job not listed here waits
-                enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper"]
+                enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper", "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter"]
                 # Put golems that fall into the void back on safe ground
                 voidRescue = true
                 # Let stuck golems dig their way back to their area
                 digOut = true
                 # Use storage blocks from other mods that offer an item inventory
                 moddedStorage = true
+                # The skyblock programs (cobblegen, sifter and hammer) as a group
+                skyblockPrograms = true
+                # A rancher stops breeding a kind of animal once its area holds this many of them
+                rancherMaxAnimals = 8
                 """;
     }
 }

@@ -147,7 +147,8 @@ public class WorkGoal extends Goal {
         } else if (work.restock(golem) != null && !full) {
             Predicate<ItemStack> want = work.restock(golem);
             BlockPos chest = Storage.nearest(level, area, golem.position(), c -> c.hasAnyMatching(want), this::skipOrAway);
-            golem.setBlocksTrouble(chest == null);
+            if (work.supplies() == null) golem.setBlocksTrouble(chest == null);
+            else golem.setSupplies(chest == null ? work.supplies() : null);
             if (chest != null) return begin(Task.FETCH, chest, null);
         }
         return false;
@@ -305,6 +306,7 @@ public class WorkGoal extends Goal {
                     int keep = work.keep(golem);
                     for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
                         ItemStack s = golem.getCarried().get(i);
+                        if (work.keeps(golem, i)) continue;
                         if (i != keep) golem.getCarried().set(i, Storage.insert(c, s));
                         else if (s.getCount() > work.reserve(golem)) s.grow(Storage.insert(c, s.split(s.getCount() - work.reserve(golem))).getCount());
                     }

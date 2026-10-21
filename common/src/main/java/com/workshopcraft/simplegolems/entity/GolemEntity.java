@@ -17,6 +17,8 @@ import com.workshopcraft.simplegolems.entity.work.DigOutGoal;
 import com.workshopcraft.simplegolems.entity.work.WorkGoal;
 import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.MarkerStickItem;
+import com.workshopcraft.simplegolems.item.MarkerCorners;
+import com.workshopcraft.simplegolems.entity.work.ExDeorum;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -90,6 +92,8 @@ public class GolemEntity extends AbstractGolem {
     private final NonNullList<ItemStack> carried = NonNullList.withSize(CARRY_SLOTS, ItemStack.EMPTY);
     private int fuel;
     private @Nullable WorkArea customArea;
+    private List<BlockPos> points = List.of();
+    private @Nullable String supplies;
     private @Nullable BlockPos home;
     private @Nullable UUID owner;
     private boolean storageTrouble;
@@ -238,6 +242,8 @@ public class GolemEntity extends AbstractGolem {
     public int getFuel() { return fuel; }
     public @Nullable WorkArea getCustomArea() { return customArea; }
     public void setCustomArea(@Nullable WorkArea area) { customArea = area; }
+    public List<BlockPos> getPoints() { return points; }
+    public void setPoints(List<BlockPos> p) { points = List.copyOf(p); }
     public @Nullable UUID getOwner() { return owner; }
     public void setOwner(@Nullable UUID uuid) { owner = uuid; }
 
@@ -250,9 +256,20 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public WorkArea getArea() {
+        if (getJob().points() > 0 && points.size() >= 2) return pointsBox();
         if (customArea == null) return WorkArea.around(getHome());
         // miners and couriers may work a tall area; other jobs keep to 32 blocks high
         return getJob() == Job.MINER || getJob() == Job.COURIER ? customArea : customArea.capHeight();
+    }
+
+    // the blocks a program works between, with room to stand around them
+    private WorkArea pointsBox() {
+        BlockPos min = points.get(0), max = points.get(0);
+        for (BlockPos p : points) {
+            min = BlockPos.min(min, p);
+            max = BlockPos.max(max, p);
+        }
+        return WorkArea.of(min.offset(-1, -1, -1), max.offset(1, 2, 1));
     }
 
     // same rules as a player: tool tier speed, Efficiency through the mining_efficiency attribute, Haste
@@ -284,7 +301,8 @@ public class GolemEntity extends AbstractGolem {
 
     public boolean canWorkHere() {
         Job job = getJob();
-        if (job.needsArea() && customArea == null || !Config.jobEnabled(job)) return false;
+        if (job.needsArea() && customArea == null || !Config.jobEnabled(job) || points.size() < job.points()) return false;
+        if (job.needsExDeorum() && !ExDeorum.loaded()) return false;
         return job != Job.MINER || !(level() instanceof ServerLevel sl) || sl.getGameRules().get(GameRules.MOB_GRIEFING);
     }
 
@@ -310,6 +328,15 @@ public class GolemEntity extends AbstractGolem {
         if (!b) blocksTrouble = false;
     }
 
+    // what a program is waiting for (lang key part), or null
+    public void setSupplies(@Nullable String what) {
+        supplies = what;
+    }
+
+    public @Nullable String getSupplies() {
+        return supplies;
+    }
+
     public void setSaplingTrouble(boolean b) {
         saplingTrouble = b;
     }
@@ -323,6 +350,7 @@ public class GolemEntity extends AbstractGolem {
         if (storageTrouble) return Trouble.STORAGE;
         if (saplingTrouble && job == Job.LUMBER) return Trouble.SAPLING;
         if (blocksTrouble && job == Job.MINER) return Trouble.BLOCKS;
+        if (supplies != null) return Trouble.SUPPLIES;
         return Trouble.NONE;
     }
 
@@ -451,6 +479,7 @@ public class GolemEntity extends AbstractGolem {
         GolemSettings s = stack.getOrDefault(ModContent.SETTINGS, GolemSettings.EMPTY);
         fuel = s.fuel();
         customArea = s.area().orElse(null);
+        points = List.copyOf(s.points());
         updatePowered();
     }
 
@@ -461,7 +490,7 @@ public class GolemEntity extends AbstractGolem {
         List<ItemStack> items = new ArrayList<>(List.of(getTool().copy(), cookies.copy()));
         for (ItemStack c : carried) items.add(c.copy());
         stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
-        stack.set(ModContent.SETTINGS, new GolemSettings(fuel, Optional.ofNullable(customArea)));
+        stack.set(ModContent.SETTINGS, new GolemSettings(fuel, Optional.ofNullable(customArea), points));
         if (hasCustomName()) stack.set(DataComponents.CUSTOM_NAME, getCustomName());
         return stack;
     }
@@ -539,8 +568,20 @@ public class GolemEntity extends AbstractGolem {
                     tell(player, "not_yours");
                 } else if (player.isSecondaryUseActive()) {
                     customArea = null;
+                    points = List.of();
                     setHome(blockPosition());
                     tell(player, "marker.reset");
+                } else if (job.points() > 0) {
+                    MarkerCorners m = held.get(ModContent.MARKER);
+                    List<BlockPos> clicked = m == null ? List.of() : m.points();
+                    if (clicked.size() < job.points()) {
+                        tell(player, "marker.points_needed." + job.getSerializedName());
+                    } else {
+                        points = List.copyOf(clicked.subList(0, job.points()));
+                        customArea = null;
+                        tell(player, "marker.points_given", job.points());
+                        playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
+                    }
                 } else if (marked == null) {
                     tell(player, "marker.unfinished");
                 } else {
@@ -549,7 +590,8 @@ public class GolemEntity extends AbstractGolem {
                     playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.5F);
                 }
                 if (player instanceof ServerPlayer sp) {
-                    MarkerStickItem.outline((ServerLevel) level(), sp, getArea(), 0x60E060);
+                    if (job.points() > 0) for (BlockPos p : points) MarkerStickItem.outline((ServerLevel) level(), sp, WorkArea.of(p, p), 0x60E060);
+                    else MarkerStickItem.outline((ServerLevel) level(), sp, getArea(), 0x60E060);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -634,6 +676,14 @@ public class GolemEntity extends AbstractGolem {
             tell(player, "status.no_power", name);
         } else if (job.needsArea() && customArea == null) {
             tell(player, "status.no_area", name);
+        } else if (points.size() < job.points()) {
+            tell(player, "marker.points_needed." + job.getSerializedName());
+        } else if (job.needsExDeorum() && !ExDeorum.loaded()) {
+            tell(player, "status.no_exdeorum", name);
+        } else if (!Config.jobEnabled(job)) {
+            tell(player, "status.disabled", name);
+        } else if (supplies != null) {
+            tell(player, "status.needs." + supplies, name);
         } else if (!canWorkHere()) {
             tell(player, "status.no_griefing", name);
         } else if (job == Job.COURIER && level() instanceof ServerLevel sl && !CourierWork.hasRoute(sl, customArea)) {
@@ -656,6 +706,7 @@ public class GolemEntity extends AbstractGolem {
         out.store("carry", ItemStack.OPTIONAL_CODEC.listOf(), List.copyOf(carried));
         out.putInt("fuel", fuel);
         if (customArea != null) out.store("area", WorkArea.CODEC, customArea);
+        if (!points.isEmpty()) out.store("points", BlockPos.CODEC.listOf(), points);
         if (home != null) out.store("home", BlockPos.CODEC, home);
         if (owner != null) out.store("owner", UUIDUtil.CODEC, owner);
     }
@@ -673,6 +724,7 @@ public class GolemEntity extends AbstractGolem {
         carriedChanged();
         fuel = in.getIntOr("fuel", 0);
         customArea = in.read("area", WorkArea.CODEC).orElse(null);
+        points = List.copyOf(in.read("points", BlockPos.CODEC.listOf()).orElse(List.of()));
         home = in.read("home", BlockPos.CODEC).orElse(null);
         owner = in.read("owner", UUIDUtil.CODEC).orElse(null);
         updatePowered();

@@ -7,6 +7,7 @@ import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -18,6 +19,7 @@ public class SimpleGolemsNeoForge {
         container.registerConfig(ModConfig.Type.COMMON, NeoForgeConfig.SPEC, "simplegolems.toml");
         modBus.addListener(NeoForgeConfig::onLoad);
         Storage.external = NeoForgeStore::at;
+        if (ModList.get().isLoaded("exdeorum")) ExDeorumCompat.init();
         modBus.addListener(SimpleGolemsNeoForge::onRegister);
         modBus.addListener((EntityAttributeCreationEvent e) -> e.put(ModContent.GOLEM_ENTITY, GolemEntity.createAttributes().build()));
     }

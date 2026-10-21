@@ -55,3 +55,14 @@ sourceSets.configureEach {
         }
     }
 }
+
+// Ex Deorum is optional: the sifter and hammer programs use it when it is installed
+repositories {
+    exclusiveContent {
+        forRepository { maven { url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+}
+dependencies {
+    compileOnly 'maven.modrinth:ex-deorum:4.0'
+}

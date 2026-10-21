@@ -13,6 +13,8 @@ public final class ModTags {
     public static final TagKey<Item> SAPLINGS = item("lumber_saplings");
     public static final TagKey<Block> CROPS = block("farmer_crops");
     public static final TagKey<Block> MINER_NEVER_DIG = block("miner_never_dig");
+    public static final TagKey<Item> HAMMERS = item("hammers");
+    public static final TagKey<Item> LIGHTS = item("lamplighter_lights");
 
     private ModTags() {}
 

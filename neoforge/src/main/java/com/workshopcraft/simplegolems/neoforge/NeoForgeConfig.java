@@ -17,6 +17,8 @@ final class NeoForgeConfig {
     private static final ModConfigSpec.BooleanValue VOID_RESCUE;
     private static final ModConfigSpec.BooleanValue DIG_OUT;
     private static final ModConfigSpec.BooleanValue MODDED_STORAGE;
+    private static final ModConfigSpec.IntValue RANCHER_MAX;
+    private static final ModConfigSpec.BooleanValue SKYBLOCK;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -29,6 +31,8 @@ final class NeoForgeConfig {
         VOID_RESCUE = b.comment("Put golems that fall into the void back on safe ground").define("voidRescue", true);
         DIG_OUT = b.comment("Let stuck golems dig their way back to their area").define("digOut", true);
         MODDED_STORAGE = b.comment("Use storage blocks from other mods that offer an item inventory").define("moddedStorage", true);
+        SKYBLOCK = b.comment("The skyblock programs (cobblegen, sifter and hammer) as a group").define("skyblockPrograms", true);
+        RANCHER_MAX = b.comment("A rancher stops breeding a kind of animal once its area holds this many of them").defineInRange("rancherMaxAnimals", 8, 2, 64);
         SPEC = b.build();
     }
 
@@ -44,5 +48,7 @@ final class NeoForgeConfig {
         Config.voidRescue = VOID_RESCUE.get();
         Config.digOut = DIG_OUT.get();
         Config.moddedStorage = MODDED_STORAGE.get();
+        Config.rancherMaxAnimals = RANCHER_MAX.get();
+        Config.skyblockPrograms = SKYBLOCK.get();
     }
 }

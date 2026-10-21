@@ -39,6 +39,16 @@ public interface JobWork {
         return -1;
     }
 
+    // carry slots that never go to storage
+    default boolean keeps(GolemEntity golem, int slot) {
+        return false;
+    }
+
+    // lang key part for what a missing restock is, shown in the status and as the supplies bubble
+    default @Nullable String supplies() {
+        return null;
+    }
+
     // how many of the kept slot stay back
     default int reserve(GolemEntity golem) {
         return 0;
@@ -50,7 +60,7 @@ public interface JobWork {
         List<ItemStack> out = new ArrayList<>();
         for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
             ItemStack c = golem.getCarried().get(i);
-            if (!c.isEmpty() && (i != keep || c.getCount() > reserve(golem))) out.add(c);
+            if (!c.isEmpty() && !keeps(golem, i) && (i != keep || c.getCount() > reserve(golem))) out.add(c);
         }
         return out;
     }
@@ -84,6 +94,16 @@ public interface JobWork {
             case SWEEPER -> SweeperWork.INSTANCE;
             case MINER -> MinerWork.INSTANCE;
             case COURIER -> CourierWork.INSTANCE;
+            case COBBLEGEN -> CobblegenWork.INSTANCE;
+            case SIFTER -> SifterWork.INSTANCE;
+            case HAMMER -> HammerWork.INSTANCE;
+            case SHEPHERD -> ShepherdWork.INSTANCE;
+            case RANCHER -> RancherWork.INSTANCE;
+            case COMPOSTER -> ComposterWork.INSTANCE;
+            case SMELTER -> SmelterWork.INSTANCE;
+            case BEEKEEPER -> BeekeeperWork.INSTANCE;
+            case FISHER -> FisherWork.INSTANCE;
+            case LAMPLIGHTER -> LamplighterWork.INSTANCE;
             default -> null;
         };
     }

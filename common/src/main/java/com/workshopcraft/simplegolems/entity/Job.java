@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import com.workshopcraft.simplegolems.registry.ModTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
@@ -15,7 +16,17 @@ public enum Job implements StringRepresentable {
     FARMER("farmer", 0xECC03A),
     MINER("miner", 0xCE463A),
     COURIER("courier", 0x3E78D6),
-    SWEEPER("sweeper", 0xA65CC4);
+    SWEEPER("sweeper", 0xA65CC4),
+    COBBLEGEN("cobblegen", 0x8A8F96),
+    SIFTER("sifter", 0xC9B27A),
+    HAMMER("hammer", 0x7A5236),
+    SHEPHERD("shepherd", 0xE8E4DA),
+    RANCHER("rancher", 0xB86E3C),
+    COMPOSTER("composter", 0x6E9A3A),
+    SMELTER("smelter", 0xE07A2A),
+    BEEKEEPER("beekeeper", 0xF2B93B),
+    FISHER("fisher", 0x3FA7B5),
+    LAMPLIGHTER("lamplighter", 0xF5D76E);
 
     public static final Codec<Job> CODEC = StringRepresentable.fromEnum(Job::values);
     public static final StreamCodec<ByteBuf, Job> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Job::ordinal);
@@ -43,6 +54,10 @@ public enum Job implements StringRepresentable {
             case FARMER -> stack.is(ItemTags.HOES);
             case MINER -> stack.is(ItemTags.PICKAXES);
             case SWEEPER -> stack.is(Items.BRUSH) || stack.is(ItemTags.SHOVELS);
+            case COBBLEGEN -> stack.is(ItemTags.PICKAXES);
+            case HAMMER -> stack.is(ModTags.HAMMERS);
+            case SHEPHERD, BEEKEEPER -> stack.is(Items.SHEARS);
+            case FISHER -> stack.is(Items.FISHING_ROD);
             default -> false;
         };
     }
@@ -52,6 +67,21 @@ public enum Job implements StringRepresentable {
     }
 
     public boolean needsTool() {
-        return this == LUMBER || this == FARMER || this == MINER;
+        return this == LUMBER || this == FARMER || this == MINER || this == COBBLEGEN || this == HAMMER || this == SHEPHERD || this == FISHER;
+    }
+
+    // blocks clicked with the marker stick, in order: the job works between them instead of in an area
+    public int points() {
+        return switch (this) {
+            case COBBLEGEN -> 2;
+            case SIFTER, HAMMER, COMPOSTER -> 3;
+            case SMELTER -> 4;
+            default -> 0;
+        };
+    }
+
+    // skyblock programs that need Ex Deorum
+    public boolean needsExDeorum() {
+        return this == SIFTER || this == HAMMER;
     }
 }

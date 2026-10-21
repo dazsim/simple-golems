@@ -3,6 +3,7 @@ package com.workshopcraft.simplegolems.registry;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
+import com.workshopcraft.simplegolems.entity.work.ExDeorum;
 import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.GolemItem;
 import com.workshopcraft.simplegolems.item.GolemSettings;
@@ -92,12 +93,17 @@ public final class ModContent {
                     out.accept(GOLEM_CORE);
                     out.accept(CLAY_COOKIE);
                     out.accept(MARKER_STICK);
-                    CARDS.values().forEach(out::accept);
-                    for (Job job : Job.values()) out.accept(GolemItem.of(job, null));
+                    for (Job job : Job.values()) if (shown(job) && CARDS.containsKey(job)) out.accept(CARDS.get(job));
+                    for (Job job : Job.values()) if (shown(job)) out.accept(GolemItem.of(job, null));
                     for (DyeColor c : DyeColor.values()) out.accept(GolemItem.of(Job.BLANK, c));
                 })
                 .build();
         r.accept(SimpleGolems.id("main"), TAB);
+    }
+
+    // the Ex Deorum programs only show when it is installed
+    private static boolean shown(Job job) {
+        return !job.needsExDeorum() || ExDeorum.loaded();
     }
 
     public static <T> BiConsumer<Identifier, T> direct(Registry<? super T> registry) {
