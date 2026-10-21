@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:cod"
+  ],
+  "result": {
+    "id": "simplegolems:fisher_card",
+    "count": 1
+  }
+}

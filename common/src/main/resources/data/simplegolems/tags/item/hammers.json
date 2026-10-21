@@ -1,0 +1,12 @@
+{
+  "values": [
+    {
+      "id": "#exdeorum:hammers",
+      "required": false
+    },
+    {
+      "id": "#exdeorum:compressed_hammers",
+      "required": false
+    }
+  ]
+}

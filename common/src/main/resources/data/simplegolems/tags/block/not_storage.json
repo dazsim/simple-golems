@@ -1,3 +1,144 @@
 {
-  "values": []
+  "values": [
+    {
+      "id": "exdeorum:oak_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:spruce_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:birch_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:jungle_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:acacia_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:dark_oak_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:mangrove_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:cherry_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:pale_oak_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:bamboo_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:crimson_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:warped_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:fir_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:redwood_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:mahogany_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:jacaranda_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:palm_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:willow_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:dead_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:magic_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:umbran_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:hellbark_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:archwood_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:skyroot_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:bluebright_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:starlit_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:frostbright_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:comet_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:lunar_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:dusk_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:maple_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:stone_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:crystallized_barrel",
+      "required": false
+    },
+    {
+      "id": "exdeorum:mechanical_sieve",
+      "required": false
+    },
+    {
+      "id": "exdeorum:mechanical_hammer",
+      "required": false
+    }
+  ]
 }

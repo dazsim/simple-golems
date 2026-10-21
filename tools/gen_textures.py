@@ -9,7 +9,10 @@ RECIPE = ["RLR", "LEL", "RLR"]
 # light to dark, for cut stones
 CUT = {"R": [(255, 150, 140), (234, 44, 32), (176, 16, 10)], "L": [(150, 184, 255), (52, 96, 222), (34, 64, 168)],
        "E": [(214, 255, 228), (90, 236, 140), (0, 158, 52)]}
-JOBS = {"lumber": (88, 170, 64), "farmer": (236, 192, 58), "miner": (206, 70, 58), "courier": (62, 120, 214), "sweeper": (166, 92, 196)}
+JOBS = {"lumber": (88, 170, 64), "farmer": (236, 192, 58), "miner": (206, 70, 58), "courier": (62, 120, 214), "sweeper": (166, 92, 196),
+        "cobblegen": (138, 143, 150), "sifter": (201, 178, 122), "hammer": (122, 82, 54), "shepherd": (150, 140, 128),
+        "rancher": (184, 110, 60), "composter": (110, 154, 58), "smelter": (224, 122, 42), "beekeeper": (242, 185, 59),
+        "fisher": (63, 167, 181), "lamplighter": (214, 170, 40)}
 CLAY = [(226, 156, 116), (206, 132, 94), (190, 116, 82), (164, 96, 66), (128, 72, 50)]
 GREY = [(255, 255, 255), (240, 240, 240), (224, 224, 224), (200, 200, 200), (166, 166, 166)]
 EYE = (40, 26, 24)
@@ -151,6 +154,68 @@ def icon_brush(im, c):
     put(im, 8, 10, c)
 
 
+def icon_cobble(im, c):
+    rect(im, 5, 7, 10, 11, c)
+    for x, y in ((6, 8), (8, 9), (9, 7), (6, 10), (9, 11)):
+        put(im, x, y, scale(c, 0.7))
+
+
+def icon_mesh(im, c):
+    for x in (5, 7, 9, 11):
+        rect(im, x, 7, x, 11, c)
+    for y in (7, 9, 11):
+        rect(im, 5, y, 11, y, c)
+
+
+def icon_hammer(im, c):
+    rect(im, 5, 7, 10, 8, c)
+    rect(im, 7, 9, 8, 11, (150, 110, 70))
+
+
+def icon_shears(im, c):
+    for x, y in ((5, 7), (6, 8), (7, 9), (9, 7), (8, 8), (8, 10), (9, 11), (6, 10), (5, 11)):
+        put(im, x, y, c)
+
+
+def icon_heart(im, c):
+    for x, y in ((5, 7), (6, 7), (8, 7), (9, 7), (5, 8), (6, 8), (7, 8), (8, 8), (9, 8), (6, 9), (7, 9), (8, 9), (7, 10)):
+        put(im, x, y, c)
+
+
+def icon_bin(im, c):
+    rect(im, 5, 8, 10, 11, c)
+    rect(im, 4, 7, 11, 7, scale(c, 0.8))
+    rect(im, 6, 9, 9, 9, (120, 160, 60))
+
+
+def icon_flame(im, c):
+    for x, y in ((7, 6), (6, 7), (7, 7), (8, 8), (6, 8), (5, 9), (6, 9), (7, 9), (8, 9), (9, 9), (5, 10), (6, 10), (7, 10), (8, 10), (9, 10), (6, 11), (7, 11), (8, 11)):
+        put(im, x, y, c)
+    put(im, 7, 10, (255, 220, 90))
+
+
+def icon_bee(im, c):
+    rect(im, 5, 8, 10, 10, (240, 200, 60))
+    for x in (6, 8, 10):
+        rect(im, x, 8, x, 10, (60, 46, 30))
+    put(im, 7, 7, (220, 236, 250))
+    put(im, 9, 7, (220, 236, 250))
+
+
+def icon_fish(im, c):
+    rect(im, 5, 8, 9, 10, c)
+    put(im, 10, 9, c)
+    put(im, 11, 8, c)
+    put(im, 11, 10, c)
+    put(im, 6, 8, (30, 30, 30))
+
+
+def icon_torch(im, c):
+    rect(im, 7, 8, 8, 11, (150, 110, 70))
+    rect(im, 7, 6, 8, 7, (255, 210, 70))
+    put(im, 7, 6, (255, 245, 170))
+
+
 def marker_stick():
     im = img()
     stick = [(137, 103, 39), (104, 78, 30), (73, 54, 21)]
@@ -251,7 +316,9 @@ def main():
     golem_core().save(f"{OUT}/golem_core.png")
     clay_cookie().save(f"{OUT}/clay_cookie.png")
     marker_stick().save(f"{OUT}/marker_stick.png")
-    icons = {"lumber": icon_leaf, "farmer": icon_wheat, "miner": icon_pick, "courier": icon_chest, "sweeper": icon_brush}
+    icons = {"lumber": icon_leaf, "farmer": icon_wheat, "miner": icon_pick, "courier": icon_chest, "sweeper": icon_brush,
+             "cobblegen": icon_cobble, "sifter": icon_mesh, "hammer": icon_hammer, "shepherd": icon_shears, "rancher": icon_heart,
+             "composter": icon_bin, "smelter": icon_flame, "beekeeper": icon_bee, "fisher": icon_fish, "lamplighter": icon_torch}
     for job, colour in JOBS.items():
         card(colour, icons[job]).save(f"{OUT}/{job}_card.png")
         accent(job).save(f"{OUT}/golem_accent_{job}.png")

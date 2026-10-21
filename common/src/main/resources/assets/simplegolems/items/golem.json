@@ -270,6 +270,76 @@
               "type": "minecraft:model",
               "model": "simplegolems:item/golem_accent_sweeper"
             }
+          },
+          {
+            "when": "cobblegen",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_cobblegen"
+            }
+          },
+          {
+            "when": "sifter",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_sifter"
+            }
+          },
+          {
+            "when": "hammer",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_hammer"
+            }
+          },
+          {
+            "when": "shepherd",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_shepherd"
+            }
+          },
+          {
+            "when": "rancher",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_rancher"
+            }
+          },
+          {
+            "when": "composter",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_composter"
+            }
+          },
+          {
+            "when": "smelter",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_smelter"
+            }
+          },
+          {
+            "when": "beekeeper",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_beekeeper"
+            }
+          },
+          {
+            "when": "fisher",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_fisher"
+            }
+          },
+          {
+            "when": "lamplighter",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_lamplighter"
+            }
           }
         ],
         "fallback": {
