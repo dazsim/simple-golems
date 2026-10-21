@@ -128,11 +128,11 @@ public class MinerWork implements JobWork {
         golem.setNeedsBlocks(false);
         // from the rim down: water or lava that got in is sealed first, then missing steps, then the next block to dig
         for (int y = max.getY() + 1; y >= min.getY(); y--) {
-            // the layer below too, so digging never opens on to it
+            // then the layer below too, so digging never opens on to it
             BlockPos fix = fluidToSeal(golem, level, min, max, y, skip);
-            if (fix == null && y > min.getY()) fix = fluidToSeal(golem, level, min, max, y - 1, skip);
             BlockPos step = st.step(st.depth(y));
             if (fix == null && step != null && open(level, step) && !skip.test(step)) fix = step;
+            if (fix == null && y > min.getY()) fix = fluidToSeal(golem, level, min, max, y - 1, skip);
             if (fix != null) {
                 if (hasBlocks) return fix;
                 golem.setNeedsBlocks(true);
