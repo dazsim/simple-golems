@@ -78,38 +78,18 @@ public final class Storage {
         return HopperBlockEntity.addItem(null, c, stack, null);
     }
 
-    public static boolean fits(ItemStack carried, ItemStack stack) {
-        if (carried.isEmpty()) return true;
-        return ItemStack.isSameItemSameComponents(carried, stack) && carried.getCount() < carried.getMaxStackSize();
-    }
-
     public static void pickUp(GolemEntity golem, ItemEntity item) {
-        ItemStack carried = golem.getCarried();
         ItemStack stack = item.getItem();
-        if (!fits(carried, stack)) return;
-        int n = carried.isEmpty() ? Math.min(stack.getCount(), stack.getMaxStackSize()) : Math.min(stack.getCount(), carried.getMaxStackSize() - carried.getCount());
-        ItemStack taken = stack.split(n);
-        if (carried.isEmpty()) golem.setCarried(taken);
-        else {
-            carried.grow(n);
-            golem.setCarried(carried);
-        }
+        if (!golem.canCarry(stack)) return;
+        golem.addCarried(stack);
         if (stack.isEmpty()) item.discard();
         else item.setItem(stack);
         golem.playSound(SoundEvents.ITEM_PICKUP, 0.3F, 1.6F);
     }
 
-    // what fits the carry slot goes straight in, the rest is dropped for later trips
+    // what fits the carry slots goes straight in, the rest is dropped for later trips
     public static void collectOrDrop(GolemEntity golem, ServerLevel level, Vec3 at, ItemStack stack) {
-        ItemStack carried = golem.getCarried();
-        if (carried.isEmpty()) {
-            golem.setCarried(stack.split(stack.getMaxStackSize()));
-        } else if (ItemStack.isSameItemSameComponents(carried, stack)) {
-            int n = Math.min(stack.getCount(), carried.getMaxStackSize() - carried.getCount());
-            carried.grow(n);
-            stack.shrink(n);
-            golem.setCarried(carried);
-        }
+        golem.addCarried(stack);
         spawnWorkDrop(level, at, stack);
     }
 

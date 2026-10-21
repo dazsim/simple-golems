@@ -128,7 +128,7 @@ LANG = {
     "message.simplegolems.status.no_route": "%s needs a container near each corner of its area",
     "message.simplegolems.marker.first": "First corner set at %s %s %s",
     "message.simplegolems.marker.second": "Area %s x %s x %s marked, use it on a golem",
-    "message.simplegolems.marker.too_big": "Too big, an area can be at most %s blocks each way",
+    "message.simplegolems.marker.too_big": "Too big, an area can be at most %s blocks across",
     "message.simplegolems.marker.cleared": "Marker cleared",
     "message.simplegolems.marker.unfinished": "Mark two corners first",
     "message.simplegolems.marker.given": "Area %s x %s x %s given to the golem",
@@ -143,6 +143,18 @@ def lang():
     write(f"{ASSETS}/lang/en_us.json", LANG)
 
 
+# plain blocks a miner may place for steps and to seal water and lava: no ores, valuables, block entities or falling blocks
+BUILDING = ["cobblestone", "cobbled_deepslate", "stone", "deepslate", "andesite", "diorite", "granite", "tuff",
+            "dirt", "coarse_dirt", "netherrack", "blackstone", "basalt", "smooth_basalt", "calcite", "end_stone",
+            "stone_bricks", "deepslate_bricks", "mossy_cobblestone", "dripstone_block", "sandstone", "red_sandstone",
+            "mud_bricks", "packed_mud", "terracotta"]
+
+
+def tags():
+    write(f"{DATA}/tags/item/miner_building_blocks.json", {"values": [f"minecraft:{b}" for b in BUILDING]})
+
+
 items()
 recipes()
 lang()
+tags()

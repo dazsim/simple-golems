@@ -7,8 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -18,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -123,36 +124,23 @@ public class MinerWork implements JobWork {
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
         Stairs st = Stairs.of(area);
         BlockPos min = area.min(), max = area.max();
-        boolean hasBlocks = isBuildingBlock(golem.getCarried());
+        boolean hasBlocks = golem.carries(MinerWork::isBuildingBlock);
         golem.setNeedsBlocks(false);
-        // layers already found finished are skipped, with a full look from the top now and then
-        boolean full = golem.tickCount % 600 < 20;
-        int from = full ? max.getY() : Math.min(max.getY(), golem.minerFrom);
-        boolean clean = true;
-        for (int y = from; y >= min.getY(); y--) {
-            BlockPos fix = null;
-            double fixDist = Double.MAX_VALUE;
-            // water or lava at this layer, in the pit or right at its edge
-            for (BlockPos p : BlockPos.betweenClosed(min.getX() - 1, y, min.getZ() - 1, max.getX() + 1, y, max.getZ() + 1)) {
-                if (skip.test(p) || !fluid(level, p)) continue;
-                double d = golem.distanceToSqr(Vec3.atCenterOf(p));
-                if (d < fixDist) {
-                    fix = p.immutable();
-                    fixDist = d;
-                }
-            }
+        // from the rim down: water or lava that got in is sealed first, then missing steps, then the next block to dig
+        for (int y = max.getY() + 1; y >= min.getY(); y--) {
+            BlockPos fix = fluidToSeal(golem, level, min, max, y, skip);
             BlockPos step = st.step(st.depth(y));
             if (fix == null && step != null && open(level, step) && !skip.test(step)) fix = step;
             if (fix != null) {
-                clean = false;
                 if (hasBlocks) return fix;
                 golem.setNeedsBlocks(true);
                 return null;
             }
+            if (y > max.getY()) continue;
             BlockPos best = null;
             double bestDist = Double.MAX_VALUE;
             for (BlockPos p : BlockPos.betweenClosed(min.getX(), y, min.getZ(), max.getX(), y, max.getZ())) {
-                if (st.isStair(p) || skip.test(p) || !mineable(level, p, golem)) continue;
+                if (st.isStair(p) || skip.test(p) || !mineable(level, p, golem) || underFoot(level, golem, p)) continue;
                 double d = golem.distanceToSqr(Vec3.atCenterOf(p));
                 if (d < bestDist) {
                     best = p.immutable();
@@ -160,9 +148,63 @@ public class MinerWork implements JobWork {
                 }
             }
             if (best != null) return best;
-            if (clean) golem.minerFrom = y - 1;
         }
         return null;
+    }
+
+    // water or lava in the pit or right at its edge on this layer, ones with somewhere dry to stand first
+    private static @Nullable BlockPos fluidToSeal(GolemEntity golem, ServerLevel level, BlockPos min, BlockPos max, int y, Predicate<BlockPos> skip) {
+        BlockPos fix = null;
+        double fixDist = Double.MAX_VALUE;
+        for (BlockPos p : BlockPos.betweenClosed(min.getX() - 1, y, min.getZ() - 1, max.getX() + 1, y, max.getZ() + 1)) {
+            if (skip.test(p) || !fluid(level, p) || golem.getBoundingBox().intersects(new AABB(p))) continue;
+            double d = golem.distanceToSqr(Vec3.atCenterOf(p)) + (dryStand(level, p) == null ? 10000 : 0);
+            if (d < fixDist) {
+                fix = p.immutable();
+                fixDist = d;
+            }
+        }
+        return fix;
+    }
+
+    // the block it stands on, with a drop below it
+    private static boolean underFoot(ServerLevel level, GolemEntity golem, BlockPos p) {
+        if (!golem.getBoundingBox().move(0, -0.5, 0).intersects(new AABB(p))) return false;
+        BlockPos below = p.below();
+        return level.getBlockState(below).getCollisionShape(level, below).isEmpty();
+    }
+
+    // somewhere dry next to water or lava, so the block does not go where the golem stands
+    private static @Nullable BlockPos dryStand(ServerLevel level, BlockPos target) {
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (BlockPos p : BlockPos.betweenClosed(target.offset(-2, -1, -2), target.offset(2, 2, 2))) {
+            int dx = p.getX() - target.getX(), dz = p.getZ() - target.getZ();
+            if (dx == 0 && dz == 0 || dx * dx + dz * dz > 5) continue;
+            if (!dry(level, p) || !dry(level, p.above())) continue;
+            if (!level.getBlockState(p.below()).isFaceSturdy(level, p.below(), Direction.UP)) continue;
+            double d = p.distSqr(target);
+            if (d < bestDist) {
+                best = p.immutable();
+                bestDist = d;
+            }
+        }
+        return best;
+    }
+
+    private static boolean dry(ServerLevel level, BlockPos p) {
+        return level.getBlockState(p).getCollisionShape(level, p).isEmpty() && level.getFluidState(p).isEmpty() && !level.getBlockState(p).is(BlockTags.FIRE);
+    }
+
+    // the biggest stack of building blocks, up to a full 64, stays with the miner for steps and sealing
+    @Override
+    public int keep(GolemEntity golem) {
+        int best = -1;
+        for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
+            ItemStack c = golem.getCarried().get(i);
+            if (isBuildingBlock(c) && (best < 0 || c.getCount() > golem.getCarried().get(best).getCount())) best = i;
+        }
+        return best;
     }
 
     @Override
@@ -182,7 +224,7 @@ public class MinerWork implements JobWork {
 
     @Override
     public boolean isValid(GolemEntity golem, ServerLevel level, BlockPos pos) {
-        return isFix(golem, level, pos) ? isBuildingBlock(golem.getCarried()) : isValid(level, pos);
+        return isFix(golem, level, pos) ? golem.carries(MinerWork::isBuildingBlock) : isValid(level, pos);
     }
 
     @Override
@@ -193,13 +235,14 @@ public class MinerWork implements JobWork {
     @Override
     public void finish(GolemEntity golem, ServerLevel level, BlockPos pos) {
         if (isFix(golem, level, pos)) {
-            ItemStack carried = golem.getCarried();
-            if (!isBuildingBlock(carried)) return;
+            int slot = keep(golem);
+            if (slot < 0 || golem.getBoundingBox().intersects(new AABB(pos))) return;
+            ItemStack carried = golem.getCarried().get(slot);
             BlockState state = ((BlockItem) carried.getItem()).getBlock().defaultBlockState();
             level.setBlockAndUpdate(pos, state);
             level.playSound(null, pos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
             carried.shrink(1);
-            golem.setCarried(carried);
+            golem.carriedChanged();
             return;
         }
         ItemStack tool = golem.getTool();
@@ -218,6 +261,7 @@ public class MinerWork implements JobWork {
         WorkArea area = area(golem);
         Stairs st = Stairs.of(area);
         int d = st.depth(target.getY());
+        if (fluid(level, target)) return dryStand(level, target);
         if (!target.equals(st.step(d)) || !open(level, target)) return null;
         BlockPos above = st.step(d - 1);
         return above == null ? new BlockPos(st.minX - 1, st.top + 1, st.minZ) : above.above();

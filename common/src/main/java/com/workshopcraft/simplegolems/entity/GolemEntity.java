@@ -1,6 +1,7 @@
 package com.workshopcraft.simplegolems.entity;
 
 import com.workshopcraft.simplegolems.item.GolemSettings;
+import com.workshopcraft.simplegolems.entity.goal.EscapeHazardGoal;
 import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
 import com.workshopcraft.simplegolems.entity.goal.GetOffTreeGoal;
@@ -20,6 +21,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
@@ -54,9 +56,12 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.tags.ItemTags;
@@ -73,7 +78,8 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<Integer> DATA_TROUBLE = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
 
     private ItemStack cookies = ItemStack.EMPTY;
-    private ItemStack carried = ItemStack.EMPTY;
+    public static final int CARRY_SLOTS = 4;
+    private final NonNullList<ItemStack> carried = NonNullList.withSize(CARRY_SLOTS, ItemStack.EMPTY);
     private int fuel;
     private @Nullable WorkArea customArea;
     private @Nullable BlockPos home;
@@ -82,7 +88,6 @@ public class GolemEntity extends AbstractGolem {
     private boolean saplingTrouble;
     private boolean blocksTrouble;
     private boolean needBlocks;
-    public int minerFrom = Integer.MAX_VALUE;
     private Trouble lastTrouble = Trouble.NONE;
     private int thanks;
     public float bubble, bubbleO;
@@ -101,13 +106,14 @@ public class GolemEntity extends AbstractGolem {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 48.0)
+                .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 64.0)
                 .add(Attributes.MINING_EFFICIENCY);
     }
 
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new EscapeHazardGoal(this));
         goalSelector.addGoal(0, new FetchToolGoal(this));
         goalSelector.addGoal(2, new GetOffTreeGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
@@ -135,7 +141,6 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public void setJob(Job job) {
-        minerFrom = Integer.MAX_VALUE;
         entityData.set(DATA_JOB, job.ordinal());
     }
 
@@ -163,10 +168,59 @@ public class GolemEntity extends AbstractGolem {
     public ItemStack getCookies() { return cookies; }
     public int getShownCookies() { return entityData.get(DATA_COOKIES); }
     public void setCookies(ItemStack s) { cookies = s; updatePowered(); }
-    public ItemStack getCarried() { return carried; }
-    public void setCarried(ItemStack s) {
-        carried = s;
-        entityData.set(DATA_CARRIED, s.copyWithCount(1));
+    // the four carry slots; call carriedChanged after changing a stack in place
+    public NonNullList<ItemStack> getCarried() { return carried; }
+
+    public void carriedChanged() {
+        for (int i = 0; i < CARRY_SLOTS; i++) if (carried.get(i).isEmpty()) carried.set(i, ItemStack.EMPTY);
+        ItemStack shown = carried.stream().filter(c -> !c.isEmpty()).findFirst().orElse(ItemStack.EMPTY);
+        entityData.set(DATA_CARRIED, shown.copyWithCount(1));
+    }
+
+    public void setCarried(int slot, ItemStack s) {
+        carried.set(slot, s);
+        carriedChanged();
+    }
+
+    public void clearCarried() {
+        Collections.fill(carried, ItemStack.EMPTY);
+        carriedChanged();
+    }
+
+    public boolean carryEmpty() {
+        return carried.stream().allMatch(ItemStack::isEmpty);
+    }
+
+    // no empty slot left
+    public boolean carryFull() {
+        return carried.stream().noneMatch(ItemStack::isEmpty);
+    }
+
+    public boolean canCarry(ItemStack stack) {
+        for (ItemStack c : carried) {
+            if (c.isEmpty() || ItemStack.isSameItemSameComponents(c, stack) && c.getCount() < c.getMaxStackSize()) return true;
+        }
+        return false;
+    }
+
+    public boolean carries(Predicate<ItemStack> test) {
+        return carried.stream().anyMatch(c -> !c.isEmpty() && test.test(c));
+    }
+
+    // tops up matching stacks first, then empty slots; what does not fit is left in the stack
+    public void addCarried(ItemStack stack) {
+        for (ItemStack c : carried) {
+            if (stack.isEmpty()) break;
+            if (!c.isEmpty() && ItemStack.isSameItemSameComponents(c, stack)) {
+                int n = Math.min(stack.getCount(), c.getMaxStackSize() - c.getCount());
+                c.grow(n);
+                stack.shrink(n);
+            }
+        }
+        for (int i = 0; i < CARRY_SLOTS && !stack.isEmpty(); i++) {
+            if (carried.get(i).isEmpty()) carried.set(i, stack.split(stack.getMaxStackSize()));
+        }
+        carriedChanged();
     }
 
     public ItemStack getShownCarried() {
@@ -174,7 +228,7 @@ public class GolemEntity extends AbstractGolem {
     }
     public int getFuel() { return fuel; }
     public @Nullable WorkArea getCustomArea() { return customArea; }
-    public void setCustomArea(@Nullable WorkArea area) { customArea = area; minerFrom = Integer.MAX_VALUE; }
+    public void setCustomArea(@Nullable WorkArea area) { customArea = area; }
     public @Nullable UUID getOwner() { return owner; }
     public void setOwner(@Nullable UUID uuid) { owner = uuid; }
 
@@ -187,7 +241,9 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public WorkArea getArea() {
-        return customArea != null ? customArea : WorkArea.around(getHome());
+        if (customArea == null) return WorkArea.around(getHome());
+        // miners and couriers may work a tall area; other jobs keep to 32 blocks high
+        return getJob() == Job.MINER || getJob() == Job.COURIER ? customArea : customArea.capHeight();
     }
 
     // same rules as a player: tool tier speed, Efficiency through the mining_efficiency attribute, Haste
@@ -290,9 +346,9 @@ public class GolemEntity extends AbstractGolem {
     // storage may have been emptied or added, and a sapling may have turned up
     private void recheckTrouble(ServerLevel sl) {
         JobWork work = JobWork.of(getJob());
-        if (storageTrouble && (carried.isEmpty() || work == null
-                || work.dropOff(this, sl, work.area(this), carried, p -> false) != null)) storageTrouble = false;
-        if (blocksTrouble && (carried.is(MinerWork.BUILDING) || Storage.nearest(sl, work == null ? getArea() : work.area(this), position(),
+        if (storageTrouble && (work == null || work.load(this).stream()
+                .allMatch(c -> work.dropOff(this, sl, work.area(this), c, p -> false) != null))) storageTrouble = false;
+        if (blocksTrouble && (carries(MinerWork::isBuildingBlock) || Storage.nearest(sl, work == null ? getArea() : work.area(this), position(),
                 c -> c.hasAnyMatching(st -> st.is(MinerWork.BUILDING)), p -> false) != null)) blocksTrouble = false;
         if (saplingTrouble && Storage.nearest(sl, getArea(), position(), c -> c.hasAnyMatching(st -> st.is(ItemTags.SAPLINGS)), p -> false) != null) {
             saplingTrouble = false;
@@ -331,7 +387,8 @@ public class GolemEntity extends AbstractGolem {
         List<ItemStack> items = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).allItemsCopyStream().toList();
         setTool(items.size() > 0 ? items.get(0) : ItemStack.EMPTY);
         cookies = items.size() > 1 ? items.get(1) : ItemStack.EMPTY;
-        setCarried(items.size() > 2 ? items.get(2) : ItemStack.EMPTY);
+        for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, items.size() > 2 + i ? items.get(2 + i) : ItemStack.EMPTY);
+        carriedChanged();
         GolemSettings s = stack.getOrDefault(ModContent.SETTINGS, GolemSettings.EMPTY);
         fuel = s.fuel();
         customArea = s.area().orElse(null);
@@ -342,7 +399,8 @@ public class GolemEntity extends AbstractGolem {
         ItemStack stack = new ItemStack(ModContent.GOLEM);
         stack.set(ModContent.JOB, getJob());
         if (getColour() != null) stack.set(ModContent.COLOUR, getColour());
-        List<ItemStack> items = new ArrayList<>(List.of(getTool().copy(), cookies.copy(), carried.copy()));
+        List<ItemStack> items = new ArrayList<>(List.of(getTool().copy(), cookies.copy()));
+        for (ItemStack c : carried) items.add(c.copy());
         stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
         stack.set(ModContent.SETTINGS, new GolemSettings(fuel, Optional.ofNullable(customArea)));
         if (hasCustomName()) stack.set(DataComponents.CUSTOM_NAME, getCustomName());
@@ -483,9 +541,9 @@ public class GolemEntity extends AbstractGolem {
 
         if (held.isEmpty()) {
             if (server) {
-                if (!carried.isEmpty()) {
-                    give(player, carried);
-                    setCarried(ItemStack.EMPTY);
+                if (!carryEmpty()) {
+                    for (ItemStack c : carried) if (!c.isEmpty()) give(player, c);
+                    clearCarried();
                 } else {
                     tellStatus(player);
                 }
@@ -493,6 +551,12 @@ public class GolemEntity extends AbstractGolem {
             return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
+    }
+
+    // a miner only steps down one block at a time, so it does not drop into a cave it cannot climb out of
+    @Override
+    public int getMaxFallDistance() {
+        return getJob() == Job.MINER ? 1 : super.getMaxFallDistance();
     }
 
     public static boolean isTool(ItemStack stack) {
@@ -529,7 +593,8 @@ public class GolemEntity extends AbstractGolem {
         if (getColour() != null) out.store("colour", DyeColor.CODEC, getColour());
         out.store("cookies", ItemStack.OPTIONAL_CODEC, cookies);
         if (thanks > 0) out.putInt("thanks", thanks);
-        out.store("carried", ItemStack.OPTIONAL_CODEC, carried);
+        if (getTrouble() != Trouble.NONE) out.putString("trouble", getTrouble().name().toLowerCase(Locale.ROOT));
+        out.store("carry", ItemStack.OPTIONAL_CODEC.listOf(), List.copyOf(carried));
         out.putInt("fuel", fuel);
         if (customArea != null) out.store("area", WorkArea.CODEC, customArea);
         if (home != null) out.store("home", BlockPos.CODEC, home);
@@ -542,7 +607,11 @@ public class GolemEntity extends AbstractGolem {
         setJob(in.read("job", Job.CODEC).orElse(Job.BLANK));
         setColour(in.read("colour", DyeColor.CODEC).orElse(null));
         cookies = in.read("cookies", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
-        setCarried(in.read("carried", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY));
+        // alpha.6 and older kept one stack under "carried": it becomes slot 0
+        List<ItemStack> carry = in.read("carry", ItemStack.OPTIONAL_CODEC.listOf())
+                .orElseGet(() -> List.of(in.read("carried", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY)));
+        for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, i < carry.size() ? carry.get(i) : ItemStack.EMPTY);
+        carriedChanged();
         fuel = in.getIntOr("fuel", 0);
         customArea = in.read("area", WorkArea.CODEC).orElse(null);
         home = in.read("home", BlockPos.CODEC).orElse(null);
@@ -556,10 +625,11 @@ public class GolemEntity extends AbstractGolem {
         spawnAtLocation(level, new ItemStack(ModContent.GOLEM_CORE));
         ItemStack card = ModContent.card(getJob());
         if (!card.isEmpty()) spawnAtLocation(level, card);
-        for (ItemStack s : List.of(getTool(), cookies, carried)) if (!s.isEmpty()) spawnAtLocation(level, s.copy());
+        for (ItemStack s : List.of(getTool(), cookies)) if (!s.isEmpty()) spawnAtLocation(level, s.copy());
+        for (ItemStack s : carried) if (!s.isEmpty()) spawnAtLocation(level, s.copy());
         setTool(ItemStack.EMPTY);
         cookies = ItemStack.EMPTY;
-        setCarried(ItemStack.EMPTY);
+        clearCarried();
     }
 
     @Override

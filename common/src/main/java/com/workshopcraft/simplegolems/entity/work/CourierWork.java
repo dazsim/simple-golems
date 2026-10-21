@@ -51,7 +51,7 @@ public class CourierWork implements JobWork {
 
     @Override
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
-        if (!golem.getCarried().isEmpty()) return null;
+        if (!golem.carryEmpty()) return null;
         BlockPos from = source(level, area), to = destination(level, area);
         if (from == null || to == null || skip.test(from) || sameContainer(level, from, to)) return null;
         Container src = Storage.containerAt(level, from), dst = Storage.containerAt(level, to);
@@ -73,11 +73,14 @@ public class CourierWork implements JobWork {
         WorkArea area = golem.getArea();
         BlockPos to = destination(level, area);
         Container src = Storage.containerAt(level, pos), dst = to == null ? null : Storage.containerAt(level, to);
-        if (src == null || dst == null || !golem.getCarried().isEmpty()) return;
-        int slot = slotToMove(src, dst);
-        if (slot < 0) return;
-        ItemStack s = src.getItem(slot);
-        golem.setCarried(src.removeItem(slot, Math.min(s.getCount(), s.getMaxStackSize())));
+        if (src == null || dst == null || !golem.carryEmpty()) return;
+        // up to one stack per carry slot each trip
+        for (int n = 0; n < GolemEntity.CARRY_SLOTS; n++) {
+            int slot = slotToMove(src, dst);
+            if (slot < 0) break;
+            ItemStack s = src.getItem(slot);
+            golem.setCarried(n, src.removeItem(slot, Math.min(s.getCount(), s.getMaxStackSize())));
+        }
         src.setChanged();
         golem.playSound(SoundEvents.BUNDLE_INSERT, 0.6F, 1.2F);
     }

@@ -9,6 +9,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 public interface JobWork {
@@ -30,6 +32,22 @@ public interface JobWork {
     // where to stand for a target, when walking at the target itself would go wrong
     default @Nullable BlockPos approach(GolemEntity golem, ServerLevel level, BlockPos target) {
         return null;
+    }
+
+    // carry slot kept back from storage, or -1
+    default int keep(GolemEntity golem) {
+        return -1;
+    }
+
+    // the carried stacks that go to storage
+    default List<ItemStack> load(GolemEntity golem) {
+        int keep = keep(golem);
+        List<ItemStack> out = new ArrayList<>();
+        for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
+            ItemStack c = golem.getCarried().get(i);
+            if (i != keep && !c.isEmpty()) out.add(c);
+        }
+        return out;
     }
 
     // what to fetch from storage before work can go on, or null

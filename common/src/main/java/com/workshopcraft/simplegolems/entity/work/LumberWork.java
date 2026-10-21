@@ -202,9 +202,8 @@ public class LumberWork implements JobWork {
         if (plant(level, base, drops)) return true;
         List<ItemEntity> near = level.getEntitiesOfClass(ItemEntity.class, new AABB(base).inflate(3), e -> e.isAlive() && e.getItem().is(ItemTags.SAPLINGS));
         if (near.stream().anyMatch(e -> plantFrom(level, base, e))) return true;
-        ItemStack carried = golem.getCarried();
-        if (plant(level, base, List.of(carried))) {
-            golem.setCarried(carried);
+        if (plant(level, base, golem.getCarried())) {
+            golem.carriedChanged();
             return true;
         }
         // nothing dropped, so borrow a sapling from storage in the area

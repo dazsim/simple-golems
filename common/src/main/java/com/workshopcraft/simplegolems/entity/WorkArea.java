@@ -48,7 +48,14 @@ public record WorkArea(BlockPos first, BlockPos second) {
     }
 
     public static boolean fits(BlockPos a, BlockPos b) {
-        return Math.abs(a.getX() - b.getX()) < MAX_SIZE && Math.abs(a.getY() - b.getY()) < MAX_SIZE && Math.abs(a.getZ() - b.getZ()) < MAX_SIZE;
+        return Math.abs(a.getX() - b.getX()) < MAX_SIZE && Math.abs(a.getZ() - b.getZ()) < MAX_SIZE;
+    }
+
+    // at most MAX_SIZE high, keeping the bottom
+    public WorkArea capHeight() {
+        if (sizeY() <= MAX_SIZE) return this;
+        BlockPos min = min(), max = max();
+        return of(min, new BlockPos(max.getX(), min.getY() + MAX_SIZE - 1, max.getZ()));
     }
 
     public boolean contains(BlockPos p) {

@@ -67,10 +67,18 @@ public class WorkGoal extends Goal {
     }
 
     // a container it can use, or null; the chest bubble only shows when there is none at all, not when it is out of reach
-    private @Nullable BlockPos storageFor(ServerLevel level, WorkArea area, ItemStack carried) {
-        BlockPos chest = work.dropOff(golem, level, area, carried, this::skipOrAway);
-        golem.setStorageTrouble(chest == null && work.dropOff(golem, level, area, carried, this::skip) == null);
+    private @Nullable BlockPos storageFor(ServerLevel level, WorkArea area, List<ItemStack> load) {
+        BlockPos chest = dropOff(level, area, load, this::skipOrAway);
+        golem.setStorageTrouble(chest == null && dropOff(level, area, load, this::skip) == null);
         return chest;
+    }
+
+    private @Nullable BlockPos dropOff(ServerLevel level, WorkArea area, List<ItemStack> load, Predicate<BlockPos> skip) {
+        for (ItemStack c : load) {
+            BlockPos p = work.dropOff(golem, level, area, c, skip);
+            if (p != null) return p;
+        }
+        return null;
     }
 
     @Override
@@ -96,16 +104,16 @@ public class WorkGoal extends Goal {
         for (ItemEntity e : loose) {
             if (e.getAge() > 3000) e.setExtendedLifetime();
         }
-        ItemStack carried = golem.getCarried();
-        boolean full = !carried.isEmpty() && carried.getCount() >= carried.getMaxStackSize();
-        ItemEntity next = full ? null : loose.stream()
-                .filter(e -> !e.hasPickUpDelay() && Storage.fits(carried, e.getItem()))
+        boolean full = golem.carryFull();
+        ItemEntity next = loose.stream()
+                .filter(e -> !e.hasPickUpDelay() && golem.canCarry(e.getItem()))
                 .min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
         if (next != null) return begin(Task.PICKUP, next.blockPosition(), next);
-        // one item type per trip, and every drop is cleared before the next tree, crop or block
-        if (!carried.isEmpty()) {
+        // off to storage once the slots are full or nothing is left to do; every drop is cleared before the next tree, crop or block
+        List<ItemStack> load = work.load(golem);
+        if (!load.isEmpty()) {
             // nowhere to put it: stop and wait rather than spill more drops
-            BlockPos chest = storageFor(level, area, carried);
+            BlockPos chest = storageFor(level, area, load);
             if (chest == null) return false;
             if (full || !loose.isEmpty()) return begin(Task.DELIVER, chest, null);
         } else {
@@ -116,10 +124,10 @@ public class WorkGoal extends Goal {
             BlockPos target = work.findTarget(golem, level, area, this::skip);
             if (target != null) return begin(Task.WORK, target, null);
         }
-        if (!carried.isEmpty()) {
-            BlockPos chest = storageFor(level, area, carried);
+        if (!load.isEmpty()) {
+            BlockPos chest = storageFor(level, area, load);
             if (chest != null) return begin(Task.DELIVER, chest, null);
-        } else if (work.restock(golem) != null) {
+        } else if (work.restock(golem) != null && !full) {
             Predicate<ItemStack> want = work.restock(golem);
             BlockPos chest = Storage.nearest(level, area, golem.position(), c -> c.hasAnyMatching(want), this::skipOrAway);
             golem.setBlocksTrouble(chest == null);
@@ -148,9 +156,9 @@ public class WorkGoal extends Goal {
     public boolean canContinueToUse() {
         if (task == null || failed || golem.isWaiting() || ticks > GIVE_UP || trip > MAX_TRIP) return false;
         return switch (task) {
-            case PICKUP -> item != null && item.isAlive() && Storage.fits(golem.getCarried(), item.getItem());
-            case DELIVER -> Storage.containerAt(level(), pos) != null && !golem.getCarried().isEmpty();
-            case FETCH -> Storage.containerAt(level(), pos) != null && golem.getCarried().isEmpty();
+            case PICKUP -> item != null && item.isAlive() && golem.canCarry(item.getItem());
+            case DELIVER -> Storage.containerAt(level(), pos) != null && !work.load(golem).isEmpty();
+            case FETCH -> Storage.containerAt(level(), pos) != null && !golem.carryFull();
             case WORK -> work.isValid(golem, level(), pos);
         };
     }
@@ -249,26 +257,36 @@ public class WorkGoal extends Goal {
             case DELIVER -> {
                 Container c = Storage.containerAt(level(), pos);
                 if (c != null) {
-                    golem.setCarried(Storage.insert(c, golem.getCarried()));
+                    int keep = work.keep(golem);
+                    for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
+                        if (i != keep) golem.getCarried().set(i, Storage.insert(c, golem.getCarried().get(i)));
+                    }
+                    golem.carriedChanged();
                     golem.swing(InteractionHand.OFF_HAND);
                     golem.playSound(SoundEvents.BUNDLE_DROP_CONTENTS, 0.6F, 1.3F);
                 }
-                if (!golem.getCarried().isEmpty()) skipped.put(pos, level().getGameTime() + 100);
+                if (!work.load(golem).isEmpty()) skipped.put(pos, level().getGameTime() + 100);
                 task = null;
             }
             case FETCH -> {
                 Container c = Storage.containerAt(level(), pos);
                 Predicate<ItemStack> want = work.restock(golem);
                 if (c != null && want != null) {
-                    for (int i = 0; i < c.getContainerSize(); i++) {
+                    // up to one full stack of the first kind it finds
+                    ItemStack got = ItemStack.EMPTY;
+                    for (int i = 0; i < c.getContainerSize() && got.getCount() < 64; i++) {
                         ItemStack s = c.getItem(i);
-                        if (!s.isEmpty() && want.test(s)) {
-                            golem.setCarried(c.removeItem(i, Math.min(s.getCount(), 32)));
-                            c.setChanged();
-                            golem.swing(InteractionHand.OFF_HAND);
-                            golem.playSound(SoundEvents.BUNDLE_INSERT, 0.6F, 1.2F);
-                            break;
-                        }
+                        if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !ItemStack.isSameItemSameComponents(got, s)) continue;
+                        ItemStack taken = c.removeItem(i, Math.min(s.getCount(), s.getMaxStackSize() - got.getCount()));
+                        if (got.isEmpty()) got = taken;
+                        else got.grow(taken.getCount());
+                    }
+                    if (!got.isEmpty()) {
+                        golem.addCarried(got);
+                        if (!got.isEmpty()) Storage.insert(c, got);
+                        c.setChanged();
+                        golem.swing(InteractionHand.OFF_HAND);
+                        golem.playSound(SoundEvents.BUNDLE_INSERT, 0.6F, 1.2F);
                     }
                 }
                 task = null;
