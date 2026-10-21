@@ -4,8 +4,11 @@ import os, random
 from PIL import Image
 
 OUT = "common/src/main/resources/assets/simplegolems/textures/item"
-GEM = {"A": (178, 104, 222), "R": (222, 48, 38), "L": (52, 92, 214), "D": (110, 236, 228), "E": (52, 206, 98)}
-RECIPE = ["ARA", "LDL", "ERE"]
+GEM = {"R": (222, 48, 38), "L": (52, 92, 214), "E": (52, 206, 98)}
+RECIPE = ["RLR", "LEL", "RLR"]
+# light to dark, for cut stones
+CUT = {"R": [(255, 150, 140), (234, 44, 32), (176, 16, 10)], "L": [(150, 184, 255), (52, 96, 222), (34, 64, 168)],
+       "E": [(214, 255, 228), (90, 236, 140), (0, 158, 52)]}
 JOBS = {"lumber": (88, 170, 64), "farmer": (236, 192, 58), "miner": (206, 70, 58), "courier": (62, 120, 214), "sweeper": (166, 92, 196)}
 CLAY = [(226, 156, 116), (206, 132, 94), (190, 116, 82), (164, 96, 66), (128, 72, 50)]
 GREY = [(255, 255, 255), (240, 240, 240), (224, 224, 224), (200, 200, 200), (166, 166, 166)]
@@ -61,20 +64,23 @@ def gem(im, x0, y0):
 def golem_core():
     im = img()
     rng = random.Random(1)
-    # clay puck with the recipe gem set in it
+    # clay puck with the recipe set in it as cut stones, emerald in the middle
     for x in range(3, 13):
         for y in range(3, 13):
             if (x in (3, 12)) and (y in (3, 12)):
                 continue
             put(im, x, y, CLAY[1 + (rng.random() < 0.3)] if 3 < x < 12 and 3 < y < 12 else CLAY[3])
     rect(im, 4, 4, 11, 4, CLAY[0])
-    rect(im, 5, 5, 10, 10, scale(CLAY[3], 0.8))
+    rect(im, 4, 4, 4, 10, CLAY[0])
     for j in range(3):
         for i in range(3):
-            rect(im, 5 + 2 * i, 5 + 2 * j, 6 + 2 * i, 6 + 2 * j, GEM[RECIPE[j][i]])
-    put(im, 7, 7, (196, 252, 248))
-    put(im, 5, 5, scale(GEM["A"], 1.25))
-    put(im, 9, 5, scale(GEM["A"], 1.25))
+            light, mid, dark = CUT[RECIPE[j][i]]
+            x, y = 5 + 2 * i, 5 + 2 * j
+            put(im, x, y, light)
+            put(im, x + 1, y, mid)
+            put(im, x, y + 1, mid)
+            put(im, x + 1, y + 1, dark)
+    put(im, 8, 8, (0, 110, 36))
     outline(im)
     return im
 
