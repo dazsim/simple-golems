@@ -71,8 +71,7 @@ def shapeless(name, ingredients, result, count=1):
 
 
 def recipes():
-    shaped("golem_core", ["ARA", "LDL", "ERE"], {"A": "minecraft:amethyst_shard", "R": "minecraft:redstone", "L": "minecraft:lapis_lazuli",
-                                                  "D": "minecraft:diamond", "E": "minecraft:emerald"}, "golem_core")
+    shaped("golem_core", ["RLR", "LEL", "RLR"], {"R": "minecraft:redstone", "L": "minecraft:lapis_lazuli", "E": "minecraft:emerald"}, "golem_core")
     body = {"B": "minecraft:clay", "C": f"{NS}:golem_core", "b": "minecraft:clay_ball"}
     shaped("golem", [" B ", "BCB", "b b"], body, "golem")
     for j in JOBS:

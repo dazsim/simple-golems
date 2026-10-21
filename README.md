@@ -6,7 +6,7 @@ Small clay helper golems that chop trees, farm, mine, carry and sweep for you.
 
 | Item | Recipe |
 |---|---|
-| Golem Core | amethyst, redstone, amethyst / lapis, diamond, lapis / emerald, redstone, emerald |
+| Golem Core | redstone, lapis, redstone / lapis, emerald, lapis / redstone, lapis, redstone |
 | Golem | clay block on top, clay block, core, clay block in the middle, clay balls in the bottom corners |
 | Job golem | the same, with a card between the two clay balls |
 | Card | paper and a hint item (shapeless) |
