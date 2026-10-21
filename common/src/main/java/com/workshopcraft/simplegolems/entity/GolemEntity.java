@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.item.GolemSettings;
 import com.workshopcraft.simplegolems.entity.goal.EscapeHazardGoal;
 import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
@@ -282,7 +283,7 @@ public class GolemEntity extends AbstractGolem {
 
     public boolean canWorkHere() {
         Job job = getJob();
-        if (job.needsArea() && customArea == null) return false;
+        if (job.needsArea() && customArea == null || !Config.jobEnabled(job)) return false;
         return job != Job.MINER || !(level() instanceof ServerLevel sl) || sl.getGameRules().get(GameRules.MOB_GRIEFING);
     }
 
@@ -334,7 +335,7 @@ public class GolemEntity extends AbstractGolem {
             bubble = Mth.clamp(bubble + (t != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
             return;
         }
-        if (getY() < level().getMinY()) rescueFromVoid();
+        if (getY() < level().getMinY() && Config.voidRescue) rescueFromVoid();
         if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
         if (thanks > 0) thanks--;
         if (tickCount % 10 == 0) {
@@ -365,7 +366,8 @@ public class GolemEntity extends AbstractGolem {
 
     @Override
     protected void onBelowWorld() {
-        rescueFromVoid();
+        if (Config.voidRescue) rescueFromVoid();
+        else super.onBelowWorld();
     }
 
     // fell out of the world: back up on the highest safe spot nearby, or home if there is none
@@ -430,7 +432,7 @@ public class GolemEntity extends AbstractGolem {
                 return false;
             }
             cookies.shrink(1);
-            fuel += COOKIE_TICKS;
+            fuel += Config.cookieTicks;
         }
         fuel = Math.max(0, fuel - ticks);
         updatePowered();
@@ -637,7 +639,7 @@ public class GolemEntity extends AbstractGolem {
             tell(player, "status.no_route", name);
         } else {
             WorkArea a = getArea();
-            int minutes = (fuel + cookies.getCount() * COOKIE_TICKS) / 1200;
+            int minutes = (fuel + cookies.getCount() * Config.cookieTicks) / 1200;
             tell(player, "status.working", name, minutes, a.sizeX(), a.sizeY(), a.sizeZ());
         }
     }

@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -303,7 +304,9 @@ public class WorkGoal extends Goal {
                 if (c != null) {
                     int keep = work.keep(golem);
                     for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
-                        if (i != keep) golem.getCarried().set(i, Storage.insert(c, golem.getCarried().get(i)));
+                        ItemStack s = golem.getCarried().get(i);
+                        if (i != keep) golem.getCarried().set(i, Storage.insert(c, s));
+                        else if (s.getCount() > work.reserve(golem)) s.grow(Storage.insert(c, s.split(s.getCount() - work.reserve(golem))).getCount());
                     }
                     golem.carriedChanged();
                     golem.swing(InteractionHand.OFF_HAND);
@@ -318,10 +321,11 @@ public class WorkGoal extends Goal {
                 if (c != null && want != null) {
                     // up to one full stack of the first kind it finds
                     ItemStack got = ItemStack.EMPTY;
-                    for (int i = 0; i < c.getContainerSize() && got.getCount() < 64; i++) {
+                    int limit = Math.max(16, Config.blockReserve);
+                    for (int i = 0; i < c.getContainerSize() && got.getCount() < limit; i++) {
                         ItemStack s = c.getItem(i);
                         if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !ItemStack.isSameItemSameComponents(got, s)) continue;
-                        ItemStack taken = c.removeItem(i, Math.min(s.getCount(), s.getMaxStackSize() - got.getCount()));
+                        ItemStack taken = c.removeItem(i, Math.min(s.getCount(), Math.min(limit, s.getMaxStackSize()) - got.getCount()));
                         if (got.isEmpty()) got = taken;
                         else got.grow(taken.getCount());
                     }
@@ -336,7 +340,7 @@ public class WorkGoal extends Goal {
                 task = null;
             }
             case WORK -> {
-                int need = work.workTicks(golem, level(), pos);
+                int need = Config.scaled(work.workTicks(golem, level(), pos));
                 if (workTicks % 10 == 0) golem.swing(InteractionHand.MAIN_HAND);
                 workTicks++;
                 if (need > 20) level().destroyBlockProgress(golem.getId(), pos, workTicks * 10 / need);

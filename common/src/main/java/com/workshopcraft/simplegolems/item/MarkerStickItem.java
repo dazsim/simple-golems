@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.item;
 
+import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import com.workshopcraft.simplegolems.registry.ModContent;
 import net.minecraft.ChatFormatting;
@@ -52,7 +53,7 @@ public class MarkerStickItem extends Item {
             tell(player, "marker.first", pos.getX(), pos.getY(), pos.getZ());
             context.getLevel().playSound(null, pos, SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 1.2F);
         } else if (!WorkArea.fits(m.first(), pos)) {
-            tell(player, "marker.too_big", WorkArea.MAX_SIZE);
+            tell(player, "marker.too_big", Config.maxAreaWidth);
         } else {
             stack.set(ModContent.MARKER, new MarkerCorners(m.first(), Optional.of(pos.immutable())));
             WorkArea a = WorkArea.of(m.first(), pos);

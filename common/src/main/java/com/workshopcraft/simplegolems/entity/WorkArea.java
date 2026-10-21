@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.Config;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -48,7 +49,7 @@ public record WorkArea(BlockPos first, BlockPos second) {
     }
 
     public static boolean fits(BlockPos a, BlockPos b) {
-        return Math.abs(a.getX() - b.getX()) < MAX_SIZE && Math.abs(a.getZ() - b.getZ()) < MAX_SIZE;
+        return Math.abs(a.getX() - b.getX()) < Config.maxAreaWidth && Math.abs(a.getZ() - b.getZ()) < Config.maxAreaWidth;
     }
 
     // at most MAX_SIZE high, keeping the bottom

@@ -39,13 +39,18 @@ public interface JobWork {
         return -1;
     }
 
+    // how many of the kept slot stay back
+    default int reserve(GolemEntity golem) {
+        return 0;
+    }
+
     // the carried stacks that go to storage
     default List<ItemStack> load(GolemEntity golem) {
         int keep = keep(golem);
         List<ItemStack> out = new ArrayList<>();
         for (int i = 0; i < GolemEntity.CARRY_SLOTS; i++) {
             ItemStack c = golem.getCarried().get(i);
-            if (i != keep && !c.isEmpty()) out.add(c);
+            if (!c.isEmpty() && (i != keep || c.getCount() > reserve(golem))) out.add(c);
         }
         return out;
     }

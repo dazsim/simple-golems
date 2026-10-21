@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -222,6 +223,11 @@ public class MinerWork implements JobWork {
             if (isBuildingBlock(c) && (best < 0 || c.getCount() > golem.getCarried().get(best).getCount())) best = i;
         }
         return best;
+    }
+
+    @Override
+    public int reserve(GolemEntity golem) {
+        return Config.blockReserve;
     }
 
     @Override

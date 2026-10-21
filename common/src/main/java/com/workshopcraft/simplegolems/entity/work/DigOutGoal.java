@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -77,7 +78,7 @@ public class DigOutGoal extends Goal {
         long now = level().getGameTime();
         if (now < nextCheck || now < restUntil) return false;
         nextCheck = now + CHECK;
-        if (golem.getJob() == Job.BLANK || golem.isWaiting() || !golem.onGround() || area().near(golem.blockPosition(), 1) || free()) {
+        if (!Config.digOut || golem.getJob() == Job.BLANK || golem.isWaiting() || !golem.onGround() || area().near(golem.blockPosition(), 1) || free()) {
             failures = 0;
             return false;
         }
@@ -116,7 +117,7 @@ public class DigOutGoal extends Goal {
         ServerLevel level = level();
         if (working != null) {
             golem.getLookControl().setLookAt(Vec3.atCenterOf(working));
-            int need = digTicks(working);
+            int need = Config.scaled(digTicks(working));
             if (workTicks % 10 == 0) golem.swing(InteractionHand.MAIN_HAND);
             if (++workTicks < need) {
                 if (need > 20) level.destroyBlockProgress(golem.getId(), working, workTicks * 10 / need);

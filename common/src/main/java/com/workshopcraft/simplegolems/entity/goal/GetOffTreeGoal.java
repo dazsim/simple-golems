@@ -1,5 +1,7 @@
 package com.workshopcraft.simplegolems.entity.goal;
 
+import com.workshopcraft.simplegolems.Config;
+
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.work.LumberWork;
@@ -33,11 +35,11 @@ public class GetOffTreeGoal extends Goal {
         if (base != null && golem.canHarvest(level.getBlockState(base))) {
             target = base;
             fell = true;
-            need = LumberWork.INSTANCE.workTicks(golem, level, base);
+            need = Config.scaled(LumberWork.INSTANCE.workTicks(golem, level, base));
         } else if (LumberWork.isTreeLeaf(level, floor)) {
             target = floor;
             fell = false;
-            need = golem.digTicks(level.getBlockState(floor), floor);
+            need = Config.scaled(golem.digTicks(level.getBlockState(floor), floor));
         } else {
             return false;
         }
