@@ -42,6 +42,7 @@ public class DigOutGoal extends Goal {
     private int workTicks;
     private int moving;
     private boolean done;
+    private long nextFree;
     private int turn;
 
     public DigOutGoal(GolemEntity golem) {
@@ -114,6 +115,7 @@ public class DigOutGoal extends Goal {
         next = null;
         working = null;
         moving = 0;
+        nextFree = 0;
     }
 
     @Override
@@ -157,10 +159,14 @@ public class DigOutGoal extends Goal {
             if (next.getY() > golem.getBlockY() && golem.onGround()) golem.getJumpControl().jump();
             return;
         }
-        if (level.getGameTime() % 20 == 0 && free()) {
-            golem.markFreed();
-            done = true;
-            return;
+        // on its own timer: a step cycle in step with the game clock must not skip every check
+        if (level.getGameTime() >= nextFree) {
+            nextFree = level.getGameTime() + 20;
+            if (free()) {
+                golem.markFreed();
+                done = true;
+                return;
+            }
         }
         BlockPos here = golem.blockPosition();
         for (BlockPos step : candidates(here)) {
@@ -213,6 +219,7 @@ public class DigOutGoal extends Goal {
         BlockPos floor = step.below();
         BlockState f = level.getBlockState(floor);
         if (f.isFaceSturdy(level, floor, Direction.UP) && !hot(floor)) return true;
+        if (inPit() && MinerWork.isHeadroom(area(), floor)) return false;
         return blocks && (f.canBeReplaced() || breakable(floor));
     }
 
@@ -246,6 +253,8 @@ public class DigOutGoal extends Goal {
     }
 
     private boolean place(BlockPos p) {
+        // never into the way up its own staircase, unless it is sealing water or lava there
+        if (inPit() && MinerWork.isHeadroom(area(), p) && level().getFluidState(p).isEmpty()) return false;
         int slot = MinerWork.INSTANCE.keep(golem);
         if (slot < 0) return false;
         ItemStack carried = golem.getCarried().get(slot);

@@ -88,6 +88,15 @@ public class MinerWork implements JobWork {
             return i >= 0 && d >= i && Math.floorMod(d - i, loop()) < loop() - 2;
         }
 
+        // one of the two blocks over a tread that the golem walks through on its way up
+        boolean isHeadroom(BlockPos p) {
+            for (int lift = 1; lift <= 2; lift++) {
+                BlockPos s = step(depth(p.getY() - lift));
+                if (s != null && s.getX() == p.getX() && s.getZ() == p.getZ()) return true;
+            }
+            return false;
+        }
+
         @Nullable BlockPos step(int d) {
             if (d < 0 || top - 1 - d < bottom) return null;
             if (!spiral()) return d < sz() ? new BlockPos(minX, top - 1 - d, minZ + d) : null;
@@ -98,6 +107,33 @@ public class MinerWork implements JobWork {
 
     static boolean isStair(WorkArea area, BlockPos p) {
         return Stairs.of(area).isStair(p);
+    }
+
+    static boolean isHeadroom(WorkArea area, BlockPos p) {
+        return Stairs.of(area).isHeadroom(p);
+    }
+
+    // the first block in the headroom of the staircase above the golem, nearest it first, so it never stays trapped under its own blocks
+    private static @Nullable BlockPos blockedRoute(GolemEntity golem, ServerLevel level, Stairs st, Predicate<BlockPos> skip) {
+        int here = Mth.clamp(st.top - golem.getBlockY(), 0, st.top - 1 - st.bottom);
+        for (int d = here; d >= 0; d--) {
+            BlockPos s = st.step(d);
+            if (s == null) continue;
+            for (int lift = 1; lift <= 2; lift++) {
+                BlockPos p = s.above(lift);
+                if (p.getY() > st.top || skip.test(p) || dry(level, p) || !layerDug(level, golem, st, p.getY())) continue;
+                if (mineable(level, p, golem) && !underFoot(level, golem, p)) return p.immutable();
+            }
+        }
+        return null;
+    }
+
+    // nothing left to dig on this layer but the staircase and its headroom, so a block there is in the way rather than still to be mined
+    private static boolean layerDug(ServerLevel level, GolemEntity golem, Stairs st, int y) {
+        for (BlockPos p : BlockPos.betweenClosed(st.minX, y, st.minZ, st.maxX, y, st.maxZ)) {
+            if (!st.isStair(p) && !st.isHeadroom(p) && mineable(level, p, golem)) return false;
+        }
+        return true;
     }
 
     public static boolean isBuildingBlock(ItemStack s) {
@@ -131,6 +167,8 @@ public class MinerWork implements JobWork {
         BlockPos min = area.min(), max = area.max();
         boolean hasBlocks = golem.carries(MinerWork::isBuildingBlock);
         golem.setNeedsBlocks(false);
+        BlockPos route = blockedRoute(golem, level, st, skip);
+        if (route != null) return route;
         // from the rim down: water or lava that got in is sealed first, then missing steps, then the next block to dig
         for (int y = max.getY() + 1; y >= min.getY(); y--) {
             // then the layer below too, so digging never opens on to it
@@ -285,7 +323,11 @@ public class MinerWork implements JobWork {
     public void finish(GolemEntity golem, ServerLevel level, BlockPos pos) {
         if (isFix(golem, level, pos)) {
             int slot = keep(golem);
-            if (slot < 0 || golem.getBoundingBox().intersects(new AABB(pos))) return;
+            if (slot < 0) return;
+            if (golem.getBoundingBox().intersects(new AABB(pos))) {
+                stepAside(golem, pos);
+                return;
+            }
             ItemStack carried = golem.getCarried().get(slot);
             BlockState state = ((BlockItem) carried.getItem()).getBlock().defaultBlockState();
             level.setBlockAndUpdate(pos, state);
@@ -302,6 +344,14 @@ public class MinerWork implements JobWork {
         tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
         Vec3 at = Vec3.atCenterOf(pos);
         for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
+    }
+
+    // standing half over the block it wants to place: shuffle to the middle of the block it is in, so the next try fits
+    private static void stepAside(GolemEntity golem, BlockPos pos) {
+        BlockPos at = golem.blockPosition();
+        if (at.getX() == pos.getX() && at.getZ() == pos.getZ()) return;
+        Vec3 c = Vec3.atBottomCenterOf(at), v = golem.getDeltaMovement();
+        golem.setDeltaMovement((c.x - golem.getX()) * 0.45, v.y, (c.z - golem.getZ()) * 0.45);
     }
 
     // a missing step is built from the one above it

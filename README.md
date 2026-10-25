@@ -137,3 +137,7 @@ Golems do not despawn, do not attack, take no fall damage and drop their core, c
 Minecraft 26.1 to 26.1.2, NeoForge and Fabric.
 
 Build with `./gradlew build`. The entity model is made from `tools/golem_b.json` by `python3 tools/gen_model.py`, item textures by `python3 tools/gen_textures.py`, the thought bubbles by `python3 tools/gen_bubbles.py` and the json files by `python3 tools/gen_resources.py`.
+
+## Changelog
+
+- **1.1.3**: a miner never places a block in the headroom of its own staircase, and digs out any block blocking its way back up instead of spinning in place. Fixed a golem climbing out of a hole sometimes never noticing it was out, and a miner standing half over the top step it needs to build never moving aside to build it (both seen mostly on NeoForge).
