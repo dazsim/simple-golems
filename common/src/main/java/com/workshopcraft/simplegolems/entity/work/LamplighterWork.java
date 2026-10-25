@@ -6,10 +6,10 @@ import com.workshopcraft.simplegolems.registry.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.DirectionalPlaceContext;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -17,7 +17,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-// puts torches (the lamplighter_lights item tag) from storage on dark ground in its area, where monsters could spawn
+// puts torches and lamps (the lamplighter_lights item tag) from storage on dark ground in its area, where monsters could spawn
 public class LamplighterWork implements JobWork {
     public static final LamplighterWork INSTANCE = new LamplighterWork();
 
@@ -102,11 +102,11 @@ public class LamplighterWork implements JobWork {
     public void finish(GolemEntity golem, ServerLevel level, BlockPos pos) {
         int i = light(golem);
         if (i < 0) return;
-        BlockState t = torch(golem);
-        if (!dark(level, pos, t)) return;
-        level.setBlockAndUpdate(pos, t);
-        level.playSound(null, pos, t.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
-        golem.getCarried().get(i).shrink(1);
-        golem.carriedChanged();
+        if (!dark(level, pos, torch(golem))) return;
+        // placed the way a player would, so lamps from other mods come out lit and whole
+        ItemStack stack = golem.getCarried().get(i);
+        if (((BlockItem) stack.getItem()).place(new DirectionalPlaceContext(level, pos, Direction.DOWN, stack, Direction.UP)).consumesAction()) {
+            golem.carriedChanged();
+        }
     }
 }

@@ -186,6 +186,31 @@ public class MinerWork implements JobWork {
         return false;
     }
 
+    private static boolean besideNone(ServerLevel level, BlockPos target) {
+        for (Direction d : Direction.values()) {
+            BlockPos p = target.relative(d);
+            if (dry(level, p) && level.getBlockState(p.below()).isFaceSturdy(level, p.below(), Direction.UP)) return false;
+        }
+        return true;
+    }
+
+    // a ledge with nowhere to stand beside it: the nearest spot it can reach it from, such as the cave floor under it
+    private static @Nullable BlockPos stand(ServerLevel level, GolemEntity golem, BlockPos target) {
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (BlockPos p : BlockPos.betweenClosed(target.offset(-2, -3, -2), target.offset(2, 2, 2))) {
+            int dx = p.getX() - target.getX(), dz = p.getZ() - target.getZ();
+            if (dx * dx + dz * dz > 5 || p.equals(target) || p.below().equals(target)) continue;
+            if (!dry(level, p) || !level.getBlockState(p.below()).isFaceSturdy(level, p.below(), Direction.UP)) continue;
+            double dist = golem.distanceToSqr(Vec3.atBottomCenterOf(p));
+            if (dist < bestDist) {
+                best = p.immutable();
+                bestDist = dist;
+            }
+        }
+        return best;
+    }
+
     // the block it stands on, with a drop below it
     private static boolean underFoot(ServerLevel level, GolemEntity golem, BlockPos p) {
         if (!golem.getBoundingBox().move(0, -0.5, 0).intersects(new AABB(p))) return false;
@@ -286,19 +311,38 @@ public class MinerWork implements JobWork {
         Stairs st = Stairs.of(area);
         int d = st.depth(target.getY());
         if (fluid(level, target)) return dryStand(level, target);
-        if (!target.equals(st.step(d)) || !open(level, target)) return null;
+        if (!open(level, target)) return besideNone(level, target) ? stand(level, golem, target) : null;
+        if (!target.equals(st.step(d))) return null;
         BlockPos above = st.step(d - 1);
         return above == null ? new BlockPos(st.minX - 1, st.top + 1, st.minZ) : above.above();
     }
 
-    // a step on its own staircase up to HOP blocks nearer the target's depth
+    // the nearest step at or above the golem that still has whole steps up to the rim, or the rim when there is none
+    public BlockPos stairsNear(GolemEntity golem, ServerLevel level) {
+        Stairs st = Stairs.of(area(golem));
+        int here = Mth.clamp(st.top - golem.getBlockY(), 0, st.top - 1 - st.bottom);
+        for (int d = 0; d <= here; d++) {
+            BlockPos s = st.step(d);
+            if (s == null || !level.getBlockState(s).isFaceSturdy(level, s, Direction.UP)) {
+                here = d - 1;
+                break;
+            }
+        }
+        for (int d = here; d > 0 && d >= here - HOP; d--) {
+            BlockPos s = st.step(d);
+            if (s != null && level.getBlockState(s).isFaceSturdy(level, s, Direction.UP) && dry(level, s.above())) return s.above();
+        }
+        return new BlockPos(st.minX - 1, st.top + 1, st.minZ);
+    }
+
+    // a step on its own staircase up to HOP blocks nearer the target's depth, never past the bottom step (the floor layer is dug from the last step)
     @Override
     public @Nullable BlockPos waypoint(GolemEntity golem, ServerLevel level, BlockPos target) {
         WorkArea area = area(golem);
         Stairs st = Stairs.of(area);
         if (!area.near(golem.blockPosition(), 2)) return null;
-        int here = Mth.clamp(st.top - golem.getBlockY(), 0, st.top - st.bottom);
-        int there = Mth.clamp(st.top - target.getY(), 0, st.top - st.bottom);
+        int here = Mth.clamp(st.top - golem.getBlockY(), 0, st.top - 1 - st.bottom);
+        int there = Mth.clamp(st.top - target.getY(), 0, st.top - 1 - st.bottom);
         int next = here + Mth.clamp(there - here, -HOP, HOP);
         if (next <= 0) return new BlockPos(st.minX - 1, st.top + 1, st.minZ);
         BlockPos s = st.step(next);

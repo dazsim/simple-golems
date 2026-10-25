@@ -330,6 +330,17 @@ public class GolemEntity extends AbstractGolem {
         blocksTrouble = b;
     }
 
+    // bumped when it digs its way out, so work it gave up on from the old spot gets another go
+    private int freed;
+
+    public int freed() {
+        return freed;
+    }
+
+    public void markFreed() {
+        freed++;
+    }
+
     // the miner has steps to build or water to seal and nothing to do it with
     public boolean needsBlocks() {
         return needBlocks;

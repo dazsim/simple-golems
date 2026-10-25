@@ -42,6 +42,7 @@ public class WorkGoal extends Goal {
     // how often a block has been out of reach: it waits longer each time so the rest of the work goes on
     private final Map<BlockPos, Integer> misses = new HashMap<>();
     private long retryMissed;
+    private int freed;
     private @Nullable Task task;
     private @Nullable JobWork work;
     private @Nullable BlockPos pos;
@@ -108,6 +109,12 @@ public class WorkGoal extends Goal {
         ServerLevel level = level();
         WorkArea area = work.area(golem);
         if (!level.hasChunksAt(area.min(), area.max())) return false;
+        if (freed != golem.freed()) {
+            freed = golem.freed();
+            skipped.clear();
+            unreachable.clear();
+            misses.clear();
+        }
         skipped.values().removeIf(t -> t <= level.getGameTime());
         unreachable.values().removeIf(t -> t <= level.getGameTime());
         List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, itemBox(area),

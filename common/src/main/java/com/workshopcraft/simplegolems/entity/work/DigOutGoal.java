@@ -4,6 +4,7 @@ import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.WorkArea;
+import com.workshopcraft.simplegolems.registry.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -57,9 +58,18 @@ public class DigOutGoal extends Goal {
         return work == null ? golem.getArea() : work.area(golem);
     }
 
-    // home when it has no marked area, otherwise just above the nearest column of the area
+    // a miner down its own pit
+    private boolean inPit() {
+        if (golem.getJob() != Job.MINER || golem.getCustomArea() == null) return false;
+        BlockPos p = golem.blockPosition(), min = area().min(), max = area().max();
+        return p.getX() >= min.getX() && p.getX() <= max.getX() && p.getZ() >= min.getZ() && p.getZ() <= max.getZ()
+                && p.getY() >= min.getY() && p.getY() <= max.getY() + 1;
+    }
+
+    // home when it has no marked area, the nearest step of its staircase down a pit, otherwise just above the nearest column of the area
     private BlockPos anchor() {
         if (golem.getCustomArea() == null) return golem.getHome();
+        if (inPit()) return MinerWork.INSTANCE.stairsNear(golem, level());
         WorkArea a = area();
         BlockPos min = a.min(), max = a.max();
         return new BlockPos(Mth.clamp(golem.getBlockX(), min.getX(), max.getX()), max.getY() + 1, Mth.clamp(golem.getBlockZ(), min.getZ(), max.getZ()));
@@ -67,6 +77,12 @@ public class DigOutGoal extends Goal {
 
     private boolean free() {
         BlockPos a = anchor();
+        if (inPit()) {
+            // just under the rim it can dig the top layers and climb from where it stands
+            if (golem.getBlockY() >= area().max().getY() - 1 || golem.blockPosition().distManhattan(a) <= 1) return true;
+            Path p = golem.getNavigation().createPath(a, 0);
+            return p != null && p.canReach();
+        }
         if (golem.blockPosition().distManhattan(a) <= 2) return true;
         if (golem.getCustomArea() != null && area().contains(golem.blockPosition())) return true;
         Path p = golem.getNavigation().createPath(a, 1);
@@ -78,7 +94,8 @@ public class DigOutGoal extends Goal {
         long now = level().getGameTime();
         if (now < nextCheck || now < restUntil) return false;
         nextCheck = now + CHECK;
-        if (!Config.digOut || golem.getJob() == Job.BLANK || golem.isWaiting() || !golem.onGround() || area().near(golem.blockPosition(), 1) || free()) {
+        if (!Config.digOut || golem.getJob() == Job.BLANK || golem.isWaiting() || !golem.onGround()
+                || !inPit() && area().near(golem.blockPosition(), 1) || free()) {
             failures = 0;
             return false;
         }
@@ -141,6 +158,7 @@ public class DigOutGoal extends Goal {
             return;
         }
         if (level.getGameTime() % 20 == 0 && free()) {
+            golem.markFreed();
             done = true;
             return;
         }
@@ -250,11 +268,13 @@ public class DigOutGoal extends Goal {
         return s.getFluidState().is(FluidTags.LAVA) || s.is(BlockTags.FIRE);
     }
 
-    // never bedrock or anything unbreakable, never a chest or other block entity, never inside another golem's area
+    // never bedrock or anything unbreakable, never a chest or other block entity, never inside another golem's area.
+    // Down its own pit a miner only digs the pit, never its staircase
     private boolean breakable(BlockPos p) {
         ServerLevel level = level();
         BlockState s = level.getBlockState(p);
         if (s.isAir() || s.hasBlockEntity() || s.getDestroySpeed(level, p) < 0 || !s.getFluidState().isEmpty()) return false;
+        if (inPit() && (!area().contains(p) || MinerWork.isStair(area(), p) || s.is(ModTags.MINER_NEVER_DIG))) return false;
         for (GolemEntity other : level.getEntitiesOfClass(GolemEntity.class, golem.getBoundingBox().inflate(64), g -> g != golem && g.getCustomArea() != null)) {
             if (other.getArea().contains(p)) return false;
         }

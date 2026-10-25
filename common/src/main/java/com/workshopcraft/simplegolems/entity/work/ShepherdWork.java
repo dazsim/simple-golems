@@ -14,6 +14,8 @@ import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 // shears grown sheep in its area; the wool goes to storage
@@ -32,7 +34,8 @@ public class ShepherdWork implements JobWork {
 
     @Override
     public @Nullable BlockPos findTarget(GolemEntity golem, ServerLevel level, WorkArea area, Predicate<BlockPos> skip) {
-        Sheep s = level.getEntitiesOfClass(Sheep.class, area.box(), e -> e.isAlive() && e.readyForShearing() && !skip.test(e.blockPosition())).stream()
+        // sheep standing on a flat area marked on the ground count too
+        Sheep s = level.getEntitiesOfClass(Sheep.class, area.box().expandTowards(0, 1, 0), e -> e.isAlive() && e.readyForShearing() && !skip.test(e.blockPosition())).stream()
                 .min(Comparator.comparingDouble(golem::distanceToSqr)).orElse(null);
         return s == null ? null : s.blockPosition();
     }
@@ -52,7 +55,13 @@ public class ShepherdWork implements JobWork {
         Sheep s = near(level, golem.getBoundingBox().inflate(3.0), golem.blockPosition());
         ItemStack tool = golem.getTool();
         if (s == null || tool.isEmpty()) return;
+        AABB around = s.getBoundingBox().inflate(4.0);
+        Set<ItemEntity> before = new HashSet<>(level.getEntitiesOfClass(ItemEntity.class, around));
         s.shear(level, SoundSource.NEUTRAL, tool);
         tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        // the wool goes straight into its carry, so none of it lands out of reach over a fence
+        for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, around, i -> i.isAlive() && !before.contains(i) && wants(i))) {
+            Storage.pickUp(golem, e);
+        }
     }
 }
