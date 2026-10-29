@@ -563,15 +563,27 @@ public class GolemEntity extends AbstractGolem {
         return !isDowned() && super.canBeSeenAsEnemy();
     }
 
+    // a downed guard stays where it fell
+    @Override
+    public boolean isPushable() {
+        return !isDowned() && super.isPushable();
+    }
+
     // mobs do not wear their weapons out, but a guard's should
     @Override
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean hit = super.doHurtTarget(level, target);
         if (hit && target instanceof LivingEntity living) {
             getMainHandItem().postHurtEnemy(living, this);
-            if (!living.isAlive()) kills++;
         }
         return hit;
+    }
+
+    // also counts a target that burns to death after a hit
+    @Override
+    public void awardKillScore(Entity killed, DamageSource source) {
+        super.awardKillScore(killed, source);
+        if (killed instanceof Mob) kills++;
     }
 
     // it is short, so it reaches up a bit further than its own height
