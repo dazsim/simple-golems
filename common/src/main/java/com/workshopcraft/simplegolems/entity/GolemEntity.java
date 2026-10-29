@@ -120,7 +120,9 @@ public class GolemEntity extends AbstractGolem {
     private int thanks;
     public float bubble, bubbleO;
     public float tilt, tiltO;
-    private int curious;
+    private static final int TILT_COOLDOWN = 500, HEART_COOLDOWN = 2400;
+    private int curious, tiltCooldown, heartCooldown, heart;
+    private boolean tilted;
     public Trouble shownTrouble = Trouble.NONE;
     private boolean follow;
     private int downTicks;
@@ -488,12 +490,28 @@ public class GolemEntity extends AbstractGolem {
         super.aiStep();
         if (level().isClientSide()) {
             Trouble t = getTrouble();
-            bubbleO = bubble;
-            if (t != Trouble.NONE) shownTrouble = t;
-            bubble = Mth.clamp(bubble + (t != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
             tiltO = tilt;
+            if (tiltCooldown > 0) tiltCooldown--;
+            if (heartCooldown > 0) heartCooldown--;
+            if (heart > 0) heart--;
             curious = lookingAtPlayer() ? curious + 1 : 0;
-            tilt = Mth.clamp(tilt + (curious > 8 ? 0.06F : -0.08F), 0.0F, 1.0F);
+            if (!tilted && curious > 8 && tiltCooldown == 0) {
+                tilted = true;
+                // a heart now and then, only if no other bubble is up
+                if (heartCooldown == 0 && t == Trouble.NONE && bubble == 0.0F) {
+                    heart = 40;
+                    heartCooldown = HEART_COOLDOWN;
+                }
+            } else if (tilted && curious == 0) {
+                tilted = false;
+                tiltCooldown = TILT_COOLDOWN;
+            }
+            tilt = Mth.clamp(tilt + (tilted ? 0.06F : -0.08F), 0.0F, 1.0F);
+            if (t != Trouble.NONE) heart = 0;
+            Trouble shown = t != Trouble.NONE ? t : heart > 0 ? Trouble.THANKS : Trouble.NONE;
+            bubbleO = bubble;
+            if (shown != Trouble.NONE) shownTrouble = shown;
+            bubble = Mth.clamp(bubble + (shown != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
             return;
         }
         if (getY() < level().getMinY() && Config.voidRescue) rescueFromVoid();

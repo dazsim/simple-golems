@@ -113,6 +113,8 @@ A golem that cannot get on with its job shows a small thought bubble above its h
 
 Once the problem is sorted out, whether you handed it over or the golem fetched it, the bubble shows a little heart as a thank-you for about two seconds and then fades away.
 
+An idle golem sometimes looks up at a nearby player and tilts its head, now and then with the same little heart.
+
 ## Config
 
 The server settings are in `config/simplegolems.toml` (the same file on NeoForge and Fabric; clients do not need it). NeoForge reloads it while the game runs, Fabric reads it when the server starts. An older config file keeps working: missing settings are added with their defaults. The defaults are:
