@@ -161,4 +161,5 @@ Build with `./gradlew build`. The entity model is made from `tools/golem_b.json`
 
 ## Changelog
 
+- **1.1.4**: new guard golem (Guarding Card, iron sword hint) that guards its area or follows you on a lead, fights hostile mobs with a sword or axe, hits creepers and backs off before they blow, heals with cookies and goes down for a while instead of dying. A lumber golem builds log steps up to a tree it cannot reach and takes them away after. A golem just outside a custom area walks back in.
 - **1.1.3**: a miner never places a block in the headroom of its own staircase, and digs out any block blocking its way back up instead of spinning in place. Fixed a golem climbing out of a hole sometimes never noticing it was out, and a miner standing half over the top step it needs to build never moving aside to build it (both seen mostly on NeoForge).
