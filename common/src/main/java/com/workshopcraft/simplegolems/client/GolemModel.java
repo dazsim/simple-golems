@@ -64,6 +64,7 @@ public class GolemModel extends EntityModel<GolemRenderState> {
         float speed = Math.min(state.walkAnimationSpeed, 1.0F);
         head.yRot = state.yRot * Mth.DEG_TO_RAD;
         head.xRot = state.xRot * Mth.DEG_TO_RAD * 0.5F;
+        head.zRot = state.headTilt;
         legL.xRot = -1.4F * Mth.triangleWave(pos, 8.0F) * speed;
         legR.xRot = 1.4F * Mth.triangleWave(pos, 8.0F) * speed;
         toolArm.loadPose(toolArmPose);

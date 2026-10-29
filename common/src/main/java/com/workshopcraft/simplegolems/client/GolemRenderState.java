@@ -17,4 +17,5 @@ public class GolemRenderState extends LivingEntityRenderState {
     public final ItemStackRenderState carried = new ItemStackRenderState();
     public Trouble trouble = Trouble.NONE;
     public float bubble;
+    public float headTilt;
 }

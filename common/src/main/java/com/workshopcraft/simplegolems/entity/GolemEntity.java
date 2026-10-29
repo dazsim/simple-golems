@@ -119,6 +119,8 @@ public class GolemEntity extends AbstractGolem {
     private Trouble lastTrouble = Trouble.NONE;
     private int thanks;
     public float bubble, bubbleO;
+    public float tilt, tiltO;
+    private int curious;
     public Trouble shownTrouble = Trouble.NONE;
     private boolean follow;
     private int downTicks;
@@ -200,6 +202,14 @@ public class GolemEntity extends AbstractGolem {
         else a.addOrReplacePermanentModifier(new AttributeModifier(GUARD_HEALTH, add, AttributeModifier.Operation.ADD_VALUE));
         if (full && add > 0.0) setHealth(getMaxHealth());
         if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
+    }
+
+    private boolean lookingAtPlayer() {
+        if (isDowned() || isWaiting() || swinging || walkAnimation.speed() > 0.05F) return false;
+        Player p = level().getNearestPlayer(this, 6.0);
+        if (p == null) return false;
+        float yaw = (float) (Mth.atan2(p.getZ() - getZ(), p.getX() - getX()) * Mth.RAD_TO_DEG) - 90.0F;
+        return Math.abs(Mth.wrapDegrees(yaw - yHeadRot)) < 20.0F;
     }
 
     public boolean isDowned() {
@@ -481,6 +491,9 @@ public class GolemEntity extends AbstractGolem {
             bubbleO = bubble;
             if (t != Trouble.NONE) shownTrouble = t;
             bubble = Mth.clamp(bubble + (t != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
+            tiltO = tilt;
+            curious = lookingAtPlayer() ? curious + 1 : 0;
+            tilt = Mth.clamp(tilt + (curious > 8 ? 0.06F : -0.08F), 0.0F, 1.0F);
             return;
         }
         if (getY() < level().getMinY() && Config.voidRescue) rescueFromVoid();

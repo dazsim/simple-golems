@@ -78,6 +78,8 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         return new GolemRenderState();
     }
 
+    private static final float TILT = 17.0F * Mth.DEG_TO_RAD;
+
     @Override
     public void extractRenderState(GolemEntity golem, GolemRenderState state, float partialTicks) {
         super.extractRenderState(golem, state, partialTicks);
@@ -92,6 +94,9 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         state.carrying = !state.carried.isEmpty();
         state.trouble = golem.shownTrouble;
         state.bubble = Mth.lerp(partialTicks, golem.bubbleO, golem.bubble);
+        float t = Mth.lerp(partialTicks, golem.tiltO, golem.tilt);
+        // curious head tilt, each golem leans its own way
+        state.headTilt = t * t * (3 - 2 * t) * TILT * ((golem.getId() & 1) == 0 ? 1 : -1);
     }
 
     @Override
