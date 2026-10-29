@@ -31,6 +31,30 @@ ICONS = {
         "....x.....",
         "..........",
     ],
+    "cracked_heart": [
+        "..........",
+        ".xx...xx..",
+        "xPRx.xRRx.",
+        "xPRRxRRRx.",
+        "xRRR.xRrx.",
+        ".xRRx.rx..",
+        "..xR.xx...",
+        "...x.x....",
+        "....x.....",
+        "..........",
+    ],
+    "sword": [
+        "........oo",
+        ".......ohH",
+        "......ohHo",
+        ".....ohHo.",
+        ".oo.ohHo..",
+        ".okkhHo...",
+        "..okkko...",
+        ".oWokko...",
+        "oWo..oo...",
+        "wo........",
+    ],
     "chest": [
         ".oooooooo.",
         "ollllllllo",
@@ -210,7 +234,7 @@ def badge(im, ox, oy):
 
 def make(icon, crossed=False, marked=False):
     im = bubble()
-    ox, oy = (15, 7) if icon == "heart" else (14, 7)
+    ox, oy = (15, 7) if icon in ("heart", "cracked_heart") else (14, 7)
     for y, row in enumerate(ICONS[icon]):
         for x, c in enumerate(row[:10]):
             if c != ".":
@@ -236,6 +260,8 @@ if __name__ == "__main__":
         "bubble_hammer": make("hammer", crossed=True),
         "bubble_supplies": make("sack", crossed=True),
         "bubble_thanks": make("heart"),
+        "bubble_sword": make("sword", crossed=True),
+        "bubble_hurt": make("cracked_heart"),
     }
     for k, v in out.items():
         v.save(f"{OUT}/{k}.png")

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:iron_sword"
+  ],
+  "result": {
+    "id": "simplegolems:guard_card",
+    "count": 1
+  }
+}

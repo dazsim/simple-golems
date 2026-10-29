@@ -32,6 +32,7 @@ Cards and their hint items:
 | Beekeeping Card | honeycomb | harvests full beehives and bee nests | shears (optional) |
 | Fishing Card | cod | fishes | fishing rod |
 | Lamplighter Card | torch | puts torches in dark spots | none |
+| Guarding Card | iron sword | fights hostile mobs in its area | sword or axe |
 
 A golem made without a card is a blank golem. It follows its owner around and does no work.
 
@@ -86,6 +87,18 @@ Cobblegen, sifter, hammer, composter and smelter golems work between blocks you 
 
 A program that is missing what it works with (torches, feed, bottles, fuel, a mesh, its furnace or composter) shows a sack crossed out and says what it needs in its status. Cobblegen, sifter and hammer are the skyblock programs and can be turned off together with `skyblockPrograms`. The Ex Deorum cards and recipes only show when Ex Deorum is installed (it is NeoForge only for 26.1.2); without it everything else works as normal.
 
+## Guard
+
+A guard golem keeps its area clear of hostile mobs. It has 30 health (`guardHealth`) and fights with the sword or axe in its hand, which deals the weapon's damage, applies its enchantments and wears like it would for a player. When the weapon breaks it fetches another sword or axe from storage, or shows its sword crossed out.
+
+- It only goes for hostile mobs. It never attacks players, villagers and traders, animals, pets or other owned mobs, iron and snow golems or other Simple Golems. Neutral mobs such as endermen, wolves and zombified piglins are left alone until they hit it first. Mobs in the `simplegolems:guard_ignores` entity tag are never attacked.
+- It chases a mob up to `guardChaseRange` blocks out of its area, then walks back. A mob it cannot reach is skipped for a while.
+- Creepers: by default it strikes once and backs off while the creeper swells (`guardCreepers`; `attack` keeps hitting, `ignore` leaves them alone). The back-off does not always get it clear of the blast.
+- Use a lead on it to make it follow you instead; it then fights hostile mobs near you. Use the lead again to make it guard the spot where it stands (or its marked area).
+- Cookies only run down while it is fighting. Below half health, and once nothing has hit it for a few seconds, it eats one cookie to heal 8 health (`guardCookieHeal`).
+- At 0 health it does not die but goes down for 60 seconds (`guardDownTime`). While down it sits still, mobs lose interest in it and it cannot be hurt; then it gets up with a quarter of its health. The void and `/kill` still kill it.
+- It never breaks blocks and works with `mob_griefing` off.
+
 ## Thought bubbles
 
 A golem that cannot get on with its job shows a small thought bubble above its head:
@@ -95,6 +108,7 @@ A golem that cannot get on with its job shows a small thought bubble above its h
 - a clay cookie crossed out when it has run out of cookies.
 - a cobblestone crossed out when a miner has steps to build or water or lava to seal and no building blocks with it or in storage.
 - a sack crossed out when a program has run out of what it works with, or when a lumber golem needs logs to build steps up to a tree and has none with it or in storage.
+- a cracked heart when a guard is below a third of its health or is down.
 - its tool crossed out when its tool broke or is missing. A golem first looks for a matching tool in storage in its area and takes the best one (highest tier, so iron beats gold), and only shows the bubble if there is none.
 
 Once the problem is sorted out, whether you handed it over or the golem fetched it, the bubble shows a little heart as a thank-you for about two seconds and then fades away.
@@ -111,6 +125,12 @@ blockReserve = 64        # building blocks a miner keeps back (0 to 64)
 enabledJobs = ["lumber", "farmer", "miner", "courier", "sweeper"]   # a golem with a job not listed waits
 enabledPrograms = ["cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter",
                    "smelter", "beekeeper", "fisher", "lamplighter"]   # the same for programs
+enabledCombat = ["guard"]   # the same for the guard
+guardHealth = 30         # guard golem max health (10 to 200)
+guardChaseRange = 4      # how far a guard chases out of its area, in blocks (0 to 16)
+guardCreepers = "hit_and_back_off"   # or "attack" or "ignore"
+guardDownTime = 60       # seconds a guard stays down at 0 health (5 to 600)
+guardCookieHeal = 8      # health a guard heals per cookie (1 to 200)
 voidRescue = true        # golems that fall into the void are put back on safe ground
 digOut = true            # stuck golems dig their way back to their area
 moddedStorage = true     # use other mods' storage blocks
@@ -129,10 +149,11 @@ rancherMaxAnimals = 8    # a rancher stops breeding a kind of animal at this man
 - `simplegolems:hammers` (item): what a hammer golem uses (defaults to Ex Deorum's hammers and compressed hammers).
 - `simplegolems:lamplighter_lights` (item): what a lamplighter places (defaults to torches, plus More Lighting's floor-standing lights when installed). Anything in it is placed as a player would place it on the floor.
 - `simplegolems:farmer_crops` (block): crops a farmer harvests besides the vanilla crop block types (defaults to `#minecraft:crops`).
+- `simplegolems:guard_ignores` (entity type): mobs a guard never attacks (empty by default).
 
 All recipes are normal data pack recipes and show in any recipe viewer.
 
-Golems do not despawn, do not attack, take no fall damage and drop their core, card, tool, cookies and all four carry slots if they die.
+Golems do not despawn, do not attack (except guards), take no fall damage and drop their core, card, tool, cookies and all four carry slots if they die. Guards go down instead of dying.
 
 Minecraft 26.1 to 26.1.2, NeoForge and Fabric.
 

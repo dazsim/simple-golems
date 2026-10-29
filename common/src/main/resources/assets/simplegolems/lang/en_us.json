@@ -138,5 +138,14 @@
   "message.simplegolems.setup.done": "Setup done, the %s is ready",
   "message.simplegolems.setup.golem_gone": "Blocks saved on the marker, but the %s was not found. Use the marker on it to finish",
   "message.simplegolems.setup.cancelled": "Setup cancelled",
-  "tooltip.simplegolems.marker.setup": "Setting up a %s: %s of %s blocks selected"
+  "tooltip.simplegolems.marker.setup": "Setting up a %s: %s of %s blocks selected",
+  "message.simplegolems.status.guard": "%s, guarding its area, health %s/%s, %s mobs beaten, about %s min of fighting power",
+  "message.simplegolems.status.guard_follow": "%s, following you, health %s/%s, %s mobs beaten, about %s min of fighting power",
+  "message.simplegolems.status.guard_down": "%s is down, back up in %s s",
+  "message.simplegolems.guard.follow": "Guard golem following you",
+  "message.simplegolems.guard.stay": "Guard golem guarding its area",
+  "item.simplegolems.golem.guard": "Guard Golem",
+  "item.simplegolems.guard_card": "Guarding Card",
+  "job.simplegolems.guard": "Guard golem",
+  "message.simplegolems.wrong_tool.guard": "A guard golem fights with a sword or an axe"
 }

@@ -3,6 +3,7 @@ package com.workshopcraft.simplegolems.registry;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
@@ -15,6 +16,7 @@ public final class ModTags {
     public static final TagKey<Block> MINER_NEVER_DIG = block("miner_never_dig");
     public static final TagKey<Item> HAMMERS = item("hammers");
     public static final TagKey<Item> LIGHTS = item("lamplighter_lights");
+    public static final TagKey<EntityType<?>> GUARD_IGNORES = TagKey.create(Registries.ENTITY_TYPE, SimpleGolems.id("guard_ignores"));
 
     private ModTags() {}
 

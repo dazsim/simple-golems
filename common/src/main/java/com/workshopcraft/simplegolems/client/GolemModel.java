@@ -80,6 +80,19 @@ public class GolemModel extends EntityModel<GolemRenderState> {
             toolArm.xRot = toolArmPose.xRot() * 0.3F;
             cardArm.zRot = cardArmPose.zRot() * 0.5F;
         }
+        if (state.downed) {
+            body.y += 2.0F;
+            body.xRot = 0.25F;
+            head.xRot = 0.6F;
+            for (ModelPart leg : List.of(legL, legR)) {
+                leg.xRot = -Mth.HALF_PI;
+                leg.y += 0.5F;
+            }
+            toolArm.xRot = -0.25F;
+            toolArm.zRot = toolArmPose.zRot() + 0.35F;
+            cardArm.xRot = -0.25F;
+            cardArm.zRot = cardArmPose.zRot() - 0.35F;
+        }
     }
 
     public void poseTool(PoseStack pose) {

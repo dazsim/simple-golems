@@ -7,6 +7,18 @@ import com.workshopcraft.simplegolems.entity.goal.EscapeHazardGoal;
 import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
 import com.workshopcraft.simplegolems.entity.goal.GetOffTreeGoal;
+import com.workshopcraft.simplegolems.entity.goal.GuardAttackGoal;
+import com.workshopcraft.simplegolems.entity.goal.GuardTargetGoal;
+import com.workshopcraft.simplegolems.SimpleGolems;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.phys.AABB;
+import java.util.HashMap;
+import java.util.Map;
 import com.workshopcraft.simplegolems.entity.work.JobWork;
 import com.workshopcraft.simplegolems.entity.work.MinerWork;
 import com.workshopcraft.simplegolems.entity.work.Storage;
@@ -86,6 +98,10 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<Boolean> DATA_WAITING = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_COOKIES = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TROUBLE = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_DOWNED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final Identifier GUARD_HEALTH = SimpleGolems.id("guard_health");
+    // how far from its owner a following guard looks for mobs
+    public static final double FOLLOW_GUARD_RANGE = 10.0;
 
     private ItemStack cookies = ItemStack.EMPTY;
     public static final int CARRY_SLOTS = 4;
@@ -104,6 +120,11 @@ public class GolemEntity extends AbstractGolem {
     private int thanks;
     public float bubble, bubbleO;
     public Trouble shownTrouble = Trouble.NONE;
+    private boolean follow;
+    private int downTicks;
+    private int lastFight = -10000;
+    private int kills;
+    private final Map<UUID, Long> skip = new HashMap<>();
 
     public GolemEntity(EntityType<? extends GolemEntity> type, Level level) {
         super(type, level);
@@ -119,7 +140,7 @@ public class GolemEntity extends AbstractGolem {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 64.0)
-                .add(Attributes.MINING_EFFICIENCY);
+                .add(Attributes.MINING_EFFICIENCY).add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.ATTACK_SPEED, 4.0);
     }
 
     @Override
@@ -129,6 +150,8 @@ public class GolemEntity extends AbstractGolem {
         goalSelector.addGoal(0, new FetchToolGoal(this));
         goalSelector.addGoal(2, new GetOffTreeGoal(this));
         goalSelector.addGoal(2, new DigOutGoal(this));
+        goalSelector.addGoal(2, new GuardAttackGoal(this));
+        targetSelector.addGoal(1, new GuardTargetGoal(this));
         goalSelector.addGoal(1, new WaitGoal(this));
         goalSelector.addGoal(3, new FollowOwnerGoal(this));
         goalSelector.addGoal(4, new WorkGoal(this));
@@ -147,6 +170,7 @@ public class GolemEntity extends AbstractGolem {
         b.define(DATA_TROUBLE, 0);
         b.define(DATA_COOKIES, 0);
         b.define(DATA_CARRIED, ItemStack.EMPTY);
+        b.define(DATA_DOWNED, false);
     }
 
     public Job getJob() {
@@ -155,6 +179,70 @@ public class GolemEntity extends AbstractGolem {
 
     public void setJob(Job job) {
         entityData.set(DATA_JOB, job.ordinal());
+        if (job != Job.GUARD) {
+            follow = false;
+            downTicks = 0;
+            entityData.set(DATA_DOWNED, false);
+        }
+        applyJobHealth();
+    }
+
+    // a guard has more health than a worker; the modifier is saved with the attributes
+    private void applyJobHealth() {
+        if (level().isClientSide()) return;
+        AttributeInstance a = getAttribute(Attributes.MAX_HEALTH);
+        if (a == null) return;
+        double add = getJob() == Job.GUARD ? Config.guardHealth - 20.0 : 0.0;
+        AttributeModifier cur = a.getModifier(GUARD_HEALTH);
+        if (cur == null ? add == 0.0 : cur.amount() == add) return;
+        boolean full = cur == null || getHealth() >= getMaxHealth();
+        if (add == 0.0) a.removeModifier(GUARD_HEALTH);
+        else a.addOrReplacePermanentModifier(new AttributeModifier(GUARD_HEALTH, add, AttributeModifier.Operation.ADD_VALUE));
+        if (full && add > 0.0) setHealth(getMaxHealth());
+        if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
+    }
+
+    public boolean isDowned() {
+        return level().isClientSide() ? entityData.get(DATA_DOWNED) : downTicks > 0;
+    }
+
+    public int downSeconds() {
+        return (downTicks + 19) / 20;
+    }
+
+    public boolean isFollowing() {
+        return follow && getJob() == Job.GUARD;
+    }
+
+    public @Nullable Player followedOwner() {
+        if (!isFollowing() || owner == null) return null;
+        Player p = level().getPlayerByUUID(owner);
+        return p != null && p.isAlive() && !p.isSpectator() ? p : null;
+    }
+
+    // where a guard looks for mobs, grown by how far past it it may chase them
+    public AABB guardBox(double extra) {
+        Player p = followedOwner();
+        if (p != null) return p.getBoundingBox().inflate(FOLLOW_GUARD_RANGE + extra, 4.0 + extra / 2.0, FOLLOW_GUARD_RANGE + extra);
+        return getArea().box(extra).inflate(0.0, 2.0, 0.0);
+    }
+
+    public boolean canGuard() {
+        return getJob() == Job.GUARD && !isWaiting();
+    }
+
+    public void markFighting() {
+        lastFight = tickCount;
+    }
+
+    // a mob it could not reach is left alone for ten seconds
+    public void skipTarget(Entity e) {
+        skip.put(e.getUUID(), level().getGameTime() + 200);
+    }
+
+    public boolean skipped(Entity e) {
+        Long until = skip.get(e.getUUID());
+        return until != null && until > level().getGameTime();
     }
 
     public @Nullable DyeColor getColour() {
@@ -308,7 +396,7 @@ public class GolemEntity extends AbstractGolem {
 
     public boolean isWaiting() {
         if (level().isClientSide()) return entityData.get(DATA_WAITING);
-        return getJob() != Job.BLANK && (!isPowered() || !hasTool() || !canWorkHere());
+        return getJob() != Job.BLANK && (!isPowered() || !hasTool() || !canWorkHere() || downTicks > 0);
     }
 
     public boolean canWorkHere() {
@@ -375,6 +463,7 @@ public class GolemEntity extends AbstractGolem {
         if (level().isClientSide()) return Trouble.byId(entityData.get(DATA_TROUBLE));
         Job job = getJob();
         if (job == Job.BLANK) return Trouble.NONE;
+        if (job == Job.GUARD && (downTicks > 0 || getHealth() < getMaxHealth() / 3.0F)) return Trouble.HURT;
         if (!isPowered()) return Trouble.FOOD;
         if (!hasTool()) return Trouble.TOOL;
         if (storageTrouble) return Trouble.STORAGE;
@@ -397,6 +486,7 @@ public class GolemEntity extends AbstractGolem {
         if (getY() < level().getMinY() && Config.voidRescue) rescueFromVoid();
         if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
         if (thanks > 0) thanks--;
+        if (getJob() == Job.GUARD) guardTick();
         if (tickCount % 10 == 0) {
             entityData.set(DATA_WAITING, isWaiting());
             Trouble t = getTrouble();
@@ -409,6 +499,92 @@ public class GolemEntity extends AbstractGolem {
             lastTrouble = t;
             entityData.set(DATA_TROUBLE, (t == Trouble.NONE && thanks > 0 ? Trouble.THANKS : t).ordinal());
         }
+    }
+
+    private void guardTick() {
+        if (tickCount % 100 == 0) {
+            applyJobHealth();
+            skip.values().removeIf(t -> t <= level().getGameTime());
+        }
+        if (downTicks > 0) {
+            getNavigation().stop();
+            setTarget(null);
+            if (tickCount % 10 == 0) forgetMe();
+            if (--downTicks == 0) {
+                entityData.set(DATA_DOWNED, false);
+                setHealth(getMaxHealth() * 0.25F);
+                playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.8F, 0.8F);
+            }
+            return;
+        }
+        // a cookie after the fight heals it; never while something is still after it
+        if (tickCount % 60 == 0 && getHealth() < getMaxHealth() / 2.0F && getTarget() == null && !cookies.isEmpty()
+                && tickCount - lastFight > 100 && tickCount - getLastHurtByMobTimestamp() > 100 && level() instanceof ServerLevel sl) {
+            cookies.shrink(1);
+            if (cookies.isEmpty()) cookies = ItemStack.EMPTY;
+            heal(Config.guardCookieHeal);
+            updatePowered();
+            playSound(SoundEvents.GENERIC_EAT.value(), 0.6F, 1.2F);
+            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + getBbHeight(), getZ(), 5, 0.3, 0.2, 0.3, 0.0);
+        }
+    }
+
+    // mobs after it lose interest while it is down
+    private void forgetMe() {
+        for (Mob m : level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(32.0), m -> m.getTarget() == this)) {
+            m.setTarget(null);
+            if (m.getLastHurtByMob() == this) m.setLastHurtByMob(null);
+        }
+    }
+
+    // a guard goes down instead of dying, unless something like /kill or the void gets it
+    @Override
+    public void die(DamageSource source) {
+        if (getJob() != Job.GUARD || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || isRemoved()) {
+            super.die(source);
+            return;
+        }
+        setHealth(1.0F);
+        downTicks = Config.guardDownTime * 20;
+        entityData.set(DATA_DOWNED, true);
+        setTarget(null);
+        getNavigation().stop();
+        forgetMe();
+        if (level() instanceof ServerLevel sl) sl.sendParticles(ParticleTypes.POOF, getX(), getY() + 0.4, getZ(), 8, 0.3, 0.2, 0.3, 0.02);
+    }
+
+    @Override
+    public boolean isInvulnerableTo(ServerLevel level, DamageSource source) {
+        return downTicks > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || super.isInvulnerableTo(level, source);
+    }
+
+    @Override
+    public boolean canBeSeenAsEnemy() {
+        return !isDowned() && super.canBeSeenAsEnemy();
+    }
+
+    // mobs do not wear their weapons out, but a guard's should
+    @Override
+    public boolean doHurtTarget(ServerLevel level, Entity target) {
+        boolean hit = super.doHurtTarget(level, target);
+        if (hit && target instanceof LivingEntity living) {
+            getMainHandItem().postHurtEnemy(living, this);
+            if (!living.isAlive()) kills++;
+        }
+        return hit;
+    }
+
+    // it is short, so it reaches up a bit further than its own height
+    @Override
+    protected AABB getAttackBoundingBox(double reach) {
+        AABB box = super.getAttackBoundingBox(reach);
+        return getJob() == Job.GUARD ? box.expandTowards(0.0, 0.6, 0.0) : box;
+    }
+
+    // a lead switches a guard between its area and following its owner, so it is never tied up
+    @Override
+    public boolean canBeLeashed() {
+        return getJob() != Job.GUARD && super.canBeLeashed();
     }
 
     // storage may have been emptied or added, and a sapling may have turned up
@@ -629,6 +805,22 @@ public class GolemEntity extends AbstractGolem {
             return InteractionResult.SUCCESS;
         }
 
+        if (held.is(Items.LEAD) && job == Job.GUARD) {
+            if (server) {
+                if (!canBeChangedBy(player)) {
+                    tell(player, "not_yours");
+                } else {
+                    follow = !follow;
+                    if (follow) setOwner(player.getUUID());
+                    else if (customArea == null) setHome(blockPosition());
+                    getNavigation().stop();
+                    playSound(follow ? SoundEvents.LEAD_TIED : SoundEvents.LEAD_UNTIED, 0.8F, 1.2F);
+                    tell(player, follow ? "guard.follow" : "guard.stay");
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         DyeColor dye = held.get(DataComponents.DYE);
         if (dye != null && held.getItem() instanceof DyeItem) {
             if (dye == getColour()) return InteractionResult.PASS;
@@ -720,6 +912,10 @@ public class GolemEntity extends AbstractGolem {
             tell(player, "status.no_griefing", name);
         } else if (job == Job.COURIER && level() instanceof ServerLevel sl && !CourierWork.hasRoute(sl, customArea)) {
             tell(player, "status.no_route", name);
+        } else if (job == Job.GUARD) {
+            int minutes = (fuel + cookies.getCount() * Config.cookieTicks) / 1200;
+            if (downTicks > 0) tell(player, "status.guard_down", name, downSeconds());
+            else tell(player, isFollowing() ? "status.guard_follow" : "status.guard", name, Mth.ceil(getHealth()), Mth.ceil(getMaxHealth()), kills, minutes);
         } else {
             WorkArea a = getArea();
             int minutes = (fuel + cookies.getCount() * Config.cookieTicks) / 1200;
@@ -741,6 +937,9 @@ public class GolemEntity extends AbstractGolem {
         if (!points.isEmpty()) out.store("points", BlockPos.CODEC.listOf(), points);
         if (home != null) out.store("home", BlockPos.CODEC, home);
         if (owner != null) out.store("owner", UUIDUtil.CODEC, owner);
+        if (follow) out.putBoolean("follow", true);
+        if (downTicks > 0) out.putInt("downed", downTicks);
+        if (kills > 0) out.putInt("kills", kills);
         if (!climbSteps.isEmpty()) out.store("climb_steps", BlockPos.CODEC.listOf(), List.copyOf(climbSteps));
     }
 
@@ -760,6 +959,10 @@ public class GolemEntity extends AbstractGolem {
         points = List.copyOf(in.read("points", BlockPos.CODEC.listOf()).orElse(List.of()));
         home = in.read("home", BlockPos.CODEC).orElse(null);
         owner = in.read("owner", UUIDUtil.CODEC).orElse(null);
+        follow = in.getBooleanOr("follow", false);
+        downTicks = getJob() == Job.GUARD ? in.getIntOr("downed", 0) : 0;
+        entityData.set(DATA_DOWNED, downTicks > 0);
+        kills = in.getIntOr("kills", 0);
         climbSteps.clear();
         climbSteps.addAll(in.read("climb_steps", BlockPos.CODEC.listOf()).orElse(List.of()));
         updatePowered();

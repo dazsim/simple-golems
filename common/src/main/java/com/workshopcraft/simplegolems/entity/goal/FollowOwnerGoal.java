@@ -26,16 +26,22 @@ public class FollowOwnerGoal extends Goal {
         return p != null && !p.isSpectator() && p.isAlive() ? p : null;
     }
 
+    // a blank golem, or a guard told to follow with a lead that is not busy fighting
+    private boolean follows() {
+        if (golem.getJob() == Job.BLANK) return true;
+        return golem.getJob() == Job.GUARD && golem.isFollowing() && !golem.isDowned() && golem.getTarget() == null;
+    }
+
     @Override
     public boolean canUse() {
-        if (golem.getJob() != Job.BLANK) return false;
+        if (!follows()) return false;
         owner = findOwner();
         return owner != null && golem.distanceToSqr(owner) > 9.0;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return golem.getJob() == Job.BLANK && owner != null && owner.isAlive() && golem.distanceToSqr(owner) > 4.0;
+        return follows() && owner != null && owner.isAlive() && golem.distanceToSqr(owner) > 4.0;
     }
 
     @Override

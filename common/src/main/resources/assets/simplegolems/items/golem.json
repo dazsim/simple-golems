@@ -340,6 +340,13 @@
               "type": "minecraft:model",
               "model": "simplegolems:item/golem_accent_lamplighter"
             }
+          },
+          {
+            "when": "guard",
+            "model": {
+              "type": "minecraft:model",
+              "model": "simplegolems:item/golem_accent_guard"
+            }
           }
         ],
         "fallback": {

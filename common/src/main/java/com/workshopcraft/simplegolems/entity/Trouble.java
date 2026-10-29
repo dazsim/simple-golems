@@ -11,7 +11,9 @@ public enum Trouble {
     // a program is missing something it works with: torches, feed, bottles, fuel, a mesh
     SUPPLIES,
     // not a problem: a short thank-you once the last problem is sorted
-    THANKS;
+    THANKS,
+    // a guard is badly hurt or knocked down
+    HURT;
 
     public static Trouble byId(int id) {
         return id >= 0 && id < values().length ? values()[id] : NONE;

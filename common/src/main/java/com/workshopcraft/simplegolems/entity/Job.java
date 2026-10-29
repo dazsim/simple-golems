@@ -28,7 +28,8 @@ public enum Job implements StringRepresentable {
     SMELTER("smelter", 0xE07A2A),
     BEEKEEPER("beekeeper", 0xF2B93B),
     FISHER("fisher", 0x3FA7B5),
-    LAMPLIGHTER("lamplighter", 0xF5D76E);
+    LAMPLIGHTER("lamplighter", 0xF5D76E),
+    GUARD("guard", 0x5B6B8C);
 
     public static final Codec<Job> CODEC = StringRepresentable.fromEnum(Job::values);
     public static final StreamCodec<ByteBuf, Job> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Job::ordinal);
@@ -60,6 +61,7 @@ public enum Job implements StringRepresentable {
             case HAMMER -> stack.is(ModTags.HAMMERS);
             case SHEPHERD, BEEKEEPER -> stack.is(Items.SHEARS);
             case FISHER -> stack.is(Items.FISHING_ROD);
+            case GUARD -> stack.is(ItemTags.SWORDS) || stack.is(ItemTags.AXES);
             default -> false;
         };
     }
@@ -69,7 +71,7 @@ public enum Job implements StringRepresentable {
     }
 
     public boolean needsTool() {
-        return this == LUMBER || this == FARMER || this == MINER || this == COBBLEGEN || this == HAMMER || this == SHEPHERD || this == FISHER;
+        return this == LUMBER || this == FARMER || this == MINER || this == COBBLEGEN || this == HAMMER || this == SHEPHERD || this == FISHER || this == GUARD;
     }
 
     // blocks clicked with the marker stick, in order: the job works between them instead of in an area

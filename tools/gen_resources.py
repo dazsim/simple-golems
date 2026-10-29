@@ -8,11 +8,12 @@ DATA = f"{RES}/data/simplegolems"
 NS = "simplegolems"
 
 JOBS = ["lumber", "farmer", "miner", "courier", "sweeper", "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter",
-        "smelter", "beekeeper", "fisher", "lamplighter"]
+        "smelter", "beekeeper", "fisher", "lamplighter", "guard"]
 HINTS = {"lumber": "#minecraft:saplings", "farmer": "minecraft:wheat", "miner": "minecraft:cobblestone",
          "courier": "minecraft:chest", "sweeper": "minecraft:feather", "cobblegen": "minecraft:stone", "sifter": "exdeorum:string_mesh",
          "hammer": "exdeorum:wooden_hammer", "shepherd": "#minecraft:wool", "rancher": "minecraft:lead", "composter": "minecraft:composter",
-         "smelter": "minecraft:furnace", "beekeeper": "minecraft:honeycomb", "fisher": "minecraft:cod", "lamplighter": "minecraft:torch"}
+         "smelter": "minecraft:furnace", "beekeeper": "minecraft:honeycomb", "fisher": "minecraft:cod", "lamplighter": "minecraft:torch",
+         "guard": "minecraft:iron_sword"}
 EXDEORUM = ["sifter", "hammer"]
 # name, card, golem, job, tool message
 NAMES = {
@@ -31,6 +32,7 @@ NAMES = {
     "beekeeper": ("Beekeeping Card", "Beekeeper Golem", "Beekeeper golem", "A beekeeper golem only takes shears"),
     "fisher": ("Fishing Card", "Fisher Golem", "Fisher golem", "A fisher golem works with a fishing rod"),
     "lamplighter": ("Lamplighter Card", "Lamplighter Golem", "Lamplighter golem", "A lamplighter golem needs no tool, just torches in storage"),
+    "guard": ("Guarding Card", "Guard Golem", "Guard golem", "A guard golem fights with a sword or an axe"),
 }
 POINTS = {
     "cobblegen": "Click the block to mine, then its chest, then use the marker on the golem",
@@ -164,6 +166,11 @@ LANG = {
     "message.simplegolems.marker.points_given": "%s blocks given to the golem",
     "message.simplegolems.status.no_exdeorum": "%s needs Ex Deorum installed",
     "message.simplegolems.status.disabled": "%s is turned off in the server config",
+    "message.simplegolems.status.guard": "%s, guarding its area, health %s/%s, %s mobs beaten, about %s min of fighting power",
+    "message.simplegolems.status.guard_follow": "%s, following you, health %s/%s, %s mobs beaten, about %s min of fighting power",
+    "message.simplegolems.status.guard_down": "%s is down, back up in %s s",
+    "message.simplegolems.guard.follow": "Guard golem following you",
+    "message.simplegolems.guard.stay": "Guard golem guarding its area",
 }
 for j, (card, golem, job, tool) in NAMES.items():
     LANG[f"item.simplegolems.golem.{j}"] = golem
@@ -205,6 +212,7 @@ def tags():
     write(f"{DATA}/tags/item/hammers.json", {"values": [{"id": "#exdeorum:hammers", "required": False}, {"id": "#exdeorum:compressed_hammers", "required": False}]})
     write(f"{DATA}/tags/item/lamplighter_lights.json", {"values": ["minecraft:torch"]})
     write(f"{DATA}/tags/block/storage.json", {"values": []})
+    write(f"{DATA}/tags/entity_type/guard_ignores.json", {"values": []})
 
 
 items()

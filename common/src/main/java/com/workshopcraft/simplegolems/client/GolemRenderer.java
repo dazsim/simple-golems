@@ -87,6 +87,7 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         state.colour = tint(golem.getColour());
         state.powered = golem.isPowered();
         state.waiting = golem.isWaiting();
+        state.downed = golem.isDowned();
         itemModelResolver.updateForLiving(state.carried, golem.getShownCarried(), ItemDisplayContext.GROUND, golem);
         state.carrying = !state.carried.isEmpty();
         state.trouble = golem.shownTrouble;
@@ -131,12 +132,14 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
             case THANKS -> "thanks";
             case BLOCKS -> "blocks";
             case SUPPLIES -> "supplies";
+            case HURT -> "hurt";
             default -> switch (state.job) {
                 case FARMER -> "hoe";
                 case MINER, COBBLEGEN -> "pickaxe";
                 case SHEPHERD, BEEKEEPER -> "shears";
                 case FISHER -> "rod";
                 case HAMMER -> "hammer";
+                case GUARD -> "sword";
                 default -> "axe";
             };
         };

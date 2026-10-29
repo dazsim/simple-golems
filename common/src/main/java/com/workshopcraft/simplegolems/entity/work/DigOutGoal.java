@@ -93,7 +93,7 @@ public class DigOutGoal extends Goal {
         long now = level().getGameTime();
         if (now < nextCheck || now < restUntil) return false;
         nextCheck = now + CHECK;
-        if (!Config.digOut || golem.getJob() == Job.BLANK || golem.isWaiting() || !golem.onGround()
+        if (!Config.digOut || golem.getJob() == Job.BLANK || golem.getJob() == Job.GUARD || golem.isWaiting() || !golem.onGround()
                 || !inPit() && area().near(golem.blockPosition(), 1) || free()) {
             failures = 0;
             return false;

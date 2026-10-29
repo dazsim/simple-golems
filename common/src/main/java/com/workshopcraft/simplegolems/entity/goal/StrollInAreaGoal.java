@@ -22,13 +22,13 @@ public class StrollInAreaGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (golem.getJob() == Job.BLANK || golem.isWaiting()) return false;
+        if (golem.getJob() == Job.BLANK || golem.isWaiting() || golem.isFollowing()) return false;
         WorkArea area = golem.getArea();
         if (!area.contains(golem.blockPosition())) {
             BlockPos min = area.min(), max = area.max();
             BlockPos p = golem.blockPosition();
             target = golem.getCustomArea() == null ? Vec3.atBottomCenterOf(golem.getHome())
-                    : Vec3.atBottomCenterOf(new BlockPos(Math.clamp(p.getX(), min.getX(), max.getX()), Math.clamp(p.getY(), min.getY(), max.getY()), Math.clamp(p.getZ(), min.getZ(), max.getZ())));
+                    : Vec3.atBottomCenterOf(new BlockPos(inside(p.getX(), min.getX(), max.getX()), Math.clamp(p.getY(), min.getY(), max.getY()), inside(p.getZ(), min.getZ(), max.getZ())));
             return true;
         }
         if (golem.getRandom().nextInt(120) != 0) return false;
@@ -50,5 +50,10 @@ public class StrollInAreaGoal extends Goal {
     @Override
     public void start() {
         if (target != null) golem.getNavigation().moveTo(target.x, target.y, target.z, 0.8);
+    }
+
+    // a block in from the edge, so a golem just outside walks properly back in
+    private static int inside(int v, int min, int max) {
+        return max - min >= 2 ? Math.clamp(v, min + 1, max - 1) : Math.clamp(v, min, max);
     }
 }

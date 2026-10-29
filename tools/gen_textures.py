@@ -12,7 +12,8 @@ CUT = {"R": [(255, 150, 140), (234, 44, 32), (176, 16, 10)], "L": [(150, 184, 25
 JOBS = {"lumber": (88, 170, 64), "farmer": (236, 192, 58), "miner": (206, 70, 58), "courier": (62, 120, 214), "sweeper": (166, 92, 196),
         "cobblegen": (138, 143, 150), "sifter": (201, 178, 122), "hammer": (122, 82, 54), "shepherd": (150, 140, 128),
         "rancher": (184, 110, 60), "composter": (110, 154, 58), "smelter": (224, 122, 42), "beekeeper": (242, 185, 59),
-        "fisher": (63, 167, 181), "lamplighter": (214, 170, 40)}
+        "fisher": (63, 167, 181), "lamplighter": (214, 170, 40),
+        "guard": (91, 107, 140)}
 CLAY = [(226, 156, 116), (206, 132, 94), (190, 116, 82), (164, 96, 66), (128, 72, 50)]
 GREY = [(255, 255, 255), (240, 240, 240), (224, 224, 224), (200, 200, 200), (166, 166, 166)]
 EYE = (40, 26, 24)
@@ -172,6 +173,14 @@ def icon_hammer(im, c):
     rect(im, 7, 9, 8, 11, (150, 110, 70))
 
 
+def icon_sword(im, c):
+    for x, y in ((11, 6), (10, 7), (9, 8), (8, 9)):
+        put(im, x, y, c)
+    for x, y in ((6, 9), (7, 10), (8, 11)):
+        put(im, x, y, scale(c, 0.7))
+    put(im, 6, 11, (150, 110, 70))
+
+
 def icon_shears(im, c):
     for x, y in ((5, 7), (6, 8), (7, 9), (9, 7), (8, 8), (8, 10), (9, 11), (6, 10), (5, 11)):
         put(im, x, y, c)
@@ -318,7 +327,7 @@ def main():
     marker_stick().save(f"{OUT}/marker_stick.png")
     icons = {"lumber": icon_leaf, "farmer": icon_wheat, "miner": icon_pick, "courier": icon_chest, "sweeper": icon_brush,
              "cobblegen": icon_cobble, "sifter": icon_mesh, "hammer": icon_hammer, "shepherd": icon_shears, "rancher": icon_heart,
-             "composter": icon_bin, "smelter": icon_flame, "beekeeper": icon_bee, "fisher": icon_fish, "lamplighter": icon_torch}
+             "composter": icon_bin, "smelter": icon_flame, "beekeeper": icon_bee, "fisher": icon_fish, "lamplighter": icon_torch, "guard": icon_sword}
     for job, colour in JOBS.items():
         card(colour, icons[job]).save(f"{OUT}/{job}_card.png")
         accent(job).save(f"{OUT}/golem_accent_{job}.png")

@@ -28,10 +28,18 @@ public final class Config {
     public static boolean moddedStorage = true;
     public static int rancherMaxAnimals = 8;
     public static boolean skyblockPrograms = true;
+    public static int guardHealth = 30;
+    public static int guardChaseRange = 4;
+    public static String guardCreepers = "hit_and_back_off";
+    public static int guardDownTime = 60;
+    public static int guardCookieHeal = 8;
 
     public static final List<String> JOBS = List.of("lumber", "farmer", "miner", "courier", "sweeper");
     // a list of their own, so a 1.0.0 config without them leaves every program on
     public static final List<String> PROGRAMS = List.of("cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter", "smelter", "beekeeper", "fisher", "lamplighter");
+    // also its own list, so an older config with an enabledJobs list leaves the guard on
+    public static final List<String> COMBAT = List.of("guard");
+    public static final List<String> CREEPER_MODES = List.of("hit_and_back_off", "attack", "ignore");
 
     private Config() {}
 
@@ -79,10 +87,17 @@ public final class Config {
             moddedStorage = !"false".equals(v.get("moddedStorage"));
             skyblockPrograms = !"false".equals(v.get("skyblockPrograms"));
             rancherMaxAnimals = clamp(intOf(v, "rancherMaxAnimals", 8), 2, 64);
+            guardHealth = clamp(intOf(v, "guardHealth", 30), 10, 200);
+            guardChaseRange = clamp(intOf(v, "guardChaseRange", 4), 0, 16);
+            String creepers = v.getOrDefault("guardCreepers", "hit_and_back_off").replaceAll("^\"([^\"]*)\".*$", "$1").strip().toLowerCase(Locale.ROOT);
+            guardCreepers = CREEPER_MODES.contains(creepers) ? creepers : "hit_and_back_off";
+            guardDownTime = clamp(intOf(v, "guardDownTime", 60), 5, 600);
+            guardCookieHeal = clamp(intOf(v, "guardCookieHeal", 8), 1, 200);
             addMissing(file, v);
             enabledJobs = EnumSet.allOf(Job.class);
             list(v, "enabledJobs", JOBS);
             list(v, "enabledPrograms", PROGRAMS);
+            list(v, "enabledCombat", COMBAT);
         } catch (IOException | RuntimeException e) {
             LOG.warn("Could not read {}, using defaults: {}", file, e.toString());
         }
@@ -145,6 +160,18 @@ public final class Config {
                 skyblockPrograms = true
                 # A rancher stops breeding a kind of animal once its area holds this many of them
                 rancherMaxAnimals = 8
+                # Combat jobs golems may do; a guard not listed here waits
+                enabledCombat = ["guard"]
+                # Max health of a guard golem (10 to 200)
+                guardHealth = 30
+                # How many blocks past the edge of its area a guard chases a mob (0 to 16)
+                guardChaseRange = 4
+                # What a guard does about creepers: "hit_and_back_off", "attack" or "ignore"
+                guardCreepers = "hit_and_back_off"
+                # Seconds a guard stays down when its health runs out (5 to 600)
+                guardDownTime = 60
+                # Health a guard gets back from eating a clay cookie after a fight
+                guardCookieHeal = 8
                 """;
     }
 }

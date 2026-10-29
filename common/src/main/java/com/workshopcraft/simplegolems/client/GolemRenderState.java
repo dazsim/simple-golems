@@ -12,6 +12,7 @@ public class GolemRenderState extends LivingEntityRenderState {
     public int colour = 0xFFFFFF;
     public boolean powered;
     public boolean waiting;
+    public boolean downed;
     public boolean carrying;
     public final ItemStackRenderState carried = new ItemStackRenderState();
     public Trouble trouble = Trouble.NONE;
