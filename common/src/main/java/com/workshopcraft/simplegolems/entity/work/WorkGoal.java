@@ -12,6 +12,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
@@ -27,7 +30,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 public class WorkGoal extends Goal {
-    private enum Task { PICKUP, DELIVER, WORK, FETCH }
+    private enum Task { PICKUP, DELIVER, WORK, FETCH, TIDY }
 
     private static final int GIVE_UP = 400;
     private static final int SKIP_FOR = 1200;
@@ -58,6 +61,11 @@ public class WorkGoal extends Goal {
     // where it last moved to, and how long it has stood there
     private @Nullable Vec3 lastSpot;
     private int still;
+    // building steps up to a target it cannot walk to, and what it is fetching from storage for them
+    private @Nullable BuildUp climb;
+    private @Nullable BlockPos climbFor;
+    private @Nullable BlockPos needFor;
+    private @Nullable Predicate<ItemStack> fetching;
 
     public WorkGoal(GolemEntity golem) {
         this.golem = golem;
@@ -117,6 +125,20 @@ public class WorkGoal extends Goal {
         }
         skipped.values().removeIf(t -> t <= level.getGameTime());
         unreachable.values().removeIf(t -> t <= level.getGameTime());
+        if (climbFor != null && !work.isValid(golem, level, climbFor)) climbFor = null;
+        List<BlockPos> steps = golem.climbSteps();
+        steps.removeIf(p -> !isStep(level, p));
+        if (work.climbSupplies().equals(golem.getSupplies())
+                && (needFor == null || !work.isValid(golem, level, needFor) || climbBlocksNear(level, area))) {
+            golem.setSupplies(null);
+            needFor = null;
+        }
+        // the steps come down once the work up there is done, top first so it walks down them
+        if (climbFor == null && !steps.isEmpty()) {
+            BlockPos step = steps.stream().filter(p -> !skip(p))
+                    .min(Comparator.comparingInt((BlockPos p) -> -p.getY()).thenComparingDouble(p -> golem.distanceToSqr(Vec3.atCenterOf(p)))).orElse(null);
+            if (step != null) return begin(Task.TIDY, step, null);
+        }
         List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, itemBox(area),
                 e -> e.isAlive() && work.wants(e) && !skip(e.blockPosition()));
         for (ItemEntity e : loose) {
@@ -140,11 +162,11 @@ public class WorkGoal extends Goal {
         }
         if (!loose.isEmpty()) return false;
         if (!full) {
-            BlockPos target = work.findTarget(golem, level, area, this::skip);
+            BlockPos target = work.findTarget(golem, level, area, this::skipOrStep);
             // nothing else left: blocks that were out of reach get another go, the way may be open now
             if (target == null && level.getGameTime() >= retryMissed && skipped.keySet().removeIf(misses::containsKey)) {
                 retryMissed = level.getGameTime() + RETRY_ROUTE;
-                target = work.findTarget(golem, level, area, this::skip);
+                target = work.findTarget(golem, level, area, this::skipOrStep);
             }
             if (target != null) return begin(Task.WORK, target, null);
         }
@@ -159,6 +181,69 @@ public class WorkGoal extends Goal {
             if (chest != null) return begin(Task.FETCH, chest, null);
         }
         return false;
+    }
+
+    private boolean skipOrStep(BlockPos p) {
+        return skip(p) || golem.climbSteps().contains(p);
+    }
+
+    // a step it built that is still there
+    private boolean isStep(ServerLevel level, BlockPos p) {
+        BlockState s = level.getBlockState(p);
+        if (s.isAir() || s.hasBlockEntity()) return false;
+        Predicate<ItemStack> with = work.climbWith(golem);
+        return with == null || with.test(new ItemStack(s.getBlock().asItem()));
+    }
+
+    private boolean climbBlocksNear(ServerLevel level, WorkArea area) {
+        Predicate<ItemStack> with = work.climbWith(golem);
+        return with != null && (golem.carries(with) || Storage.nearest(level, area, golem.position(), c -> c.hasAnyMatching(with), p -> false) != null);
+    }
+
+    // a target above its reach that it could build steps up to
+    private boolean canClimb() {
+        return task == Task.WORK && work.climbWith(golem) != null && level().getGameRules().get(GameRules.MOB_GRIEFING)
+                && Vec3.atCenterOf(pos).y - golem.getY() >= 4.0;
+    }
+
+    private void startClimb() {
+        golem.getNavigation().stop();
+        climb = new BuildUp(golem, work.climbWith(golem), p -> work.climbClears(level(), p));
+        climbFor = pos;
+    }
+
+    private void tickClimb() {
+        switch (climb.tick(pos)) {
+            case CLIMBING -> ticks = 0;
+            case NO_BLOCKS -> {
+                Predicate<ItemStack> with = work.climbWith(golem);
+                BlockPos chest = Storage.nearest(level(), work.area(golem), golem.position(), c -> c.hasAnyMatching(with), this::skipOrAway);
+                if (chest != null) {
+                    begin(Task.FETCH, chest, null);
+                    fetching = with;
+                    moveTo();
+                } else {
+                    golem.setSupplies(work.climbSupplies());
+                    needFor = pos;
+                    failed = true;
+                    outOfReach = true;
+                }
+            }
+            case BLOCKED -> {
+                failed = true;
+                outOfReach = true;
+            }
+        }
+    }
+
+    private void breakStep(BlockPos p) {
+        ServerLevel level = level();
+        BlockState s = level.getBlockState(p);
+        golem.climbSteps().remove(p);
+        if (!isStep(level, p)) return;
+        List<ItemStack> drops = Block.getDrops(s, level, p, null, golem, golem.getTool());
+        LumberWork.breakQuietly(level, p, s, true);
+        for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, Vec3.atCenterOf(p), d);
     }
 
     private static AABB itemBox(WorkArea area) {
@@ -177,6 +262,8 @@ public class WorkGoal extends Goal {
         outOfReach = false;
         lastSpot = null;
         still = 0;
+        climb = null;
+        fetching = null;
         return true;
     }
 
@@ -188,6 +275,7 @@ public class WorkGoal extends Goal {
             case DELIVER -> Storage.containerAt(level(), pos) != null && !work.load(golem).isEmpty();
             case FETCH -> Storage.containerAt(level(), pos) != null && !golem.carryFull();
             case WORK -> work.isValid(golem, level(), pos);
+            case TIDY -> golem.climbSteps().contains(pos) && isStep(level(), pos);
         };
     }
 
@@ -205,6 +293,12 @@ public class WorkGoal extends Goal {
             Path p = hop == null || golem.blockPosition().closerThan(hop, 1.5) ? null : golem.getNavigation().createPath(hop, 0);
             if (p != null && p.canReach()) path = p;
             else if (task == Task.WORK && golem.onGround()) {
+                // too high to walk up to: go as near as it can, then build steps
+                if (canClimb()) {
+                    if (path != null) golem.getNavigation().moveTo(path, 1.0);
+                    else startClimb();
+                    return;
+                }
                 // no way to get near this block from here: on to the next one
                 failed = true;
                 outOfReach = true;
@@ -221,6 +315,7 @@ public class WorkGoal extends Goal {
     // ground navigation aims at the first open block above a solid target, which for a trunk is the treetop,
     // so walk to an open spot beside it instead
     private @Nullable Path workPath() {
+        if (task == Task.TIDY) return golem.getNavigation().createPath(pos.above(), 0);
         BlockPos at = task == Task.WORK ? work.approach(golem, level(), pos) : null;
         return at != null ? golem.getNavigation().createPath(at, 0) : golem.getNavigation().createPath(pos, 1);
     }
@@ -257,6 +352,7 @@ public class WorkGoal extends Goal {
 
     private boolean inReach(double x, double y, double z) {
         Vec3 c = Vec3.atCenterOf(pos);
+        if (task == Task.TIDY) return c.distanceToSqr(x, y + 0.45, z) < 30.0 && y < pos.getY() + 1.5;
         double dx = x - c.x, dz = z - c.z, dy = c.y - y;
         return dx * dx + dz * dz < 6.25 && dy > -2.0 && dy < (task == Task.WORK ? 4.0 : 3.0);
     }
@@ -284,12 +380,21 @@ public class WorkGoal extends Goal {
         }
         golem.getLookControl().setLookAt(Vec3.atCenterOf(pos));
         if (!inReach()) {
+            if (climb != null) {
+                tickClimb();
+                return;
+            }
             // walked as far as it can and got no closer: out of reach for now
             if (lastSpot == null || golem.position().distanceToSqr(lastSpot) > 0.25) {
                 lastSpot = golem.position();
                 still = 0;
             }
-            if (ticks > STUCK && golem.getNavigation().isDone() || ++still > STUCK) {
+            ++still;
+            if (canClimb() && (golem.getNavigation().isDone() && still > 20 || still > STUCK)) {
+                startClimb();
+                return;
+            }
+            if (ticks > STUCK && golem.getNavigation().isDone() || still > STUCK) {
                 failed = true;
                 outOfReach = true;
                 return;
@@ -326,7 +431,7 @@ public class WorkGoal extends Goal {
             }
             case FETCH -> {
                 Container c = Storage.containerAt(level(), pos);
-                Predicate<ItemStack> want = work.restock(golem);
+                Predicate<ItemStack> want = fetching != null ? fetching : work.restock(golem);
                 if (c != null && want != null) {
                     // up to one full stack of the first kind it finds
                     ItemStack got = ItemStack.EMPTY;
@@ -359,13 +464,25 @@ public class WorkGoal extends Goal {
                     task = null;
                 }
             }
+            case TIDY -> {
+                golem.getLookControl().setLookAt(Vec3.atCenterOf(pos));
+                int need = Config.scaled(golem.digTicks(level().getBlockState(pos), pos));
+                if (workTicks % 10 == 0) golem.swing(InteractionHand.MAIN_HAND);
+                workTicks++;
+                if (need > 20) level().destroyBlockProgress(golem.getId(), pos, workTicks * 10 / need);
+                if (workTicks >= need) {
+                    level().destroyBlockProgress(golem.getId(), pos, -1);
+                    breakStep(pos);
+                    task = null;
+                }
+            }
         }
     }
 
     @Override
     public void stop() {
         if (pos != null) {
-            if (task == Task.WORK) level().destroyBlockProgress(golem.getId(), pos, -1);
+            if (task == Task.WORK || task == Task.TIDY) level().destroyBlockProgress(golem.getId(), pos, -1);
             if (task != null && (failed || ticks > GIVE_UP || trip > MAX_TRIP)) {
                 if (task == Task.DELIVER || task == Task.FETCH) unreachable.put(pos, level().getGameTime() + RETRY_ROUTE);
                 else if (outOfReach) {
@@ -375,8 +492,11 @@ public class WorkGoal extends Goal {
                 } else skipped.put(pos, level().getGameTime() + SKIP_FOR);
             }
         }
+        if (task != Task.FETCH || fetching == null) climbFor = null;
         task = null;
         item = null;
+        climb = null;
+        fetching = null;
         golem.getNavigation().stop();
         cooldown = 0;
     }

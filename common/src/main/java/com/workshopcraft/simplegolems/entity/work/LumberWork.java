@@ -152,6 +152,21 @@ public class LumberWork implements JobWork {
     }
 
     @Override
+    public Predicate<ItemStack> climbWith(GolemEntity golem) {
+        return s -> s.is(ModTags.LOG_ITEMS);
+    }
+
+    @Override
+    public String climbSupplies() {
+        return "logs";
+    }
+
+    @Override
+    public boolean climbClears(ServerLevel level, BlockPos pos) {
+        return isTreeLeaf(level, pos);
+    }
+
+    @Override
     public boolean fromGround() {
         return true;
     }

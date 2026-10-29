@@ -330,6 +330,13 @@ public class GolemEntity extends AbstractGolem {
         blocksTrouble = b;
     }
 
+    // blocks it built to climb up to its work, taken down again afterwards
+    private final List<BlockPos> climbSteps = new ArrayList<>();
+
+    public List<BlockPos> climbSteps() {
+        return climbSteps;
+    }
+
     // bumped when it digs its way out, so work it gave up on from the old spot gets another go
     private int freed;
 
@@ -734,6 +741,7 @@ public class GolemEntity extends AbstractGolem {
         if (!points.isEmpty()) out.store("points", BlockPos.CODEC.listOf(), points);
         if (home != null) out.store("home", BlockPos.CODEC, home);
         if (owner != null) out.store("owner", UUIDUtil.CODEC, owner);
+        if (!climbSteps.isEmpty()) out.store("climb_steps", BlockPos.CODEC.listOf(), List.copyOf(climbSteps));
     }
 
     @Override
@@ -752,6 +760,8 @@ public class GolemEntity extends AbstractGolem {
         points = List.copyOf(in.read("points", BlockPos.CODEC.listOf()).orElse(List.of()));
         home = in.read("home", BlockPos.CODEC).orElse(null);
         owner = in.read("owner", UUIDUtil.CODEC).orElse(null);
+        climbSteps.clear();
+        climbSteps.addAll(in.read("climb_steps", BlockPos.CODEC.listOf()).orElse(List.of()));
         updatePowered();
     }
 

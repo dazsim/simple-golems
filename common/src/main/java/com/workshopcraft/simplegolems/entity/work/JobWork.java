@@ -82,6 +82,21 @@ public interface JobWork {
         return Storage.nearest(level, area, golem.position(), c -> Storage.hasRoom(c, carried), skip);
     }
 
+    // blocks it may build steps with to reach a target above it, or null if it never builds up
+    default @Nullable Predicate<ItemStack> climbWith(GolemEntity golem) {
+        return null;
+    }
+
+    // lang key part for the status when it has none of those blocks
+    default String climbSupplies() {
+        return "climb_blocks";
+    }
+
+    // what it may break when it is in the way of those steps
+    default boolean climbClears(ServerLevel level, BlockPos pos) {
+        return false;
+    }
+
     // walk to the ground beside the target rather than onto it
     default boolean fromGround() {
         return false;

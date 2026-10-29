@@ -9,8 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -268,13 +266,11 @@ public class DigOutGoal extends Goal {
     }
 
     private boolean open(BlockPos p) {
-        BlockState s = level().getBlockState(p);
-        return s.getCollisionShape(level(), p).isEmpty() && s.getFluidState().isEmpty() && !s.is(BlockTags.FIRE);
+        return BuildUp.open(level(), p);
     }
 
     private boolean hot(BlockPos p) {
-        BlockState s = level().getBlockState(p);
-        return s.getFluidState().is(FluidTags.LAVA) || s.is(BlockTags.FIRE);
+        return BuildUp.hot(level(), p);
     }
 
     // never bedrock or anything unbreakable, never a chest or other block entity, never inside another golem's area.
@@ -284,10 +280,7 @@ public class DigOutGoal extends Goal {
         BlockState s = level.getBlockState(p);
         if (s.isAir() || s.hasBlockEntity() || s.getDestroySpeed(level, p) < 0 || !s.getFluidState().isEmpty()) return false;
         if (inPit() && (!area().contains(p) || MinerWork.isStair(area(), p) || s.is(ModTags.MINER_NEVER_DIG))) return false;
-        for (GolemEntity other : level.getEntitiesOfClass(GolemEntity.class, golem.getBoundingBox().inflate(64), g -> g != golem && g.getCustomArea() != null)) {
-            if (other.getArea().contains(p)) return false;
-        }
-        return true;
+        return !BuildUp.inOtherArea(golem, p);
     }
 
     // a miner digs with its pickaxe, anyone else by hand

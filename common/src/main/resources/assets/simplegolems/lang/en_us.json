@@ -111,6 +111,8 @@
   "message.simplegolems.status.needs.feed": "%s needs feed for its animals in storage",
   "message.simplegolems.status.needs.bottles": "%s needs glass bottles in storage or shears",
   "message.simplegolems.status.needs.torches": "%s needs torches in storage",
+  "message.simplegolems.status.needs.logs": "%s needs logs with it or in storage to build steps up to a tree",
+  "message.simplegolems.status.needs.climb_blocks": "%s needs blocks with it or in storage to build steps up to its work",
   "message.simplegolems.setup.step": "%s (%s/%s)",
   "message.simplegolems.setup.mine": "Select the block to mine",
   "message.simplegolems.setup.drop_chest": "Select the drop-off chest",
