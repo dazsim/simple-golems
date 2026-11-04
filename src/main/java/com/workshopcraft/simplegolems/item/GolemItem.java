@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.item;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -112,7 +113,7 @@ public class GolemItem extends Item {
             if (context.getPlayer() != null) golem.setOwner(context.getPlayer().getUUID());
             float yaw = context.getPlayer() != null ? context.getPlayer().getYRot() + 180.0F : 0.0F;
             //? if >=1.21.5 {
-            golem.snapTo(golem.getX(), golem.getY(), golem.getZ(), yaw, 0.0F);
+            Mc.place(golem, golem.getX(), golem.getY(), golem.getZ(), yaw, 0.0F);
             //?} else {
             /*golem.moveTo(golem.getX(), golem.getY(), golem.getZ(), yaw, 0.0F);
             *///?}

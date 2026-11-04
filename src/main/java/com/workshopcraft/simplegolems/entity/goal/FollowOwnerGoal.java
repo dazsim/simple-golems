@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.goal;
 
+import com.workshopcraft.simplegolems.Mc;
 import net.minecraft.world.phys.Vec3;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
@@ -74,7 +75,7 @@ public class FollowOwnerGoal extends Goal {
             BlockPos p = pos.offset(golem.getRandom().nextInt(5) - 2, golem.getRandom().nextInt(3) - 1, golem.getRandom().nextInt(5) - 2);
             if (golem.level().getBlockState(p.below()).isFaceSturdy(golem.level(), p.below(), Direction.UP)
                     && golem.level().noCollision(golem, golem.getDimensions(golem.getPose()).makeBoundingBox(Vec3.atBottomCenterOf(p)))) {
-                golem.snapTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, golem.getYRot(), golem.getXRot());
+                Mc.place(golem, p.getX() + 0.5, p.getY(), p.getZ() + 0.5, golem.getYRot(), golem.getXRot());
                 golem.getNavigation().stop();
                 return;
             }

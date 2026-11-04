@@ -25,6 +25,5 @@ stonecutter parameters {
     replacements.string(current.parsed < "1.20.5") {
         replace("PathType.", "BlockPathTypes.")
         replace("BlockTags.SUBSTRATE_OVERWORLD", "BlockTags.DIRT")
-        replace(".snapTo(", ".moveTo(")
     }
 }

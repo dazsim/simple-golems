@@ -22,6 +22,14 @@ import net.minecraft.world.level.gamerules.GameRules;
 public final class Mc {
     private Mc() {}
 
+    public static void place(Entity e, double x, double y, double z, float yRot, float xRot) {
+        //? if >=1.21.5 {
+        e.snapTo(x, y, z, yRot, xRot);
+        //?} else {
+        /*e.moveTo(x, y, z, yRot, xRot);
+        *///?}
+    }
+
     public static int minY(Level level) {
         //? if >=1.21.2 {
         return level.getMinY();
