@@ -24,6 +24,7 @@ public class SimpleGolemsNeoForge {
         container.registerConfig(ModConfig.Type.COMMON, NeoForgeConfig.SPEC, "simplegolems.toml");
         modBus.addListener(NeoForgeConfig::onLoad);
         Storage.external = NeoForgeStore::at;
+        //? if <26.3
         if (ModList.get().isLoaded("exdeorum")) ExDeorumCompat.init();
         modBus.addListener(SimpleGolemsNeoForge::onRegister);
         modBus.addListener((EntityAttributeCreationEvent e) -> e.put(ModContent.GOLEM_ENTITY, GolemEntity.createAttributes().build()));

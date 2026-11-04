@@ -30,7 +30,7 @@ public class ShepherdWork implements JobWork {
 
     private static @Nullable Sheep near(ServerLevel level, AABB box, BlockPos from) {
         return level.getEntitiesOfClass(Sheep.class, box, s -> s.isAlive() && s.readyForShearing()).stream()
-                .min(Comparator.comparingDouble(s -> s.distanceToSqr(from.getCenter()))).orElse(null);
+                .min(Comparator.comparingDouble(s -> s.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(from)))).orElse(null);
     }
 
     @Override

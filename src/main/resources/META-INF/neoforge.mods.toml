@@ -7,7 +7,7 @@ version = "${version}"
 displayName = "${name}"
 authors = "${author}"
 description = '''${description}'''
-logoFile = "simplegolems_logo.png"
+${logo_key} = "simplegolems_logo.png"
 [[dependencies.${id}]]
 modId = "neoforge"
 type = "required"
@@ -20,9 +20,10 @@ type = "required"
 versionRange = "${minecraft}"
 ordering = "NONE"
 side = "BOTH"
-[[dependencies.${id}]]
+<% if (exdeorum) { %>[[dependencies.${id}]]
 modId = "exdeorum"
 type = "optional"
 versionRange = "${exdeorum}"
 ordering = "NONE"
 side = "BOTH"
+<% } %>

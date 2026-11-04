@@ -59,7 +59,9 @@ public class SmelterWork extends StationWork {
     }
 
     private static boolean isFuel(ServerLevel level, ItemStack s) {
-        //? if >=1.21.2 {
+        //? if >=26.3 {
+        /*return s.has(net.minecraft.core.component.DataComponents.COOKING_FUEL);
+        *///?} else if >=1.21.2 {
         return level.fuelValues().isFuel(s);
         //?} else {
         /*return AbstractFurnaceBlockEntity.isFuel(s);

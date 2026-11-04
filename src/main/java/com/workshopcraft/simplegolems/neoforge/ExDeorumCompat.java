@@ -1,6 +1,6 @@
 package com.workshopcraft.simplegolems.neoforge;
 
-//? if neoforge {
+//? if neoforge && <26.3 {
 /*import com.workshopcraft.simplegolems.entity.work.ExDeorum;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;

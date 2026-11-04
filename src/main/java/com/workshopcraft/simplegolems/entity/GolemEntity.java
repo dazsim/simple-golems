@@ -245,8 +245,14 @@ public class GolemEntity extends AbstractGolem {
         if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
     }
 
+    //? if >=26.3 {
+    /*public void swing(net.minecraft.world.InteractionHand hand) {
+        swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT);
+    }
+    *///?}
+
     private boolean lookingAtPlayer() {
-        if (isDowned() || isWaiting() || swinging || walkAnimation.speed() > 0.05F) return false;
+        if (isDowned() || isWaiting() || /*? if >=26.3 {*//*isSwinging()*//*?} else {*/swinging/*?}*/ || walkAnimation.speed() > 0.05F) return false;
         Player p = level().getNearestPlayer(this, 6.0);
         if (p == null) return false;
         float yaw = (float) (Mth.atan2(p.getZ() - getZ(), p.getX() - getX()) * Mth.RAD_TO_DEG) - 90.0F;
@@ -851,7 +857,7 @@ public class GolemEntity extends AbstractGolem {
     }
 
     private void give(Player player, ItemStack stack) {
-        if (!stack.isEmpty() && !player.getInventory().add(stack)) player.drop(stack, false);
+        if (!stack.isEmpty() && !player.getInventory().add(stack)) player.drop(stack, false/*? if >=26.3 {*//*, net.minecraft.util.Prediction.SERVER_ONLY*//*?}*/);
     }
 
     @Override

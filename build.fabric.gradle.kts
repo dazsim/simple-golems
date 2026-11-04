@@ -17,7 +17,7 @@ val requiredJava = when {
     else -> JavaVersion.VERSION_17
 }
 
-// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py
+// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py; 26.3 reads the 26.1 files
 val era = when {
     sc.current.parsed >= "26.1" -> "26.1"
     sc.current.parsed >= "1.21" -> "1.21.1"
@@ -65,6 +65,8 @@ tasks {
             "loader" to sc.properties.get<String>("deps.fabric_loader"),
             "java" to requiredJava.majorVersion,
             "pack_format" to packProp("mod.pack_format"),
+            "pack_min" to packProp("mod.pack_min"),
+            "pack_max" to packProp("mod.pack_max"),
         )
         inputs.properties(props)
         filesMatching(listOf("fabric.mod.json", "pack.mcmeta")) { expand(props) }

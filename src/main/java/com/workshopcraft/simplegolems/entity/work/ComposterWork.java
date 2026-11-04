@@ -18,6 +18,9 @@ import java.util.function.Predicate;
 // fills a composter from the first chest and takes the bone meal to the last one
 public class ComposterWork extends StationWork {
     public static final ComposterWork INSTANCE = new ComposterWork();
+    //? if >=26.3 {
+    /*private static final Predicate<ItemStack> COMPOSTABLE = s -> s.has(net.minecraft.core.component.DataComponents.COMPOSTABLE);
+    *///?} else
     private static final Predicate<ItemStack> COMPOSTABLE = s -> ComposterBlock.COMPOSTABLES.containsKey(s.getItem());
 
     @Override

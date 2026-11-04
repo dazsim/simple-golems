@@ -50,7 +50,9 @@ public final class ItemData {
     }
 
     public static List<ItemStack> items(ItemStack stack) {
-        //? if >=1.21.5 {
+        //? if >=26.3 {
+        /*return stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).itemCopies().toList();
+        *///?} else if >=1.21.5 {
         return stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).allItemsCopyStream().toList();
         //?} else {
         /*return stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).stream().toList();

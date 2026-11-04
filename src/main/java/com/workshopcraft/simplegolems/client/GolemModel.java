@@ -163,6 +163,9 @@ public class GolemModel extends EntityModel<GolemRenderState> {
         body.translateAndRotate(pose);
         toolArm.translateAndRotate(pose);
         pose.translate(0.0F, 6.4F / 16.0F, -0.8F / 16.0F);
+        //? if >=26.3 {
+        /*pose.rotate(Axis.ZP.rotationDegrees(TOOL_TILT));
+        *///?} else
         pose.mulPose(Axis.ZP.rotationDegrees(TOOL_TILT));
         pose.scale(TOOL_SCALE, TOOL_SCALE, TOOL_SCALE);
         pose.translate(-0.38F, 0.38F, 0.0F);
@@ -173,6 +176,9 @@ public class GolemModel extends EntityModel<GolemRenderState> {
         body.translateAndRotate(pose);
         cardArm.translateAndRotate(pose);
         pose.translate(0.0F, 7.0F / 16.0F, -1.0F / 16.0F);
+        //? if >=26.3 {
+        /*pose.rotate(Axis.XP.rotationDegrees(-90.0F));
+        *///?} else
         pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
         pose.scale(0.75F, 0.75F, 0.75F);
     }

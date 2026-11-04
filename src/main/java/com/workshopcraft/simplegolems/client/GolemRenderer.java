@@ -96,7 +96,7 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
     public void extractRenderState(GolemEntity golem, GolemRenderState state, float partialTicks) {
         super.extractRenderState(golem, state, partialTicks);
         itemModelResolver.updateForLiving(state.tool, golem.getTool(), ItemDisplayContext.FIXED, golem);
-        state.attackTime = golem.getAttackAnim(partialTicks);
+        state.attackTime = golem./*? if >=26.3 {*//*getSwingAnimation*//*?} else {*/getAttackAnim/*?}*/(partialTicks);
         state.job = golem.getJob();
         state.colour = tint(golem.getColour());
         state.powered = golem.isPowered();
@@ -117,6 +117,9 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         if (state.bubble <= 0.0F || state.trouble == Trouble.NONE) return;
         pose.pushPose();
         pose.translate(0.0F, state.boundingBoxHeight + 0.42F + Mth.sin(state.ageInTicks * 0.08F) * 0.04F, 0.0F);
+        //? if >=26.3 {
+        /*pose.rotate(camera.orientation);
+        *///?} else
         pose.mulPose(camera.orientation);
         float a = state.bubble * state.bubble * (3 - 2 * state.bubble);
         pose.scale(0.75F, 0.75F, 0.75F);

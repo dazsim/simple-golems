@@ -17,7 +17,7 @@ val requiredJava = when {
     else -> JavaVersion.VERSION_21
 }
 
-// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py
+// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py; 26.3 reads the 26.1 files
 val era = when {
     sc.current.parsed >= "26.1" -> "26.1"
     sc.current.parsed >= "1.21" -> "1.21.1"
@@ -27,6 +27,7 @@ val era = when {
 val modern = sc.current.parsed >= "26.1"
 val legacy = sc.current.parsed < "1.20.5"
 sourceSets.main { resources.srcDir(rootProject.file("src/eras/$era")) }
+val exDeorum = sc.current.parsed < "26.3"
 fun packProp(key: String) = runCatching { sc.properties.get<String>(key) }.getOrDefault("")
 
 neoForge {
@@ -72,7 +73,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly(sc.properties.get<String>("deps.exdeorum"))
+    // no Ex Deorum build for 26.3 yet
+    if (exDeorum) compileOnly(sc.properties.get<String>("deps.exdeorum"))
     if (!modern) compileOnly("org.jspecify:jspecify:1.0.0")
 }
 
@@ -95,8 +97,11 @@ tasks {
             "minecraft" to sc.properties.get<String>("mod.mc_compat"),
             "neoforge" to sc.properties.get<String>("deps.neo_compat"),
             "fml" to sc.properties.get<String>("deps.neo_fml_compat"),
-            "exdeorum" to sc.properties.get<String>("deps.exdeorum_range"),
+            "exdeorum" to packProp("deps.exdeorum_range"),
+            "logo_key" to if (sc.current.parsed >= "26.3") "iconFile" else "logoFile",
             "pack_format" to packProp("mod.pack_format"),
+            "pack_min" to packProp("mod.pack_min"),
+            "pack_max" to packProp("mod.pack_max"),
         )
         inputs.properties(props)
         filesMatching(listOf("META-INF/neoforge.mods.toml", "pack.mcmeta")) { expand(props) }
