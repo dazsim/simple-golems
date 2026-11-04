@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "id": "${id}",
+    "version": "${version}",
+    "name": "${name}",
+    "description": "${description}",
+    "authors": [
+        "${author}"
+    ],
+    "license": "${license}",
+    "icon": "simplegolems_logo.png",
+    "environment": "*",
+    "accessWidener": "simplegolems.accesswidener",
+    "entrypoints": {
+        "client": [
+            "com.workshopcraft.simplegolems.fabric.SimpleGolemsFabricClient"
+        ],
+        "main": [
+            "com.workshopcraft.simplegolems.fabric.SimpleGolemsFabric"
+        ]
+    },
+    "depends": {
+        "fabricloader": ">=${loader}",
+        "fabric-api": "*",
+        "minecraft": "${minecraft}",
+        "java": ">=${java}"
+    }
+}
+  

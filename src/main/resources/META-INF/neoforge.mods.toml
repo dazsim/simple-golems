@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "${fml}"
+license = "${license}"
+[[mods]]
+modId = "${id}"
+version = "${version}"
+displayName = "${name}"
+authors = "${author}"
+description = '''${description}'''
+logoFile = "simplegolems_logo.png"
+[[dependencies.${id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neoforge}"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.${id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.${id}]]
+modId = "exdeorum"
+type = "optional"
+versionRange = "[4.0,)"
+ordering = "NONE"
+side = "BOTH"

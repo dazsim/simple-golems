@@ -159,7 +159,7 @@ Golems do not despawn, do not attack (except guards), take no fall damage and dr
 
 Minecraft 26.1 to 26.1.2, NeoForge and Fabric.
 
-Build with `./gradlew build`. The entity model is made from `tools/golem_b.json` by `python3 tools/gen_model.py`, item textures by `python3 tools/gen_textures.py`, the thought bubbles by `python3 tools/gen_bubbles.py` and the json files by `python3 tools/gen_resources.py`.
+The build uses Stonecutter with one source tree in `src/`, one node per Minecraft version and loader (now only `26.1.2-fabric` and `26.1.2-neoforge`). Build with `./gradlew :26.1.2-fabric:build :26.1.2-neoforge:build`; jars land in `versions/<node>/build/libs`. The entity model is made from `tools/golem_b.json` by `python3 tools/gen_model.py`, item textures by `python3 tools/gen_textures.py`, the thought bubbles by `python3 tools/gen_bubbles.py` and the json files by `python3 tools/gen_resources.py`.
 
 ## Changelog
 

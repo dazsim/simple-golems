@@ -3,7 +3,7 @@
 import os, random
 from PIL import Image
 
-OUT = "common/src/main/resources/assets/simplegolems/textures/item"
+OUT = "src/main/resources/assets/simplegolems/textures/item"
 GEM = {"R": (222, 48, 38), "L": (52, 92, 214), "E": (52, 206, 98)}
 RECIPE = ["RLR", "LEL", "RLR"]
 # light to dark, for cut stones

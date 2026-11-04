@@ -2,7 +2,7 @@
 # writes item models, recipes and lang, run from repo root
 import json, os
 
-RES = "common/src/main/resources"
+RES = "src/main/resources"
 ASSETS = f"{RES}/assets/simplegolems"
 DATA = f"{RES}/data/simplegolems"
 NS = "simplegolems"

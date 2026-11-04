@@ -3,7 +3,7 @@
 import json, math
 
 SRC = "tools/golem_b.json"
-OUT = "common/src/main/java/com/workshopcraft/simplegolems/client/GolemMesh.java"
+OUT = "src/main/java/com/workshopcraft/simplegolems/client/GolemMesh.java"
 
 
 def f(v):

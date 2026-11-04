@@ -2,7 +2,7 @@
 import math, sys
 from PIL import Image
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "common/src/main/resources/assets/simplegolems/textures/entity/golem"
+OUT = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources/assets/simplegolems/textures/entity/golem"
 S = 32
 EDGE, FILL, SHADE = (48, 44, 52, 255), (255, 255, 255, 255), (214, 216, 228, 255)
 RED, DARKRED = (224, 46, 40, 255), (120, 20, 18, 255)
