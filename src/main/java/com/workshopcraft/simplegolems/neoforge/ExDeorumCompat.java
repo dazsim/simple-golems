@@ -60,8 +60,14 @@ final class ExDeorumCompat implements ExDeorum.Hooks {
 
     @Override
     public boolean canHammer(ItemStack tool, ItemStack block) {
+        //? if >=26.1 {
         if (tool.is(EItemTags.COMPRESSED_HAMMERS)) return RecipeUtil.getCompressedHammerRecipe(block.getItem()) != null;
         return tool.is(EItemTags.HAMMERS) && RecipeUtil.getHammerRecipe(block.getItem()) != null;
+        //?} else {
+        /^var caches = RecipeUtil.getServerRecipeCaches();
+        if (tool.is(EItemTags.COMPRESSED_HAMMERS)) return caches.getCompressedHammerRecipe(block.getItem()) != null;
+        return tool.is(EItemTags.HAMMERS) && caches.getHammerRecipe(block.getItem()) != null;
+        ^///?}
     }
 }
 *///?}
