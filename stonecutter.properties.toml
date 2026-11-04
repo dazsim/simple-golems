@@ -49,6 +49,23 @@ deps.exdeorum_range = "[4.0,)"
 mod.pack_min = "84"
 mod.pack_max = "[101, 1]"
 
+[fabric."26.2"]
+mod.mc_compat = ">=26.2 <26.3"
+deps.fabric_api = "0.161.0+26.2"
+deps.fabric_loader = "0.20.1"
+mod.pack_min = "88"
+mod.pack_max = "[107, 1]"
+
+[neoforge."26.2"]
+mod.mc_compat = "[26.2, 26.3)"
+deps.neo_loader = "26.2.0.93"
+deps.neo_compat = "[26.2.0.0-beta,)"
+deps.neo_fml_compat = "[4,)"
+deps.exdeorum = "maven.modrinth:ex-deorum:5.1"
+deps.exdeorum_range = "[5.0,)"
+mod.pack_min = "88"
+mod.pack_max = "[107, 1]"
+
 [fabric."26.3"]
 mod.mc_compat = ">=26.3 <26.4"
 deps.fabric_api = "0.165.0+26.3"

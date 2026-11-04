@@ -22,7 +22,7 @@ public final class CookieHud {
 
     public static void tick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        //? if >=26.3 {
+        //? if >=26.2 {
         /*if (player == null || mc.level == null || mc.gui.screen() != null || player.tickCount % 4 != 0) return;
         *///?} else
         if (player == null || mc.level == null || mc.screen != null || player.tickCount % 4 != 0) return;
@@ -30,7 +30,7 @@ public final class CookieHud {
         GolemEntity golem = lookedAt(mc, player);
         if (golem == null) return;
         int max = new ItemStack(ModContent.CLAY_COOKIE).getMaxStackSize();
-        mc.gui/*? if >=26.3 {*//*.hud*//*?}*/.setOverlayMessage(Component.translatable("hud.simplegolems.cookies", golem.getShownCookies(), max), false);
+        mc.gui/*? if >=26.2 {*//*.hud*//*?}*/.setOverlayMessage(Component.translatable("hud.simplegolems.cookies", golem.getShownCookies(), max), false);
     }
 
     private static boolean holdsCookies(LocalPlayer player) {
