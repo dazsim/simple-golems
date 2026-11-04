@@ -14,6 +14,7 @@ import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -26,6 +27,7 @@ public class SimpleGolemsForge {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         Config.loadFile(FMLPaths.CONFIGDIR.get().resolve("simplegolems.toml"));
         Storage.external = ForgeStore::at;
+        if (ModList.get().isLoaded("exdeorum")) ExDeorumCompat.init();
         modBus.addListener(SimpleGolemsForge::onRegister);
         modBus.addListener((EntityAttributeCreationEvent e) -> e.put(ModContent.GOLEM_ENTITY, GolemEntity.createAttributes().build()));
         MinecraftForge.EVENT_BUS.addListener(SimpleGolemsForge::onUseBlock);

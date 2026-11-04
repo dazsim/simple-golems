@@ -5,7 +5,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 
-// set by the NeoForge side when Ex Deorum is loaded; the sifter and hammer programs only work then
+// set by the NeoForge or Forge side when Ex Deorum is loaded; the sifter and hammer programs only work then
 public final class ExDeorum {
     public interface Hooks {
         boolean isSieve(BlockEntity be);

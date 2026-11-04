@@ -20,3 +20,9 @@ mandatory = true
 versionRange = "${minecraft}"
 ordering = "NONE"
 side = "BOTH"
+[[dependencies.${id}]]
+modId = "exdeorum"
+mandatory = false
+versionRange = "[1.52,)"
+ordering = "NONE"
+side = "BOTH"

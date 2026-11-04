@@ -33,8 +33,17 @@ legacyForge {
     }
 }
 
+// Ex Deorum is optional: the sifter and hammer programs use it when it is installed
+repositories {
+    exclusiveContent {
+        forRepository { maven("https://cursemaven.com") }
+        filter { includeGroup("curse.maven") }
+    }
+}
+
 dependencies {
     compileOnly("org.jspecify:jspecify:1.0.0")
+    modCompileOnly("curse.maven:ex-deorum-901420:8370607")
 }
 
 java {
