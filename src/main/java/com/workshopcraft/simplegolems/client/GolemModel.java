@@ -95,11 +95,20 @@ public class GolemModel extends EntityModel<GolemRenderState> {
 
     // the body tint is used once, by the main pass, so layers drawn with this model after it are not tinted
     @Override
-    public void renderToBuffer(PoseStack pose, VertexConsumer vc, int light, int overlay, float r, float g, float b, float a) {
+    //? if >=1.21 {
+    public void renderToBuffer(PoseStack pose, VertexConsumer vc, int light, int overlay, int colour) {
+        int t = tint;
+        tint = -1;
+        int r = (colour >> 16 & 255) * (t >> 16 & 255) / 255, g = (colour >> 8 & 255) * (t >> 8 & 255) / 255, b = (colour & 255) * (t & 255) / 255;
+        rootPart.render(pose, vc, light, overlay, (colour & 0xFF000000) | r << 16 | g << 8 | b);
+    }
+    //?} else {
+    /^public void renderToBuffer(PoseStack pose, VertexConsumer vc, int light, int overlay, float r, float g, float b, float a) {
         float tr = (tint >> 16 & 255) / 255.0F, tg = (tint >> 8 & 255) / 255.0F, tb = (tint & 255) / 255.0F;
         tint = -1;
         rootPart.render(pose, vc, light, overlay, r * tr, g * tg, b * tb, a);
     }
+    ^///?}
     *///?}
 
     private void pose(Job job, float pos, float walkSpeed, float yRot, float xRot, float tilt, boolean carrying, float attackTime, boolean waiting, boolean downed) {

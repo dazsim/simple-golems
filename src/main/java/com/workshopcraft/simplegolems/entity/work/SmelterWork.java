@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
-//? if >=1.21.2 {
+//? if >=1.21 {
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 //?}
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
@@ -49,7 +49,10 @@ public class SmelterWork extends StationWork {
         //? if >=1.21.2 {
         return s -> !s.isEmpty() && (!shared || !isFuel(level, s))
                 && level.recipeAccess().getRecipeFor(type, new SingleRecipeInput(s), level).isPresent();
-        //?} else {
+        //?} else if >=1.21 {
+        /*return s -> !s.isEmpty() && (!shared || !isFuel(level, s))
+                && level.getRecipeManager().getRecipeFor(type, new SingleRecipeInput(s), level).isPresent();
+        *///?} else {
         /*return s -> !s.isEmpty() && (!shared || !isFuel(level, s))
                 && level.getRecipeManager().getRecipeFor(type, new net.minecraft.world.SimpleContainer(s), level).isPresent();
         *///?}

@@ -80,7 +80,7 @@ public final class Mc {
     }
 
     public static SoundEvent eatSound() {
-        //? if >=1.20.5 {
+        //? if >=1.21.2 {
         return SoundEvents.GENERIC_EAT.value();
         //?} else {
         /*return SoundEvents.GENERIC_EAT;

@@ -6,7 +6,7 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.ShapedRecipe;
@@ -14,7 +14,7 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 // a shaped recipe whose result carries the "nbt" object from its json, used for the job golem recipes
 public class ShapedNbtSerializer extends ShapedRecipe.Serializer {
     @Override
-    public ShapedRecipe fromJson(ResourceLocation id, JsonObject json) {
+    public ShapedRecipe fromJson(Identifier id, JsonObject json) {
         ShapedRecipe r = super.fromJson(id, json);
         JsonObject result = GsonHelper.getAsJsonObject(json, "result");
         if (!result.has("nbt")) return r;

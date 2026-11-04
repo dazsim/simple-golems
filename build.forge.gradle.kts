@@ -12,7 +12,7 @@ version = modVersion
 group = sc.properties.get<String>("mod.group")
 base.archivesName = "$modId-forge-${sc.current.version}"
 
-sourceSets.main { resources.srcDir(rootProject.file("src/legacy/1.20.1")) }
+sourceSets.main { resources.srcDir(rootProject.file("src/eras/1.20.1")) }
 
 legacyForge {
     version = sc.properties.get<String>("deps.forge")
@@ -63,6 +63,7 @@ tasks {
             "license" to sc.properties.get<String>("mod.license"),
             "description" to sc.properties.get<String>("mod.description"),
             "minecraft" to sc.properties.get<String>("mod.mc_compat"),
+            "pack_format" to sc.properties.get<String>("mod.pack_format"),
         )
         inputs.properties(props)
         filesMatching(listOf("META-INF/mods.toml", "pack.mcmeta")) { expand(props) }

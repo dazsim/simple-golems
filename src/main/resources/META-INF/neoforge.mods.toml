@@ -23,6 +23,6 @@ side = "BOTH"
 [[dependencies.${id}]]
 modId = "exdeorum"
 type = "optional"
-versionRange = "[4.0,)"
+versionRange = "${exdeorum}"
 ordering = "NONE"
 side = "BOTH"

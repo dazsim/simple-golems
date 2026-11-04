@@ -5,6 +5,8 @@ import json, os
 RES = "src/main/resources"
 ASSETS = f"{RES}/assets/simplegolems"
 DATA = f"{RES}/data/simplegolems"
+# formats that changed between versions go to src/eras, gen_eras.py writes the older ones from these
+ERA = "src/eras/26.1"
 NS = "simplegolems"
 
 JOBS = ["lumber", "farmer", "miner", "courier", "sweeper", "cobblegen", "sifter", "hammer", "shepherd", "rancher", "composter",
@@ -79,14 +81,14 @@ def items():
     simple = ["golem_core", "clay_cookie", "marker_stick"] + [f"{j}_card" for j in JOBS]
     for n in simple:
         flat_model(n)
-        write(f"{ASSETS}/items/{n}.json", {"model": plain(n)})
+        write(f"{ERA}/assets/simplegolems/items/{n}.json", {"model": plain(n)})
     for n in ["golem_body", "golem_face"] + [f"golem_accent_{j}" for j in JOBS]:
         flat_model(n)
 
     def body(colour):
         return {"type": "minecraft:model", "model": f"{NS}:item/golem_body", "tints": [{"type": "minecraft:constant", "value": (0xFF000000 | colour) - (1 << 32)}]}
 
-    write(f"{ASSETS}/items/golem.json", {"model": {"type": "minecraft:composite", "models": [
+    write(f"{ERA}/assets/simplegolems/items/golem.json", {"model": {"type": "minecraft:composite", "models": [
         {"type": "minecraft:select", "property": "minecraft:component", "component": f"{NS}:colour",
          "cases": [{"when": c, "model": body(DYES[i])} for i, c in enumerate(COLOURS)], "fallback": body(UNDYED)},
         plain("golem_face"),
@@ -100,14 +102,14 @@ def shaped(name, pattern, key, result, count=1, components=None, category="misc"
          "result": {"id": f"{NS}:{result}", "count": count}}
     if components:
         r["result"]["components"] = components
-    write(f"{DATA}/recipe/{name}.json", r)
+    write(f"{ERA}/data/simplegolems/recipe/{name}.json", r)
 
 
 def shapeless(name, ingredients, result, count=1, mod=None):
     r = {"type": "minecraft:crafting_shapeless", "category": "misc", "ingredients": ingredients, "result": {"id": f"{NS}:{result}", "count": count}}
     if mod:
         r = dict(conditions(mod), **r)
-    write(f"{DATA}/recipe/{name}.json", r)
+    write(f"{ERA}/data/simplegolems/recipe/{name}.json", r)
 
 
 # only loaded with the other mod, on either loader

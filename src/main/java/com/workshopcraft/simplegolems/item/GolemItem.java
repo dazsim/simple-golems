@@ -23,10 +23,10 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-//? if >=1.20.5 {
+//? if >=1.21.5 {
 import net.minecraft.world.item.component.TooltipDisplay;
 //?}
-//? if >=1.21.5 {
+//? if >=1.20.5 {
 import com.workshopcraft.simplegolems.SimpleGolems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -60,7 +60,7 @@ public class GolemItem extends Item {
         return stack;
     }
 
-    //? if >=1.21.5 {
+    //? if >=1.20.5 {
     // a golem item made on 1.20.1 comes through the world upgrade with its data left in custom_data
     public static void migrate(ItemStack stack, HolderLookup.Provider registries) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
@@ -72,7 +72,11 @@ public class GolemItem extends Item {
             ItemData.read(old, "colour", DyeColor.CODEC).ifPresent(c -> ItemData.set(stack, ModContent.COLOUR, c));
             ItemData.read(old, "settings", GolemSettings.CODEC).ifPresent(s -> ItemData.set(stack, ModContent.SETTINGS, s));
             List<ItemStack> items = new ArrayList<>();
+            //? if >=1.21.5 {
             for (Tag t : old.getListOrEmpty("items")) items.add(ItemData.parseStack(t, registries));
+            //?} else {
+            /*for (Tag t : old.getList("items", Tag.TAG_COMPOUND)) items.add(ItemData.parseStack(t, registries));
+            *///?}
             if (!items.isEmpty()) ItemData.setItems(stack, items);
         }
         root.remove(SimpleGolems.MOD_ID);
@@ -81,7 +85,12 @@ public class GolemItem extends Item {
     }
 
     @Override
+    //? if >=1.21.5 {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity owner, @Nullable EquipmentSlot slot) {
+    //?} else {
+    /*public void inventoryTick(ItemStack stack, Level level, Entity owner, int slot, boolean selected) {
+        if (level.isClientSide()) return;
+    *///?}
         migrate(stack, level.registryAccess());
     }
     //?}
@@ -104,7 +113,9 @@ public class GolemItem extends Item {
             //? if >=1.21.3 {
             var config = EntityType.<GolemEntity>createDefaultStackConfig(server, stack, context.getPlayer());
             GolemEntity golem = ModContent.GOLEM_ENTITY.create(server, config, pos, EntitySpawnReason.SPAWN_ITEM_USE, true, false);
-            //?} else {
+            //?} else if >=1.20.5 {
+            /*GolemEntity golem = ModContent.GOLEM_ENTITY.create(server, g -> {}, pos, MobSpawnType.SPAWN_EGG, true, false);
+            *///?} else {
             /*GolemEntity golem = ModContent.GOLEM_ENTITY.create(server, null, null, pos, MobSpawnType.SPAWN_EGG, true, false);
             *///?}
             if (golem == null) return InteractionResult.FAIL;
@@ -130,7 +141,10 @@ public class GolemItem extends Item {
     @Override
     //? if >=1.21.5 {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-    //?} else {
+    //?} else if >=1.20.5 {
+    /*public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        Consumer<Component> out = lines::add;
+    *///?} else {
     /*public void appendHoverText(ItemStack stack, @org.jspecify.annotations.Nullable Level level, List<Component> lines, TooltipFlag flag) {
         Consumer<Component> out = lines::add;
     *///?}

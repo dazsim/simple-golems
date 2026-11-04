@@ -84,7 +84,7 @@ public final class ModContent {
                 .sized(0.7F, 0.9F).eyeHeight(0.65F).clientTrackingRange(10).build(GOLEM_KEY);
         r.accept(GOLEM_KEY.identifier(), GOLEM_ENTITY);
         //?} else {
-        /*        .sized(0.7F, 0.9F).clientTrackingRange(10).build("golem");
+                /*.sized(0.7F, 0.9F).clientTrackingRange(10).build("golem");
         r.accept(GOLEM_KEY.location(), GOLEM_ENTITY);
         *///?}
     }

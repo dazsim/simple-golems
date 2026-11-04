@@ -29,7 +29,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-//? if >=1.20.5 {
+//? if >=1.21.5 {
 import net.minecraft.world.item.component.TooltipDisplay;
 //?}
 import net.minecraft.world.item.context.UseOnContext;
@@ -246,7 +246,10 @@ public class MarkerStickItem extends Item {
     @Override
     //? if >=1.21.5 {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-    //?} else {
+    //?} else if >=1.20.5 {
+    /*public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        Consumer<Component> out = lines::add;
+    *///?} else {
     /*public void appendHoverText(ItemStack stack, @org.jspecify.annotations.Nullable Level level, List<Component> lines, TooltipFlag flag) {
         Consumer<Component> out = lines::add;
     *///?}

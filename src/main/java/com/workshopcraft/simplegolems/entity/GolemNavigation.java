@@ -37,7 +37,7 @@ public class GolemNavigation extends GroundPathNavigation {
             /*public BlockPathTypes getBlockPathType(BlockGetter context, int x, int y, int z) {
                 BlockPathTypes type = super.getBlockPathType(context, x, y, z);
             *///?}
-                //? if >=1.20.5 {
+                //? if >=1.21.2 {
                 if (type == PathType.LAVA || type == PathType.FIRE) return PathType.BLOCKED;
                 //?} else {
                 /*if (type == PathType.LAVA || type == PathType.DAMAGE_FIRE) return PathType.BLOCKED;

@@ -43,7 +43,7 @@ public class GuardTargetGoal extends Goal {
         //?} else {
         /*if (e instanceof OwnableEntity o && o.getOwnerUUID() != null) return false;
         *///?}
-        //? if >=1.20.5 {
+        //? if >=1.21.2 {
         if (e.is(ModTags.GUARD_IGNORES)) return false;
         //?} else {
         /*if (e.getType().is(ModTags.GUARD_IGNORES)) return false;

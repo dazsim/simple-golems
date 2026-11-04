@@ -1,6 +1,6 @@
 package com.workshopcraft.simplegolems.client;
 
-//? if <1.20.5 {
+//? if <1.21.4 {
 /*import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.item.ItemData;
 import com.workshopcraft.simplegolems.registry.ModContent;

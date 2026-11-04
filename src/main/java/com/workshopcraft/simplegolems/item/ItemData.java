@@ -50,7 +50,11 @@ public final class ItemData {
     }
 
     public static List<ItemStack> items(ItemStack stack) {
+        //? if >=1.21.5 {
         return stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).allItemsCopyStream().toList();
+        //?} else {
+        /*return stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).stream().toList();
+        *///?}
     }
 
     public static void setItems(ItemStack stack, List<ItemStack> items) {
@@ -109,10 +113,6 @@ public final class ItemData {
         return list;
     }
 
-    public static <T> void put(CompoundTag tag, String key, Codec<T> codec, T value) {
-        codec.encodeStart(NbtOps.INSTANCE, value).result().ifPresent(t -> tag.put(key, t));
-    }
-
     *///?}
 
     // brings a saved stack from an older data version up to this one, a no-op on the same version
@@ -129,6 +129,10 @@ public final class ItemData {
     // stacks saved by 1.20.1 have a Count byte, newer ones a count int
     public static boolean isLegacyStack(Tag tag) {
         return tag instanceof CompoundTag c && c.contains("Count") && !c.contains("count");
+    }
+
+    public static <T> void put(CompoundTag tag, String key, Codec<T> codec, T value) {
+        codec.encodeStart(NbtOps.INSTANCE, value).result().ifPresent(t -> tag.put(key, t));
     }
 
     public static <T> java.util.Optional<T> read(CompoundTag tag, String key, Codec<T> codec) {

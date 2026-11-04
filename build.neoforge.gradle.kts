@@ -17,9 +17,21 @@ val requiredJava = when {
     else -> JavaVersion.VERSION_21
 }
 
+// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py
+val era = when {
+    sc.current.parsed >= "26.1" -> "26.1"
+    sc.current.parsed >= "1.21" -> "1.21.1"
+    else -> "1.20.1"
+}
+// the access transformer only opens 26.x members
+val modern = sc.current.parsed >= "26.1"
+val legacy = sc.current.parsed < "1.20.5"
+sourceSets.main { resources.srcDir(rootProject.file("src/eras/$era")) }
+fun packProp(key: String) = runCatching { sc.properties.get<String>(key) }.getOrDefault("")
+
 neoForge {
     version = sc.properties.get<String>("deps.neo_loader")
-    accessTransformers.from(rootProject.file("src/main/resources/META-INF/accesstransformer.cfg"))
+    if (modern) accessTransformers.from(rootProject.file("src/main/resources/META-INF/accesstransformer.cfg"))
     mods {
         register(modId) {
             sourceSet(sourceSets.main.get())
@@ -53,10 +65,15 @@ repositories {
         forRepository { maven("https://api.modrinth.com/maven") }
         filter { includeGroup("maven.modrinth") }
     }
+    exclusiveContent {
+        forRepository { maven("https://cursemaven.com") }
+        filter { includeGroup("curse.maven") }
+    }
 }
 
 dependencies {
-    compileOnly("maven.modrinth:ex-deorum:4.0")
+    compileOnly(sc.properties.get<String>("deps.exdeorum"))
+    if (!modern) compileOnly("org.jspecify:jspecify:1.0.0")
 }
 
 java {
@@ -78,10 +95,13 @@ tasks {
             "minecraft" to sc.properties.get<String>("mod.mc_compat"),
             "neoforge" to sc.properties.get<String>("deps.neo_compat"),
             "fml" to sc.properties.get<String>("deps.neo_fml_compat"),
+            "exdeorum" to sc.properties.get<String>("deps.exdeorum_range"),
+            "pack_format" to packProp("mod.pack_format"),
         )
         inputs.properties(props)
         filesMatching(listOf("META-INF/neoforge.mods.toml", "pack.mcmeta")) { expand(props) }
         exclude("fabric.mod.json", "META-INF/mods.toml")
+        if (!modern) exclude("$modId.accesswidener", "META-INF/accesstransformer.cfg")
     }
 
     named("createMinecraftArtifacts") {

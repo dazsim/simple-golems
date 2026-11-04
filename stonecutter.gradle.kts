@@ -20,10 +20,10 @@ stonecutter parameters {
         replace("entity.animal.golem.AbstractGolem", "entity.animal.AbstractGolem")
         replace("entity.animal.sheep.Sheep", "entity.animal.Sheep")
         replace("entity.npc.villager.AbstractVillager", "entity.npc.AbstractVillager")
+        replace("BlockTags.SUBSTRATE_OVERWORLD", "BlockTags.DIRT")
     }
 
     replacements.string(current.parsed < "1.20.5") {
         replace("PathType.", "BlockPathTypes.")
-        replace("BlockTags.SUBSTRATE_OVERWORLD", "BlockTags.DIRT")
     }
 }

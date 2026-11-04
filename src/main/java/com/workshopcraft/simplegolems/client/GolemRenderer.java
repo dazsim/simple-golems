@@ -151,12 +151,20 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         addLayer(new RenderLayer<>(this) {
             @Override
             public void render(PoseStack pose, MultiBufferSource buffers, int light, GolemEntity golem, float limb, float limbSpeed, float partial, float age, float yRot, float xRot) {
-                renderColoredCutoutModel(getParentModel(), OVERLAY, pose, buffers, light, golem, 1.0F, 1.0F, 1.0F);
                 Job job = golem.getJob();
+                //? if >=1.21 {
+                renderColoredCutoutModel(getParentModel(), OVERLAY, pose, buffers, light, golem, -1);
+                if (job != Job.BLANK) {
+                    coloredCutoutModelCopyLayerRender(getParentModel(), cardModel, OVERLAY, pose, buffers, light, golem, limb, limbSpeed, age, yRot, xRot, partial,
+                            0xFF000000 | job.colour);
+                }
+                //?} else {
+                /^renderColoredCutoutModel(getParentModel(), OVERLAY, pose, buffers, light, golem, 1.0F, 1.0F, 1.0F);
                 if (job != Job.BLANK) {
                     coloredCutoutModelCopyLayerRender(getParentModel(), cardModel, OVERLAY, pose, buffers, light, golem, limb, limbSpeed, age, yRot, xRot, partial,
                             (job.colour >> 16 & 255) / 255.0F, (job.colour >> 8 & 255) / 255.0F, (job.colour & 255) / 255.0F);
                 }
+                ^///?}
             }
         });
         addLayer(new RenderLayer<>(this) {
@@ -167,7 +175,12 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
                 glowModel.prepareMobModel(golem, limb, limbSpeed, partial);
                 glowModel.setupAnim(golem, limb, limbSpeed, age, yRot, xRot);
                 float f = golem.isPowered() ? 1.0F : 0.3F;
-                glowModel.renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(GLOW)), FULL_BRIGHT, OverlayTexture.NO_OVERLAY, f, f, f, 1.0F);
+                //? if >=1.21 {
+                int g = (int) (f * 255);
+                glowModel.renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(GLOW)), FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0xFF000000 | g << 16 | g << 8 | g);
+                //?} else {
+                /^glowModel.renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(GLOW)), FULL_BRIGHT, OverlayTexture.NO_OVERLAY, f, f, f, 1.0F);
+                ^///?}
             }
         });
         addLayer(new RenderLayer<>(this) {
@@ -219,8 +232,13 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         float[][] v = {{-0.5F, -0.5F, 0, 1}, {0.5F, -0.5F, 1, 1}, {0.5F, 0.5F, 1, 0}, {-0.5F, 0.5F, 0, 0}};
         for (int i = 0; i < 4; i++) {
             float[] c = v[back ? 3 - i : i];
-            vc.vertex(p.pose(), c[0], c[1], 0.0F).color(255, 255, 255, alpha).uv(c[2], c[3])
+            //? if >=1.21 {
+            vc.addVertex(p, c[0], c[1], 0.0F).setColor(255, 255, 255, alpha).setUv(c[2], c[3])
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(FULL_BRIGHT).setNormal(p, 0.0F, 0.0F, back ? -1.0F : 1.0F);
+            //?} else {
+            /^vc.vertex(p.pose(), c[0], c[1], 0.0F).color(255, 255, 255, alpha).uv(c[2], c[3])
                     .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(FULL_BRIGHT).normal(p.normal(), 0.0F, 0.0F, back ? -1.0F : 1.0F).endVertex();
+            ^///?}
         }
     }
     *///?}

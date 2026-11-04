@@ -17,9 +17,17 @@ val requiredJava = when {
     else -> JavaVersion.VERSION_17
 }
 
-// 1.20.1 json formats live in src/legacy/1.20.1; the access widener only opens 26.x members
-val modern = sc.current.parsed >= "1.20.5"
-if (!modern) sourceSets.main { resources.srcDir(rootProject.file("src/legacy/1.20.1")) }
+// json whose format changed between versions, written per era by tools/gen_resources.py and tools/gen_eras.py
+val era = when {
+    sc.current.parsed >= "26.1" -> "26.1"
+    sc.current.parsed >= "1.21" -> "1.21.1"
+    else -> "1.20.1"
+}
+// the access widener only opens 26.x members
+val modern = sc.current.parsed >= "26.1"
+val legacy = sc.current.parsed < "1.20.5"
+sourceSets.main { resources.srcDir(rootProject.file("src/eras/$era")) }
+fun packProp(key: String) = runCatching { sc.properties.get<String>(key) }.getOrDefault("")
 
 dependencies {
     if (!modern) compileOnly("org.jspecify:jspecify:1.0.0")
@@ -56,14 +64,16 @@ tasks {
             "minecraft" to sc.properties.get<String>("mod.mc_compat"),
             "loader" to sc.properties.get<String>("deps.fabric_loader"),
             "java" to requiredJava.majorVersion,
+            "pack_format" to packProp("mod.pack_format"),
         )
         inputs.properties(props)
         filesMatching(listOf("fabric.mod.json", "pack.mcmeta")) { expand(props) }
         exclude("META-INF/neoforge.mods.toml", "META-INF/mods.toml")
         if (!modern) {
             filesMatching("fabric.mod.json") { filter(StripAccessWidener::class.java) }
-            legacyResources(modId)
+            exclude("$modId.accesswidener", "META-INF/accesstransformer.cfg")
         }
+        if (legacy) legacyResources(modId)
     }
 
     withType<Jar> {

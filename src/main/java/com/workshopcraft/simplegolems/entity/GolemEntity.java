@@ -83,6 +83,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 //?} else {
 /*import com.mojang.serialization.Codec;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -681,12 +682,17 @@ public class GolemEntity extends AbstractGolem {
 
     // it is short, so it reaches up a bit further than its own height
     @Override
-    //? if >=1.20.5 {
+    //? if >=1.21.2 {
     protected AABB getAttackBoundingBox(double reach) {
         AABB box = super.getAttackBoundingBox(reach);
         return getJob() == Job.GUARD ? box.expandTowards(0.0, 0.6, 0.0) : box;
     }
-    //?} else {
+    //?} else if >=1.20.5 {
+    /*protected AABB getAttackBoundingBox() {
+        AABB box = super.getAttackBoundingBox();
+        return getJob() == Job.GUARD ? box.expandTowards(0.0, 0.6, 0.0) : box;
+    }
+    *///?} else {
     /*public boolean isWithinMeleeAttackRange(LivingEntity target) {
         double r = Math.sqrt(2.04) - 0.6;
         AABB box = getBoundingBox().inflate(r, 0.0, r);
@@ -805,7 +811,7 @@ public class GolemEntity extends AbstractGolem {
     public void fromItem(ItemStack stack) {
         setJob(ItemData.getOrDefault(stack, ModContent.JOB, Job.BLANK));
         setColour(ItemData.get(stack, ModContent.COLOUR));
-        //? if >=1.21.5 {
+        //? if >=1.20.5 {
         GolemItem.migrate(stack, registryAccess());
         //?}
         List<ItemStack> items = ItemData.items(stack);
@@ -1115,10 +1121,17 @@ public class GolemEntity extends AbstractGolem {
         super.addAdditionalSaveData(out);
         ItemData.put(out, "job", Job.CODEC, getJob());
         if (getColour() != null) ItemData.put(out, "colour", DyeColor.CODEC, getColour());
-        out.put("cookies", cookies.save(new CompoundTag()));
+        //? if >=1.20.5 {
+        out.put("cookies", cookies.saveOptional(registryAccess()));
+        ListTag carry = new ListTag();
+        for (ItemStack s : carried) carry.add(s.saveOptional(registryAccess()));
+        out.put("carry", carry);
+        //?} else {
+        /^out.put("cookies", cookies.save(new CompoundTag()));
+        out.put("carry", ItemData.saveStacks(carried));
+        ^///?}
         if (thanks > 0) out.putInt("thanks", thanks);
         if (getTrouble() != Trouble.NONE) out.putString("trouble", getTrouble().name().toLowerCase(Locale.ROOT));
-        out.put("carry", ItemData.saveStacks(carried));
         out.putInt("fuel", fuel);
         if (customArea != null) ItemData.put(out, "area", WorkArea.CODEC, customArea);
         if (!points.isEmpty()) ItemData.put(out, "points", BlockPos.CODEC.listOf(), points);
@@ -1135,9 +1148,14 @@ public class GolemEntity extends AbstractGolem {
         super.readAdditionalSaveData(in);
         setJob(ItemData.read(in, "job", Job.CODEC).orElse(Job.BLANK));
         setColour(ItemData.read(in, "colour", DyeColor.CODEC).orElse(null));
-        cookies = ItemStack.of(in.getCompound("cookies"));
         List<ItemStack> carry = new ArrayList<>();
+        //? if >=1.20.5 {
+        cookies = in.contains("cookies") ? ItemData.parseStack(in.get("cookies"), registryAccess()) : ItemStack.EMPTY;
+        for (Tag t : in.getList("carry", Tag.TAG_COMPOUND)) carry.add(ItemData.parseStack(t, registryAccess()));
+        //?} else {
+        /^cookies = ItemStack.of(in.getCompound("cookies"));
         for (Tag t : in.getList("carry", Tag.TAG_COMPOUND)) carry.add(ItemStack.of((CompoundTag) t));
+        ^///?}
         for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, i < carry.size() ? carry.get(i) : ItemStack.EMPTY);
         carriedChanged();
         fuel = in.getInt("fuel");
@@ -1155,7 +1173,7 @@ public class GolemEntity extends AbstractGolem {
     }
     *///?}
 
-    //? if >=1.21.2 {
+    //? if >=1.21 {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
         super.dropCustomDeathLoot(level, source, killedByPlayer);
     //?} else {
