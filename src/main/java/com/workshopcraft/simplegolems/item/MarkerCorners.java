@@ -3,8 +3,10 @@ package com.workshopcraft.simplegolems.item;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
+//? if >=1.20.5 {
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+//?}
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +20,11 @@ public record MarkerCorners(BlockPos first, Optional<BlockPos> second, List<Bloc
             BlockPos.CODEC.fieldOf("first").forGetter(MarkerCorners::first),
             BlockPos.CODEC.optionalFieldOf("second").forGetter(MarkerCorners::second),
             BlockPos.CODEC.listOf().optionalFieldOf("more", List.of()).forGetter(MarkerCorners::more)).apply(i, MarkerCorners::new));
+    //? if >=1.20.5 {
     public static final StreamCodec<ByteBuf, MarkerCorners> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, MarkerCorners::first, ByteBufCodecs.optional(BlockPos.STREAM_CODEC), MarkerCorners::second,
             BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_POINTS)), MarkerCorners::more, MarkerCorners::new);
+    //?}
 
     public MarkerCorners(BlockPos first, Optional<BlockPos> second) {
         this(first, second, List.of());

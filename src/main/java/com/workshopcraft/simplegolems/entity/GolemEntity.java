@@ -1,8 +1,11 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.item.GolemSettings;
+import com.workshopcraft.simplegolems.item.ItemData;
+import com.workshopcraft.simplegolems.item.GolemItem;
 import com.workshopcraft.simplegolems.entity.goal.EscapeHazardGoal;
 import com.workshopcraft.simplegolems.entity.goal.FetchToolGoal;
 import com.workshopcraft.simplegolems.entity.goal.FollowOwnerGoal;
@@ -46,7 +49,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -67,14 +69,25 @@ import net.minecraft.world.entity.animal.golem.AbstractGolem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectUtil;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
+//? if >=1.20.5 {
+import net.minecraft.core.component.DataComponents;
+//?}
+//? if >=1.21.6 {
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+//?} else {
+/*import com.mojang.serialization.Codec;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+*///?}
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -99,7 +112,11 @@ public class GolemEntity extends AbstractGolem {
     private static final EntityDataAccessor<Integer> DATA_COOKIES = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TROUBLE = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_DOWNED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
+    //? if >=1.21 {
     private static final Identifier GUARD_HEALTH = SimpleGolems.id("guard_health");
+    //?} else {
+    /*private static final UUID GUARD_HEALTH = UUID.fromString("5d3f0b8e-6a1c-4c2e-9b7a-3f1e2d4c5b6a");
+    *///?}
     // how far from its owner a following guard looks for mobs
     public static final double FOLLOW_GUARD_RANGE = 10.0;
 
@@ -134,6 +151,9 @@ public class GolemEntity extends AbstractGolem {
         super(type, level);
         setPersistenceRequired();
         setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        //? if <1.20.5 {
+        /*setMaxUpStep(1.0F);
+        *///?}
     }
 
     @Override
@@ -142,9 +162,14 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        //? if >=1.21 {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.STEP_HEIGHT, 1.0).add(Attributes.FOLLOW_RANGE, 64.0)
                 .add(Attributes.MINING_EFFICIENCY).add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.ATTACK_SPEED, 4.0);
+        //?} else {
+        /*return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0).add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.FOLLOW_RANGE, 64.0).add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.ATTACK_SPEED, 4.0);
+        *///?}
     }
 
     @Override
@@ -165,8 +190,14 @@ public class GolemEntity extends AbstractGolem {
     }
 
     @Override
+    //? if >=1.20.5 {
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
+    //?} else {
+    /*protected void defineSynchedData() {
+        super.defineSynchedData();
+        SynchedEntityData b = entityData;
+    *///?}
         b.define(DATA_JOB, 0);
         b.define(DATA_COLOUR, -1);
         b.define(DATA_POWERED, false);
@@ -198,10 +229,17 @@ public class GolemEntity extends AbstractGolem {
         if (a == null) return;
         double add = getJob() == Job.GUARD ? Config.guardHealth - 20.0 : 0.0;
         AttributeModifier cur = a.getModifier(GUARD_HEALTH);
+        //? if >=1.21 {
         if (cur == null ? add == 0.0 : cur.amount() == add) return;
         boolean full = cur == null || getHealth() >= getMaxHealth();
         if (add == 0.0) a.removeModifier(GUARD_HEALTH);
         else a.addOrReplacePermanentModifier(new AttributeModifier(GUARD_HEALTH, add, AttributeModifier.Operation.ADD_VALUE));
+        //?} else {
+        /*if (cur == null ? add == 0.0 : cur.getAmount() == add) return;
+        boolean full = cur == null || getHealth() >= getMaxHealth();
+        a.removeModifier(GUARD_HEALTH);
+        if (add != 0.0) a.addPermanentModifier(new AttributeModifier(GUARD_HEALTH, "guard_health", add, AttributeModifier.Operation.ADDITION));
+        *///?}
         if (full && add > 0.0) setHealth(getMaxHealth());
         if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
     }
@@ -311,7 +349,7 @@ public class GolemEntity extends AbstractGolem {
 
     public boolean canCarry(ItemStack stack) {
         for (ItemStack c : carried) {
-            if (c.isEmpty() || ItemStack.isSameItemSameComponents(c, stack) && c.getCount() < c.getMaxStackSize()) return true;
+            if (c.isEmpty() || Mc.sameItem(c, stack) && c.getCount() < c.getMaxStackSize()) return true;
         }
         return false;
     }
@@ -324,7 +362,7 @@ public class GolemEntity extends AbstractGolem {
     public void addCarried(ItemStack stack) {
         for (ItemStack c : carried) {
             if (stack.isEmpty()) break;
-            if (!c.isEmpty() && ItemStack.isSameItemSameComponents(c, stack)) {
+            if (!c.isEmpty() && Mc.sameItem(c, stack)) {
                 int n = Math.min(stack.getCount(), c.getMaxStackSize() - c.getCount());
                 c.grow(n);
                 stack.shrink(n);
@@ -378,8 +416,8 @@ public class GolemEntity extends AbstractGolem {
     private WorkArea pointsBox() {
         BlockPos min = points.get(0), max = points.get(0);
         for (BlockPos p : points) {
-            min = BlockPos.min(min, p);
-            max = BlockPos.max(max, p);
+            min = Mc.minPos(min, p);
+            max = Mc.maxPos(max, p);
         }
         return WorkArea.of(min.offset(-1, -1, -1), max.offset(1, 2, 1));
     }
@@ -387,7 +425,12 @@ public class GolemEntity extends AbstractGolem {
     // same rules as a player: tool tier speed, Efficiency through the mining_efficiency attribute, Haste
     public float digSpeed(BlockState state) {
         float speed = getTool().getDestroySpeed(state);
+        //? if >=1.21 {
         if (speed > 1.0F) speed += (float) getAttributeValue(Attributes.MINING_EFFICIENCY);
+        //?} else {
+        /*int eff = EnchantmentHelper.getBlockEfficiency(this);
+        if (speed > 1.0F && eff > 0) speed += eff * eff + 1;
+        *///?}
         if (MobEffectUtil.hasDigSpeed(this)) speed *= 1.0F + (MobEffectUtil.getDigSpeedAmplification(this) + 1) * 0.2F;
         return speed;
     }
@@ -415,7 +458,7 @@ public class GolemEntity extends AbstractGolem {
         Job job = getJob();
         if (job.needsArea() && customArea == null || !Config.jobEnabled(job) || points.size() < job.points()) return false;
         if (job.needsExDeorum() && !ExDeorum.loaded()) return false;
-        return job != Job.MINER || !(level() instanceof ServerLevel sl) || sl.getGameRules().get(GameRules.MOB_GRIEFING);
+        return job != Job.MINER || !(level() instanceof ServerLevel sl) || Mc.mobGriefing(sl);
     }
 
     public boolean hasStorageTrouble() {
@@ -514,7 +557,7 @@ public class GolemEntity extends AbstractGolem {
             bubble = Mth.clamp(bubble + (shown != Trouble.NONE ? 0.1F : -0.1F), 0.0F, 1.0F);
             return;
         }
-        if (getY() < level().getMinY() && Config.voidRescue) rescueFromVoid();
+        if (getY() < Mc.minY(level()) && Config.voidRescue) rescueFromVoid();
         if (tickCount % 40 == 0 && level() instanceof ServerLevel sl) recheckTrouble(sl);
         if (thanks > 0) thanks--;
         if (getJob() == Job.GUARD) guardTick();
@@ -544,7 +587,7 @@ public class GolemEntity extends AbstractGolem {
             if (--downTicks == 0) {
                 entityData.set(DATA_DOWNED, false);
                 setHealth(getMaxHealth() * 0.25F);
-                playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.8F, 0.8F);
+                playSound(Mc.equipSound(), 0.8F, 0.8F);
             }
             return;
         }
@@ -555,7 +598,7 @@ public class GolemEntity extends AbstractGolem {
             if (cookies.isEmpty()) cookies = ItemStack.EMPTY;
             heal(Config.guardCookieHeal);
             updatePowered();
-            playSound(SoundEvents.GENERIC_EAT.value(), 0.6F, 1.2F);
+            playSound(Mc.eatSound(), 0.6F, 1.2F);
             sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + getBbHeight(), getZ(), 5, 0.3, 0.2, 0.3, 0.0);
         }
     }
@@ -585,9 +628,15 @@ public class GolemEntity extends AbstractGolem {
     }
 
     @Override
+    //? if >=1.21.2 {
     public boolean isInvulnerableTo(ServerLevel level, DamageSource source) {
         return downTicks > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || super.isInvulnerableTo(level, source);
     }
+    //?} else {
+    /*public boolean isInvulnerableTo(DamageSource source) {
+        return downTicks > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || super.isInvulnerableTo(source);
+    }
+    *///?}
 
     @Override
     public boolean canBeSeenAsEnemy() {
@@ -602,6 +651,7 @@ public class GolemEntity extends AbstractGolem {
 
     // mobs do not wear their weapons out, but a guard's should
     @Override
+    //? if >=1.21.2 {
     public boolean doHurtTarget(ServerLevel level, Entity target) {
         boolean hit = super.doHurtTarget(level, target);
         if (hit && target instanceof LivingEntity living) {
@@ -609,26 +659,57 @@ public class GolemEntity extends AbstractGolem {
         }
         return hit;
     }
+    //?} else {
+    /*public boolean doHurtTarget(Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        if (hit && target instanceof LivingEntity && !getMainHandItem().isEmpty()) Mc.wear(getMainHandItem(), this);
+        return hit;
+    }
+    *///?}
 
     // also counts a target that burns to death after a hit
     @Override
+    //? if >=1.21.2 {
     public void awardKillScore(Entity killed, DamageSource source) {
         super.awardKillScore(killed, source);
+    //?} else {
+    /*public void awardKillScore(Entity killed, int score, DamageSource source) {
+        super.awardKillScore(killed, score, source);
+    *///?}
         if (killed instanceof Mob) kills++;
     }
 
     // it is short, so it reaches up a bit further than its own height
     @Override
+    //? if >=1.20.5 {
     protected AABB getAttackBoundingBox(double reach) {
         AABB box = super.getAttackBoundingBox(reach);
         return getJob() == Job.GUARD ? box.expandTowards(0.0, 0.6, 0.0) : box;
     }
+    //?} else {
+    /*public boolean isWithinMeleeAttackRange(LivingEntity target) {
+        double r = Math.sqrt(2.04) - 0.6;
+        AABB box = getBoundingBox().inflate(r, 0.0, r);
+        if (getJob() == Job.GUARD) box = box.expandTowards(0.0, 0.6, 0.0);
+        return box.intersects(target.getBoundingBox());
+    }
+
+    protected float getStandingEyeHeight(Pose pose, EntityDimensions size) {
+        return 0.65F;
+    }
+    *///?}
 
     // a lead switches a guard between its area and following its owner, so it is never tied up
     @Override
+    //? if >=1.21 {
     public boolean canBeLeashed() {
         return getJob() != Job.GUARD && super.canBeLeashed();
     }
+    //?} else {
+    /*public boolean canBeLeashed(Player player) {
+        return getJob() != Job.GUARD && super.canBeLeashed(player);
+    }
+    *///?}
 
     // storage may have been emptied or added, and a sapling may have turned up
     private void recheckTrouble(ServerLevel sl) {
@@ -652,7 +733,7 @@ public class GolemEntity extends AbstractGolem {
     private void rescueFromVoid() {
         BlockPos at = safeSpotNear(getBlockX(), getBlockZ());
         if (at == null) at = safeSpotNear(getHome().getX(), getHome().getZ());
-        if (at == null) at = getHome().getY() > level().getMinY() ? getHome() : level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, getHome());
+        if (at == null) at = getHome().getY() > Mc.minY(level()) ? getHome() : level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, getHome());
         getNavigation().stop();
         teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         setDeltaMovement(Vec3.ZERO);
@@ -677,7 +758,7 @@ public class GolemEntity extends AbstractGolem {
 
     private static @Nullable BlockPos highestStand(Level level, int x, int z) {
         int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-        for (int y = top; y > level.getMinY(); y--) {
+        for (int y = top; y > Mc.minY(level); y--) {
             BlockPos p = new BlockPos(x, y, z), below = p.below();
             if (!clear(level, p) || !clear(level, p.above())) continue;
             BlockState floor = level.getBlockState(below);
@@ -692,7 +773,11 @@ public class GolemEntity extends AbstractGolem {
     }
 
     @Override
+    //? if >=1.21.5 {
     public boolean causeFallDamage(double fallDistance, float damageModifier, DamageSource damageSource) {
+    //?} else {
+    /*public boolean causeFallDamage(float fallDistance, float damageModifier, DamageSource damageSource) {
+    *///?}
         return false;
     }
 
@@ -718,14 +803,17 @@ public class GolemEntity extends AbstractGolem {
     }
 
     public void fromItem(ItemStack stack) {
-        setJob(stack.getOrDefault(ModContent.JOB, Job.BLANK));
-        setColour(stack.get(ModContent.COLOUR));
-        List<ItemStack> items = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).allItemsCopyStream().toList();
+        setJob(ItemData.getOrDefault(stack, ModContent.JOB, Job.BLANK));
+        setColour(ItemData.get(stack, ModContent.COLOUR));
+        //? if >=1.21.5 {
+        GolemItem.migrate(stack, registryAccess());
+        //?}
+        List<ItemStack> items = ItemData.items(stack);
         setTool(items.size() > 0 ? items.get(0) : ItemStack.EMPTY);
         cookies = items.size() > 1 ? items.get(1) : ItemStack.EMPTY;
         for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, items.size() > 2 + i ? items.get(2 + i) : ItemStack.EMPTY);
         carriedChanged();
-        GolemSettings s = stack.getOrDefault(ModContent.SETTINGS, GolemSettings.EMPTY);
+        GolemSettings s = ItemData.getOrDefault(stack, ModContent.SETTINGS, GolemSettings.EMPTY);
         fuel = s.fuel();
         customArea = s.area().orElse(null);
         points = List.copyOf(s.points());
@@ -734,22 +822,26 @@ public class GolemEntity extends AbstractGolem {
 
     public ItemStack toItem() {
         ItemStack stack = new ItemStack(ModContent.GOLEM);
-        stack.set(ModContent.JOB, getJob());
-        if (getColour() != null) stack.set(ModContent.COLOUR, getColour());
+        ItemData.set(stack, ModContent.JOB, getJob());
+        if (getColour() != null) ItemData.set(stack, ModContent.COLOUR, getColour());
         List<ItemStack> items = new ArrayList<>(List.of(getTool().copy(), cookies.copy()));
         for (ItemStack c : carried) items.add(c.copy());
-        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
-        stack.set(ModContent.SETTINGS, new GolemSettings(fuel, Optional.ofNullable(customArea), points));
+        ItemData.setItems(stack, items);
+        ItemData.set(stack, ModContent.SETTINGS, new GolemSettings(fuel, Optional.ofNullable(customArea), points));
+        //? if >=1.20.5 {
         if (hasCustomName()) stack.set(DataComponents.CUSTOM_NAME, getCustomName());
+        //?} else {
+        /*if (hasCustomName()) stack.setHoverName(getCustomName());
+        *///?}
         return stack;
     }
 
     public boolean canBeChangedBy(Player player) {
-        return owner == null || owner.equals(player.getUUID()) || player.hasInfiniteMaterials();
+        return owner == null || owner.equals(player.getUUID()) || Mc.creative(player);
     }
 
     private void tell(Player player, String key, Object... args) {
-        player.sendOverlayMessage(Component.translatable("message.simplegolems." + key, args));
+        Mc.overlay(player, Component.translatable("message.simplegolems." + key, args));
     }
 
     private void give(Player player, ItemStack stack) {
@@ -770,7 +862,7 @@ public class GolemEntity extends AbstractGolem {
             }
             if (server) {
                 give(player, toItem());
-                playSound(SoundEvents.DECORATED_POT_INSERT, 0.8F, 1.4F);
+                playSound(Mc.potInsert(), 0.8F, 1.4F);
                 discard();
             }
             return InteractionResult.SUCCESS;
@@ -798,7 +890,7 @@ public class GolemEntity extends AbstractGolem {
                     tell(player, "not_yours");
                 } else {
                     setJob(card.job);
-                    held.consume(1, player);
+                    Mc.consume(held, 1, player);
                     if (!getTool().isEmpty() && !card.job.usesTool(getTool())) {
                         give(player, getTool());
                         setTool(ItemStack.EMPTY);
@@ -813,7 +905,7 @@ public class GolemEntity extends AbstractGolem {
         if (held.getItem() instanceof MarkerStickItem) {
             if (server) {
                 WorkArea marked = MarkerStickItem.area(held);
-                MarkerCorners m = held.get(ModContent.MARKER);
+                MarkerCorners m = ItemData.get(held, ModContent.MARKER);
                 List<BlockPos> clicked = m == null ? List.of() : m.points();
                 boolean ready = job.points() > 0 ? clicked.size() >= job.points() : marked != null;
                 if (!canBeChangedBy(player)) {
@@ -826,7 +918,7 @@ public class GolemEntity extends AbstractGolem {
                     tell(player, "marker.reset");
                 } else if (job == Job.BLANK && marked == null) {
                     tell(player, "marker.unfinished");
-                } else if (job != Job.BLANK && (held.has(ModContent.MARKER_SETUP) || !ready)) {
+                } else if (job != Job.BLANK && (ItemData.has(held, ModContent.MARKER_SETUP) || !ready)) {
                     MarkerStickItem.startSetup(player, held, this);
                     playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.2F);
                     return InteractionResult.SUCCESS;
@@ -857,19 +949,23 @@ public class GolemEntity extends AbstractGolem {
                     if (follow) setOwner(player.getUUID());
                     else if (customArea == null) setHome(blockPosition());
                     getNavigation().stop();
-                    playSound(follow ? SoundEvents.LEAD_TIED : SoundEvents.LEAD_UNTIED, 0.8F, 1.2F);
+                    playSound(Mc.lead(follow), 0.8F, 1.2F);
                     tell(player, follow ? "guard.follow" : "guard.stay");
                 }
             }
             return InteractionResult.SUCCESS;
         }
 
+        //? if >=1.21.5 {
         DyeColor dye = held.get(DataComponents.DYE);
+        //?} else {
+        /*DyeColor dye = held.getItem() instanceof DyeItem d ? d.getDyeColor() : null;
+        *///?}
         if (dye != null && held.getItem() instanceof DyeItem) {
             if (dye == getColour()) return InteractionResult.PASS;
             if (server) {
                 setColour(dye);
-                held.consume(1, player);
+                Mc.consume(held, 1, player);
                 level().playSound(null, this, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
@@ -885,9 +981,9 @@ public class GolemEntity extends AbstractGolem {
                 int n = Math.min(room, held.getCount());
                 if (cookies.isEmpty()) cookies = held.copyWithCount(n);
                 else cookies.grow(n);
-                if (!player.hasInfiniteMaterials()) held.shrink(n);
+                if (!Mc.creative(player)) held.shrink(n);
                 updatePowered();
-                playSound(SoundEvents.GENERIC_EAT.value(), 0.6F, 1.6F);
+                playSound(Mc.eatSound(), 0.6F, 1.6F);
                 tell(player, "fed", cookies.getCount());
             }
             return InteractionResult.SUCCESS;
@@ -901,7 +997,7 @@ public class GolemEntity extends AbstractGolem {
                     ItemStack old = getTool();
                     setTool(held.split(1));
                     give(player, old);
-                    playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.8F, 1.3F);
+                    playSound(Mc.equipSound(), 0.8F, 1.3F);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -966,6 +1062,7 @@ public class GolemEntity extends AbstractGolem {
         }
     }
 
+    //? if >=1.21.6 {
     @Override
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);
@@ -991,9 +1088,9 @@ public class GolemEntity extends AbstractGolem {
         super.readAdditionalSaveData(in);
         setJob(in.read("job", Job.CODEC).orElse(Job.BLANK));
         setColour(in.read("colour", DyeColor.CODEC).orElse(null));
-        cookies = in.read("cookies", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        cookies = in.read("cookies", CompoundTag.CODEC).map(t -> ItemData.parseStack(t, registryAccess())).orElse(ItemStack.EMPTY);
         // alpha.6 and older kept one stack under "carried": it becomes slot 0
-        List<ItemStack> carry = in.read("carry", ItemStack.OPTIONAL_CODEC.listOf())
+        List<ItemStack> carry = in.read("carry", CompoundTag.CODEC.listOf()).map(l -> l.stream().map(t -> ItemData.parseStack(t, registryAccess())).toList())
                 .orElseGet(() -> List.of(in.read("carried", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY)));
         for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, i < carry.size() ? carry.get(i) : ItemStack.EMPTY);
         carriedChanged();
@@ -1012,17 +1109,79 @@ public class GolemEntity extends AbstractGolem {
     }
 
     @Override
+    //?} else {
+    /*@Override
+    public void addAdditionalSaveData(CompoundTag out) {
+        super.addAdditionalSaveData(out);
+        ItemData.put(out, "job", Job.CODEC, getJob());
+        if (getColour() != null) ItemData.put(out, "colour", DyeColor.CODEC, getColour());
+        out.put("cookies", cookies.save(new CompoundTag()));
+        if (thanks > 0) out.putInt("thanks", thanks);
+        if (getTrouble() != Trouble.NONE) out.putString("trouble", getTrouble().name().toLowerCase(Locale.ROOT));
+        out.put("carry", ItemData.saveStacks(carried));
+        out.putInt("fuel", fuel);
+        if (customArea != null) ItemData.put(out, "area", WorkArea.CODEC, customArea);
+        if (!points.isEmpty()) ItemData.put(out, "points", BlockPos.CODEC.listOf(), points);
+        if (home != null) ItemData.put(out, "home", BlockPos.CODEC, home);
+        if (owner != null) out.putUUID("owner", owner);
+        if (follow) out.putBoolean("follow", true);
+        if (downTicks > 0) out.putInt("downed", downTicks);
+        if (kills > 0) out.putInt("kills", kills);
+        if (!climbSteps.isEmpty()) ItemData.put(out, "climb_steps", BlockPos.CODEC.listOf(), List.copyOf(climbSteps));
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag in) {
+        super.readAdditionalSaveData(in);
+        setJob(ItemData.read(in, "job", Job.CODEC).orElse(Job.BLANK));
+        setColour(ItemData.read(in, "colour", DyeColor.CODEC).orElse(null));
+        cookies = ItemStack.of(in.getCompound("cookies"));
+        List<ItemStack> carry = new ArrayList<>();
+        for (Tag t : in.getList("carry", Tag.TAG_COMPOUND)) carry.add(ItemStack.of((CompoundTag) t));
+        for (int i = 0; i < CARRY_SLOTS; i++) carried.set(i, i < carry.size() ? carry.get(i) : ItemStack.EMPTY);
+        carriedChanged();
+        fuel = in.getInt("fuel");
+        customArea = ItemData.read(in, "area", WorkArea.CODEC).orElse(null);
+        points = List.copyOf(ItemData.read(in, "points", BlockPos.CODEC.listOf()).orElse(List.of()));
+        home = ItemData.read(in, "home", BlockPos.CODEC).orElse(null);
+        owner = in.hasUUID("owner") ? in.getUUID("owner") : null;
+        follow = in.getBoolean("follow");
+        downTicks = getJob() == Job.GUARD ? in.getInt("downed") : 0;
+        entityData.set(DATA_DOWNED, downTicks > 0);
+        kills = in.getInt("kills");
+        climbSteps.clear();
+        climbSteps.addAll(ItemData.read(in, "climb_steps", BlockPos.CODEC.listOf()).orElse(List.of()));
+        updatePowered();
+    }
+    *///?}
+
+    //? if >=1.21.2 {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
         super.dropCustomDeathLoot(level, source, killedByPlayer);
-        spawnAtLocation(level, new ItemStack(ModContent.GOLEM_CORE));
+    //?} else {
+    /*protected void dropCustomDeathLoot(DamageSource source, int looting, boolean killedByPlayer) {
+        super.dropCustomDeathLoot(source, looting, killedByPlayer);
+        Level level = level();
+    *///?}
+        drop(level, new ItemStack(ModContent.GOLEM_CORE));
         ItemStack card = ModContent.card(getJob());
-        if (!card.isEmpty()) spawnAtLocation(level, card);
-        for (ItemStack s : List.of(getTool(), cookies)) if (!s.isEmpty()) spawnAtLocation(level, s.copy());
-        for (ItemStack s : carried) if (!s.isEmpty()) spawnAtLocation(level, s.copy());
+        if (!card.isEmpty()) drop(level, card);
+        for (ItemStack s : List.of(getTool(), cookies)) if (!s.isEmpty()) drop(level, s.copy());
+        for (ItemStack s : carried) if (!s.isEmpty()) drop(level, s.copy());
         setTool(ItemStack.EMPTY);
         cookies = ItemStack.EMPTY;
         clearCarried();
     }
+
+    //? if >=1.21.2 {
+    private void drop(ServerLevel level, ItemStack s) {
+        spawnAtLocation(level, s);
+    }
+    //?} else {
+    /*private void drop(Level level, ItemStack s) {
+        spawnAtLocation(s);
+    }
+    *///?}
 
     @Override
     public float getVoicePitch() {

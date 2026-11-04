@@ -8,8 +8,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathFinder;
+//? if >=1.20.5 {
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.PathfindingContext;
+//?} else {
+/*import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+*///?}
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 
 // golems keep off treetops and out of lava and fire: no standing on leaves, lumber golems never stand on a trunk, miners keep out of water
@@ -25,9 +30,18 @@ public class GolemNavigation extends GroundPathNavigation {
     protected PathFinder createPathFinder(int maxVisitedNodes) {
         nodeEvaluator = new WalkNodeEvaluator() {
             @Override
+            //? if >=1.20.5 {
             public PathType getPathType(PathfindingContext context, int x, int y, int z) {
                 PathType type = super.getPathType(context, x, y, z);
+            //?} else {
+            /*public BlockPathTypes getBlockPathType(BlockGetter context, int x, int y, int z) {
+                BlockPathTypes type = super.getBlockPathType(context, x, y, z);
+            *///?}
+                //? if >=1.20.5 {
                 if (type == PathType.LAVA || type == PathType.FIRE) return PathType.BLOCKED;
+                //?} else {
+                /*if (type == PathType.LAVA || type == PathType.DAMAGE_FIRE) return PathType.BLOCKED;
+                *///?}
                 // a miner stays out of water it might not climb out of
                 if (golem.getJob() == Job.MINER && type == PathType.WATER) return PathType.BLOCKED;
                 if (type != PathType.WALKABLE) return type;

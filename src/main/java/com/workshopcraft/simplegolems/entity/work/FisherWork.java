@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -30,7 +31,7 @@ public class FisherWork implements JobWork {
 
     @Override
     public boolean wants(ItemEntity item) {
-        return item.entityTags().contains(Storage.WORK_TAG);
+        return Mc.tags(item).contains(Storage.WORK_TAG);
     }
 
     private static boolean water(ServerLevel level, BlockPos p) {
@@ -91,11 +92,16 @@ public class FisherWork implements JobWork {
         Vec3 at = Vec3.atCenterOf(pos).add(0, 0.5, 0);
         LootParams params = new LootParams.Builder(level).withParameter(LootContextParams.ORIGIN, at).withParameter(LootContextParams.TOOL, rod)
                 .withParameter(LootContextParams.THIS_ENTITY, golem).create(LootContextParamSets.FISHING);
-        for (ItemStack s : level.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING).getRandomItems(params)) {
+        //? if >=1.20.5 {
+        var table = level.getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
+        //?} else {
+        /*var table = level.getServer().getLootData().getLootTable(BuiltInLootTables.FISHING);
+        *///?}
+        for (ItemStack s : table.getRandomItems(params)) {
             Storage.collectOrDrop(golem, level, golem.position(), s);
         }
         level.sendParticles(ParticleTypes.SPLASH, at.x, at.y, at.z, 12, 0.3, 0.0, 0.3, 0.1);
         level.playSound(null, pos, SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.NEUTRAL, 0.5F, 1.0F);
-        rod.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        Mc.wear(rod, golem);
     }
 }

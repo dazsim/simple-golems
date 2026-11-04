@@ -3,8 +3,10 @@ package com.workshopcraft.simplegolems.item;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.workshopcraft.simplegolems.entity.WorkArea;
+//? if >=1.20.5 {
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+//?}
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,9 @@ public record GolemSettings(int fuel, Optional<WorkArea> area, List<BlockPos> po
             Codec.INT.optionalFieldOf("fuel", 0).forGetter(GolemSettings::fuel),
             WorkArea.CODEC.optionalFieldOf("area").forGetter(GolemSettings::area),
             BlockPos.CODEC.listOf().optionalFieldOf("points", List.of()).forGetter(GolemSettings::points)).apply(i, GolemSettings::new));
+    //? if >=1.20.5 {
     public static final StreamCodec<ByteBuf, GolemSettings> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, GolemSettings::fuel, ByteBufCodecs.optional(WorkArea.STREAM_CODEC), GolemSettings::area,
             BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(MarkerCorners.MAX_POINTS)), GolemSettings::points, GolemSettings::new);
+    //?}
 }

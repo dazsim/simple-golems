@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -105,8 +106,12 @@ public class BeekeeperWork implements JobWork {
             Storage.collectOrDrop(golem, level, Vec3.atCenterOf(pos), new ItemStack(Items.HONEY_BOTTLE));
             level.playSound(null, pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS, 1.0F, 1.0F);
         } else if (golem.getTool().is(Items.SHEARS)) {
+            //? if >=1.21.5 {
             BeehiveBlock.dropHoneycomb(level, golem.getTool(), s, level.getBlockEntity(pos), golem, pos);
-            golem.getTool().hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+            //?} else {
+            /*BeehiveBlock.dropHoneycomb(level, pos);
+            *///?}
+            Mc.wear(golem.getTool(), golem);
             level.playSound(null, pos, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
         } else {
             return;

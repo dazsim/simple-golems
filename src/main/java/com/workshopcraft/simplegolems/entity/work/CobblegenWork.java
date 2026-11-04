@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import com.workshopcraft.simplegolems.registry.ModTags;
@@ -63,7 +64,7 @@ public class CobblegenWork extends StationWork {
         BlockState s = level.getBlockState(pos);
         var drops = Block.getDrops(s, level, pos, null, golem, tool);
         LumberWork.breakQuietly(level, pos, s, true);
-        tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        Mc.wear(tool, golem);
         for (ItemStack d : LumberWork.merge(drops)) addResult(golem, level, d, Vec3.atCenterOf(pos));
     }
 }

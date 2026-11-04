@@ -14,4 +14,17 @@ stonecutter parameters {
     constants {
         match(loader, "fabric", "neoforge", "forge")
     }
+
+    replacements.string(current.parsed < "1.21.11") {
+        replace("Identifier", "ResourceLocation")
+        replace("entity.animal.golem.AbstractGolem", "entity.animal.AbstractGolem")
+        replace("entity.animal.sheep.Sheep", "entity.animal.Sheep")
+        replace("entity.npc.villager.AbstractVillager", "entity.npc.AbstractVillager")
+    }
+
+    replacements.string(current.parsed < "1.20.5") {
+        replace("PathType.", "BlockPathTypes.")
+        replace("BlockTags.SUBSTRATE_OVERWORLD", "BlockTags.DIRT")
+        replace(".snapTo(", ".moveTo(")
+    }
 }

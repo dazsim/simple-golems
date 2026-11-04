@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.SimpleGolems;
@@ -39,13 +40,13 @@ public class MinerWork implements JobWork {
 
     @Override
     public boolean wants(ItemEntity item) {
-        return item.entityTags().contains(Storage.WORK_TAG);
+        return Mc.tags(item).contains(Storage.WORK_TAG);
     }
 
     @Override
     public WorkArea area(GolemEntity golem) {
         WorkArea a = golem.getArea();
-        return a.sizeY() == 1 ? a.down(a.min().getY() - golem.level().getMinY() + 1) : a;
+        return a.sizeY() == 1 ? a.down(a.min().getY() - Mc.minY(golem.level()) + 1) : a;
     }
 
     // the staircase: a spiral round the edge when the pit is at least 3 by 3, otherwise straight down the west edge
@@ -341,7 +342,7 @@ public class MinerWork implements JobWork {
         BlockState s = level.getBlockState(pos);
         var drops = Block.getDrops(s, level, pos, null, golem, tool);
         LumberWork.breakQuietly(level, pos, s, true);
-        tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        Mc.wear(tool, golem);
         Vec3 at = Vec3.atCenterOf(pos);
         for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }

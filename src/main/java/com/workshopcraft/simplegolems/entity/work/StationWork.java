@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -72,7 +73,7 @@ public abstract class StationWork implements JobWork {
     protected void addResult(GolemEntity golem, ServerLevel level, ItemStack stack, Vec3 at) {
         for (int i = inputs(); i < GolemEntity.CARRY_SLOTS && !stack.isEmpty(); i++) {
             ItemStack c = golem.getCarried().get(i);
-            if (!c.isEmpty() && ItemStack.isSameItemSameComponents(c, stack)) {
+            if (!c.isEmpty() && Mc.sameItem(c, stack)) {
                 int n = Math.min(stack.getCount(), c.getMaxStackSize() - c.getCount());
                 c.grow(n);
                 stack.shrink(n);
@@ -93,7 +94,7 @@ public abstract class StationWork implements JobWork {
         for (int i = inputs(); i < GolemEntity.CARRY_SLOTS; i++) {
             ItemStack c = golem.getCarried().get(i);
             if (c.isEmpty()) n += stack.getMaxStackSize();
-            else if (ItemStack.isSameItemSameComponents(c, stack)) n += c.getMaxStackSize() - c.getCount();
+            else if (Mc.sameItem(c, stack)) n += c.getMaxStackSize() - c.getCount();
         }
         return n;
     }
@@ -122,7 +123,7 @@ public abstract class StationWork implements JobWork {
         ItemStack got = golem.getCarried().get(slot);
         for (int i = 0; i < c.getContainerSize(); i++) {
             ItemStack s = c.getItem(i);
-            if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !ItemStack.isSameItemSameComponents(got, s)) continue;
+            if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !Mc.sameItem(got, s)) continue;
             int room = got.isEmpty() ? s.getMaxStackSize() : got.getMaxStackSize() - got.getCount();
             if (room <= 0) break;
             ItemStack t = c.removeItem(i, Math.min(room, s.getCount()));

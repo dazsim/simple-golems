@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -108,6 +109,6 @@ public class RancherWork implements JobWork {
         golem.getCarried().get(slot).shrink(1);
         golem.carriedChanged();
         a.setInLove(null);
-        golem.playSound(SoundEvents.GENERIC_EAT.value(), 0.5F, 1.2F);
+        golem.playSound(Mc.eatSound(), 0.5F, 1.2F);
     }
 }

@@ -5,7 +5,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.workshopcraft.simplegolems.entity.Job;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
+//? if >=1.20.5 {
 import net.minecraft.network.codec.StreamCodec;
+//?}
 
 import java.util.UUID;
 
@@ -14,6 +16,8 @@ public record MarkerSetup(UUID golem, Job job) {
     public static final Codec<MarkerSetup> CODEC = RecordCodecBuilder.create(i -> i.group(
             UUIDUtil.CODEC.fieldOf("golem").forGetter(MarkerSetup::golem),
             Job.CODEC.fieldOf("job").forGetter(MarkerSetup::job)).apply(i, MarkerSetup::new));
+    //? if >=1.20.5 {
     public static final StreamCodec<ByteBuf, MarkerSetup> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, MarkerSetup::golem, Job.STREAM_CODEC, MarkerSetup::job, MarkerSetup::new);
+    //?}
 }

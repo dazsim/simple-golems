@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -74,7 +75,7 @@ public class HammerWork extends StationWork {
             BlockState s = level.getBlockState(spot);
             var drops = Block.getDrops(s, level, spot, null, golem, tool);
             LumberWork.breakQuietly(level, spot, s, true);
-            tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+            Mc.wear(tool, golem);
             for (ItemStack d : LumberWork.merge(drops)) addResult(golem, level, d, Vec3.atCenterOf(spot));
             return;
         }

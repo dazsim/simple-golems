@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
@@ -299,7 +300,7 @@ public class DigOutGoal extends Goal {
         ItemStack tool = pick ? golem.getTool() : ItemStack.EMPTY;
         List<ItemStack> drops = (pick ? golem.canHarvest(s) : !s.requiresCorrectToolForDrops()) ? Block.getDrops(s, level, p, null, golem, tool) : List.of();
         LumberWork.breakQuietly(level, p, s, true);
-        if (pick) tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        if (pick) Mc.wear(tool, golem);
         Vec3 at = Vec3.atCenterOf(p);
         for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }

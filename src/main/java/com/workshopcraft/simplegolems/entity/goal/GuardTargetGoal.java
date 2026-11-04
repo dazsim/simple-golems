@@ -38,8 +38,16 @@ public class GuardTargetGoal extends Goal {
         if (e == golem || !e.isAlive() || !(e instanceof Mob) || !e.canBeSeenAsEnemy()) return false;
         if (e instanceof AbstractGolem || e instanceof AbstractVillager) return false;
         if (e instanceof Animal && !(e instanceof Enemy)) return false;
+        //? if >=1.21.5 {
         if (e instanceof OwnableEntity o && o.getOwnerReference() != null) return false;
+        //?} else {
+        /*if (e instanceof OwnableEntity o && o.getOwnerUUID() != null) return false;
+        *///?}
+        //? if >=1.20.5 {
         if (e.is(ModTags.GUARD_IGNORES)) return false;
+        //?} else {
+        /*if (e.getType().is(ModTags.GUARD_IGNORES)) return false;
+        *///?}
         if (e instanceof Creeper && "ignore".equals(Config.guardCreepers)) return false;
         if (hitFirst) return true;
         if (!(e instanceof Enemy)) return false;
@@ -70,7 +78,7 @@ public class GuardTargetGoal extends Goal {
             Mob e = near.get(i);
             Path p = golem.getNavigation().createPath(e, 1);
             // no path while it is in the air (just summoned or knocked back), so look again soon
-            if (p == null && !golem.onGround() && !golem.isInLiquid()) return false;
+            if (p == null && !golem.onGround() && !golem.isInWater() && !golem.isInLava()) return false;
             if (golem.isWithinMeleeAttackRange(e) || p != null && p.canReach()) {
                 found = e;
                 return true;

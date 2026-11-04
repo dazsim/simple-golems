@@ -7,11 +7,18 @@ import com.workshopcraft.simplegolems.entity.work.ExDeorum;
 import com.workshopcraft.simplegolems.item.CardItem;
 import com.workshopcraft.simplegolems.item.GolemItem;
 import com.workshopcraft.simplegolems.item.GolemSettings;
+import com.workshopcraft.simplegolems.item.ItemData;
 import com.workshopcraft.simplegolems.item.MarkerCorners;
 import com.workshopcraft.simplegolems.item.MarkerSetup;
 import com.workshopcraft.simplegolems.item.MarkerStickItem;
+//? if <1.20.5 {
+/*import com.workshopcraft.simplegolems.item.ShapedNbtSerializer;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+*///?}
 import net.minecraft.core.Registry;
+//? if >=1.20.5 {
 import net.minecraft.core.component.DataComponentType;
+//?}
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -29,11 +36,19 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public final class ModContent {
+    //? if >=1.20.5 {
     public static final DataComponentType<Job> JOB = DataComponentType.<Job>builder().persistent(Job.CODEC).networkSynchronized(Job.STREAM_CODEC).build();
     public static final DataComponentType<DyeColor> COLOUR = DataComponentType.<DyeColor>builder().persistent(DyeColor.CODEC).networkSynchronized(DyeColor.STREAM_CODEC).build();
     public static final DataComponentType<GolemSettings> SETTINGS = DataComponentType.<GolemSettings>builder().persistent(GolemSettings.CODEC).networkSynchronized(GolemSettings.STREAM_CODEC).build();
     public static final DataComponentType<MarkerCorners> MARKER = DataComponentType.<MarkerCorners>builder().persistent(MarkerCorners.CODEC).networkSynchronized(MarkerCorners.STREAM_CODEC).build();
     public static final DataComponentType<MarkerSetup> MARKER_SETUP = DataComponentType.<MarkerSetup>builder().persistent(MarkerSetup.CODEC).networkSynchronized(MarkerSetup.STREAM_CODEC).build();
+    //?} else {
+    /*public static final ItemData.Key<Job> JOB = new ItemData.Key<>("job", Job.CODEC);
+    public static final ItemData.Key<DyeColor> COLOUR = new ItemData.Key<>("colour", DyeColor.CODEC);
+    public static final ItemData.Key<GolemSettings> SETTINGS = new ItemData.Key<>("settings", GolemSettings.CODEC);
+    public static final ItemData.Key<MarkerCorners> MARKER = new ItemData.Key<>("marker", MarkerCorners.CODEC);
+    public static final ItemData.Key<MarkerSetup> MARKER_SETUP = new ItemData.Key<>("marker_setup", MarkerSetup.CODEC);
+    *///?}
 
     public static final ResourceKey<EntityType<?>> GOLEM_KEY = ResourceKey.create(Registries.ENTITY_TYPE, SimpleGolems.id("golem"));
     public static EntityType<GolemEntity> GOLEM_ENTITY;
@@ -47,6 +62,7 @@ public final class ModContent {
 
     private ModContent() {}
 
+    //? if >=1.20.5 {
     public static void registerComponents(BiConsumer<Identifier, DataComponentType<?>> r) {
         r.accept(SimpleGolems.id("job"), JOB);
         r.accept(SimpleGolems.id("colour"), COLOUR);
@@ -54,15 +70,31 @@ public final class ModContent {
         r.accept(SimpleGolems.id("marker"), MARKER);
         r.accept(SimpleGolems.id("marker_setup"), MARKER_SETUP);
     }
+    //?}
 
+    //? if <1.20.5 {
+    /*public static void registerRecipeSerializers(BiConsumer<Identifier, RecipeSerializer<?>> r) {
+        r.accept(SimpleGolems.id("shaped_nbt"), new ShapedNbtSerializer());
+    }
+
+    *///?}
     public static void registerEntities(BiConsumer<Identifier, EntityType<?>> r) {
         GOLEM_ENTITY = EntityType.Builder.of(GolemEntity::new, MobCategory.MISC)
+        //? if >=1.21.2 {
                 .sized(0.7F, 0.9F).eyeHeight(0.65F).clientTrackingRange(10).build(GOLEM_KEY);
         r.accept(GOLEM_KEY.identifier(), GOLEM_ENTITY);
+        //?} else {
+        /*        .sized(0.7F, 0.9F).clientTrackingRange(10).build("golem");
+        r.accept(GOLEM_KEY.location(), GOLEM_ENTITY);
+        *///?}
     }
 
     private static Item.Properties item(String name) {
+        //? if >=1.21.2 {
         return new Item.Properties().setId(ResourceKey.create(Registries.ITEM, SimpleGolems.id(name)));
+        //?} else {
+        /*return new Item.Properties();
+        *///?}
     }
 
     public static void registerItems(BiConsumer<Identifier, Item> r) {
@@ -114,9 +146,14 @@ public final class ModContent {
     }
 
     public static void registerAllDirect() {
+        //? if >=1.20.5 {
         registerComponents(direct(BuiltInRegistries.DATA_COMPONENT_TYPE));
+        //?}
         registerEntities(direct(BuiltInRegistries.ENTITY_TYPE));
         registerItems(direct(BuiltInRegistries.ITEM));
         registerCreativeTabs(direct(BuiltInRegistries.CREATIVE_MODE_TAB));
+        //? if <1.20.5 {
+        /*registerRecipeSerializers(direct(BuiltInRegistries.RECIPE_SERIALIZER));
+        *///?}
     }
 }

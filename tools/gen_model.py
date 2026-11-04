@@ -70,7 +70,11 @@ public final class GolemMesh {{
 
     @SuppressWarnings("unused")
     public static LayerDefinition create() {{
+        //? if >=1.21.2 {{
         MeshDefinition mesh = new MeshDefinition().transformed(p -> p.translated(0.0F, 24.0F, 0.0F));
+        //?}} else {{
+        /*MeshDefinition mesh = new MeshDefinition();
+        *///?}}
         PartDefinition root = mesh.getRoot();
 {body}
         return LayerDefinition.create(mesh, {tw}, {th});

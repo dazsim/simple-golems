@@ -6,27 +6,40 @@ import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.Trouble;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.layers.LivingEntityEmissiveLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.item.DyeColor;
+//? if >=1.21.2 {
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.layers.LivingEntityEmissiveLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.util.ARGB;
+//?} else {
+/*import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.ItemStack;
+*///?}
 
+//? if >=1.21.2 {
 public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, GolemModel> {
+//?} else {
+/*public class GolemRenderer extends MobRenderer<GolemEntity, GolemModel> {
+*///?}
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(SimpleGolems.id("golem"), "main");
     private static final Identifier TINT = SimpleGolems.id("textures/entity/golem/golem_tint.png");
     private static final Identifier OVERLAY = SimpleGolems.id("textures/entity/golem/golem_overlay.png");
     private static final Identifier GLOW = SimpleGolems.id("textures/entity/golem/golem_glow.png");
+    private static final float TILT = 17.0F * Mth.DEG_TO_RAD;
 
+    //? if >=1.21.2 {
     public GolemRenderer(EntityRendererProvider.Context context) {
         super(context, new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.BODY), 0.4F);
         GolemModel cardModel = new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.CARD);
@@ -78,7 +91,6 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         return new GolemRenderState();
     }
 
-    private static final float TILT = 17.0F * Mth.DEG_TO_RAD;
 
     @Override
     public void extractRenderState(GolemEntity golem, GolemRenderState state, float partialTicks) {
@@ -111,7 +123,7 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         // the trailing dots sit in the lower left of the texture, so shift the cloud up and right of the head
         pose.translate(0.32F, 0.3F, 0.0F);
         int alpha = (int) (a * 255);
-        out.submitCustomGeometry(pose, RenderTypes.entityTranslucent(bubbleTexture(state)), (p, vc) -> {
+        out.submitCustomGeometry(pose, RenderTypes.entityTranslucent(bubbleTexture(state.trouble, state.job)), (p, vc) -> {
             quad(p, vc, alpha, false);
             quad(p, vc, alpha, true);
         });
@@ -127,10 +139,96 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
         }
     }
 
+    //?} else {
+    /*private final ItemRenderer items;
+    private final GolemModel cardModel, glowModel;
+
+    public GolemRenderer(EntityRendererProvider.Context context) {
+        super(context, new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.BODY), 0.4F);
+        items = context.getItemRenderer();
+        cardModel = new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.CARD);
+        glowModel = new GolemModel(context.bakeLayer(LAYER), GolemModel.Pass.BODY);
+        addLayer(new RenderLayer<>(this) {
+            @Override
+            public void render(PoseStack pose, MultiBufferSource buffers, int light, GolemEntity golem, float limb, float limbSpeed, float partial, float age, float yRot, float xRot) {
+                renderColoredCutoutModel(getParentModel(), OVERLAY, pose, buffers, light, golem, 1.0F, 1.0F, 1.0F);
+                Job job = golem.getJob();
+                if (job != Job.BLANK) {
+                    coloredCutoutModelCopyLayerRender(getParentModel(), cardModel, OVERLAY, pose, buffers, light, golem, limb, limbSpeed, age, yRot, xRot, partial,
+                            (job.colour >> 16 & 255) / 255.0F, (job.colour >> 8 & 255) / 255.0F, (job.colour & 255) / 255.0F);
+                }
+            }
+        });
+        addLayer(new RenderLayer<>(this) {
+            @Override
+            public void render(PoseStack pose, MultiBufferSource buffers, int light, GolemEntity golem, float limb, float limbSpeed, float partial, float age, float yRot, float xRot) {
+                if (golem.isInvisible()) return;
+                getParentModel().copyPropertiesTo(glowModel);
+                glowModel.prepareMobModel(golem, limb, limbSpeed, partial);
+                glowModel.setupAnim(golem, limb, limbSpeed, age, yRot, xRot);
+                float f = golem.isPowered() ? 1.0F : 0.3F;
+                glowModel.renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(GLOW)), FULL_BRIGHT, OverlayTexture.NO_OVERLAY, f, f, f, 1.0F);
+            }
+        });
+        addLayer(new RenderLayer<>(this) {
+            @Override
+            public void render(PoseStack pose, MultiBufferSource buffers, int light, GolemEntity golem, float limb, float limbSpeed, float partial, float age, float yRot, float xRot) {
+                held(golem, golem.getTool(), true, pose, buffers, light);
+                held(golem, golem.getShownCarried(), false, pose, buffers, light);
+            }
+        });
+    }
+
+    private void held(GolemEntity golem, ItemStack stack, boolean tool, PoseStack pose, MultiBufferSource buffers, int light) {
+        if (stack.isEmpty()) return;
+        pose.pushPose();
+        if (tool) getModel().poseTool(pose);
+        else getModel().poseCarried(pose);
+        items.renderStatic(golem, stack, tool ? ItemDisplayContext.FIXED : ItemDisplayContext.GROUND, false, pose, buffers, golem.level(), light, OverlayTexture.NO_OVERLAY, golem.getId());
+        pose.popPose();
+    }
+
+    @Override
+    public Identifier getTextureLocation(GolemEntity golem) {
+        return TINT;
+    }
+
+    @Override
+    public void render(GolemEntity golem, float yaw, float partial, PoseStack pose, MultiBufferSource buffers, int light) {
+        float t = Mth.lerp(partial, golem.tiltO, golem.tilt);
+        // curious head tilt, each golem leans its own way
+        getModel().headTilt = t * t * (3 - 2 * t) * TILT * ((golem.getId() & 1) == 0 ? 1 : -1);
+        getModel().tint = 0xFF000000 | tint(golem.getColour());
+        super.render(golem, yaw, partial, pose, buffers, light);
+        float bubble = Mth.lerp(partial, golem.bubbleO, golem.bubble);
+        if (bubble <= 0.0F || golem.shownTrouble == Trouble.NONE) return;
+        pose.pushPose();
+        pose.translate(0.0F, golem.getBbHeight() + 0.42F + Mth.sin((golem.tickCount + partial) * 0.08F) * 0.04F, 0.0F);
+        pose.mulPose(entityRenderDispatcher.cameraOrientation());
+        float a = bubble * bubble * (3 - 2 * bubble);
+        pose.scale(0.75F, 0.75F, 0.75F);
+        pose.translate(0.32F, 0.3F, 0.0F);
+        int alpha = (int) (a * 255);
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucent(bubbleTexture(golem.shownTrouble, golem.getJob())));
+        quad(pose.last(), vc, alpha, false);
+        quad(pose.last(), vc, alpha, true);
+        pose.popPose();
+    }
+
+    private static void quad(PoseStack.Pose p, VertexConsumer vc, int alpha, boolean back) {
+        float[][] v = {{-0.5F, -0.5F, 0, 1}, {0.5F, -0.5F, 1, 1}, {0.5F, 0.5F, 1, 0}, {-0.5F, 0.5F, 0, 0}};
+        for (int i = 0; i < 4; i++) {
+            float[] c = v[back ? 3 - i : i];
+            vc.vertex(p.pose(), c[0], c[1], 0.0F).color(255, 255, 255, alpha).uv(c[2], c[3])
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(FULL_BRIGHT).normal(p.normal(), 0.0F, 0.0F, back ? -1.0F : 1.0F).endVertex();
+        }
+    }
+    *///?}
+
     private static final int FULL_BRIGHT = 0xF000F0;
 
-    private static Identifier bubbleTexture(GolemRenderState state) {
-        String name = switch (state.trouble) {
+    private static Identifier bubbleTexture(Trouble trouble, Job job) {
+        String name = switch (trouble) {
             case STORAGE -> "storage";
             case SAPLING -> "sapling";
             case FOOD -> "food";
@@ -138,7 +236,7 @@ public class GolemRenderer extends MobRenderer<GolemEntity, GolemRenderState, Go
             case BLOCKS -> "blocks";
             case SUPPLIES -> "supplies";
             case HURT -> "hurt";
-            default -> switch (state.job) {
+            default -> switch (job) {
                 case FARMER -> "hoe";
                 case MINER, COBBLEGEN -> "pickaxe";
                 case SHEPHERD, BEEKEEPER -> "shears";

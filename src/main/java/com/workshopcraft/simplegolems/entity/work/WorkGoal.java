@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -14,7 +15,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
@@ -202,7 +202,7 @@ public class WorkGoal extends Goal {
 
     // a target above its reach that it could build steps up to
     private boolean canClimb() {
-        return task == Task.WORK && work.climbWith(golem) != null && level().getGameRules().get(GameRules.MOB_GRIEFING)
+        return task == Task.WORK && work.climbWith(golem) != null && Mc.mobGriefing(level())
                 && Vec3.atCenterOf(pos).y - golem.getY() >= 4.0;
     }
 
@@ -438,7 +438,7 @@ public class WorkGoal extends Goal {
                     int limit = Math.max(16, Config.blockReserve);
                     for (int i = 0; i < c.getContainerSize() && got.getCount() < limit; i++) {
                         ItemStack s = c.getItem(i);
-                        if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !ItemStack.isSameItemSameComponents(got, s)) continue;
+                        if (s.isEmpty() || !want.test(s) || !got.isEmpty() && !Mc.sameItem(got, s)) continue;
                         ItemStack taken = c.removeItem(i, Math.min(s.getCount(), Math.min(limit, s.getMaxStackSize()) - got.getCount()));
                         if (got.isEmpty()) got = taken;
                         else got.grow(taken.getCount());

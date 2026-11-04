@@ -1,0 +1,17 @@
+{
+  "values": [
+    "minecraft:torch",
+    {
+      "id": "morelighting:table_lamp",
+      "required": false
+    },
+    {
+      "id": "morelighting:floor_lamp",
+      "required": false
+    },
+    {
+      "id": "morelighting:floor_light",
+      "required": false
+    }
+  ]
+}

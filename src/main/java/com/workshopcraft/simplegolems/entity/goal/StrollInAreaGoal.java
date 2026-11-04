@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.goal;
 
+import net.minecraft.util.Mth;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -28,7 +29,7 @@ public class StrollInAreaGoal extends Goal {
             BlockPos min = area.min(), max = area.max();
             BlockPos p = golem.blockPosition();
             target = golem.getCustomArea() == null ? Vec3.atBottomCenterOf(golem.getHome())
-                    : Vec3.atBottomCenterOf(new BlockPos(inside(p.getX(), min.getX(), max.getX()), Math.clamp(p.getY(), min.getY(), max.getY()), inside(p.getZ(), min.getZ(), max.getZ())));
+                    : Vec3.atBottomCenterOf(new BlockPos(inside(p.getX(), min.getX(), max.getX()), Mth.clamp(p.getY(), min.getY(), max.getY()), inside(p.getZ(), min.getZ(), max.getZ())));
             return true;
         }
         if (golem.getRandom().nextInt(120) != 0) return false;
@@ -54,6 +55,6 @@ public class StrollInAreaGoal extends Goal {
 
     // a block in from the edge, so a golem just outside walks properly back in
     private static int inside(int v, int min, int max) {
-        return max - min >= 2 ? Math.clamp(v, min + 1, max - 1) : Math.clamp(v, min, max);
+        return max - min >= 2 ? Mth.clamp(v, min + 1, max - 1) : Mth.clamp(v, min, max);
     }
 }

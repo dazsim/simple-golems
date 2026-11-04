@@ -17,7 +17,12 @@ val requiredJava = when {
     else -> JavaVersion.VERSION_17
 }
 
+// 1.20.1 json formats live in src/legacy/1.20.1; the access widener only opens 26.x members
+val modern = sc.current.parsed >= "1.20.5"
+if (!modern) sourceSets.main { resources.srcDir(rootProject.file("src/legacy/1.20.1")) }
+
 dependencies {
+    if (!modern) compileOnly("org.jspecify:jspecify:1.0.0")
     minecraft("com.mojang:minecraft:${sc.current.version}")
     loomx.applyMojangMappings()
     modImplementation("net.fabricmc:fabric-loader:${sc.properties.get<String>("deps.fabric_loader")}")
@@ -26,7 +31,7 @@ dependencies {
 
 loom {
     fabricModJsonPath = rootProject.file("src/main/resources/fabric.mod.json")
-    accessWidenerPath = rootProject.file("src/main/resources/$modId.accesswidener")
+    if (modern) accessWidenerPath = rootProject.file("src/main/resources/$modId.accesswidener")
     runConfigs.all {
         runDirectory = rootProject.file("runs/${sc.current.project}")
     }
@@ -55,6 +60,10 @@ tasks {
         inputs.properties(props)
         filesMatching(listOf("fabric.mod.json", "pack.mcmeta")) { expand(props) }
         exclude("META-INF/neoforge.mods.toml", "META-INF/mods.toml")
+        if (!modern) {
+            filesMatching("fabric.mod.json") { filter(StripAccessWidener::class.java) }
+            legacyResources(modId)
+        }
     }
 
     withType<Jar> {

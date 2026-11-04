@@ -67,7 +67,11 @@ public class GuardAttackGoal extends Goal {
 
     private void strike(LivingEntity t) {
         golem.swing(InteractionHand.MAIN_HAND);
+        //? if >=1.21.2 {
         golem.doHurtTarget((ServerLevel) golem.level(), t);
+        //?} else {
+        /*golem.doHurtTarget(t);
+        *///?}
         cooldown = interval();
     }
 
@@ -100,7 +104,10 @@ public class GuardAttackGoal extends Goal {
             strike(c);
             if (c.isAlive()) {
                 Vec3 away = golem.position().subtract(c.position()).multiply(1.0, 0.0, 1.0);
-                if (away.lengthSqr() > 1.0E-4) golem.push(away.normalize().scale(0.35).add(0.0, 0.1, 0.0));
+                if (away.lengthSqr() > 1.0E-4) {
+                    Vec3 v = away.normalize().scale(0.35);
+                    golem.push(v.x, 0.1, v.z);
+                }
                 flee(c);
                 fleeing = true;
                 repath = 10;

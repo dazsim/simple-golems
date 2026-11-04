@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -43,7 +44,7 @@ public class LumberWork implements JobWork {
     @Override
     public boolean wants(ItemEntity item) {
         ItemStack s = item.getItem();
-        return item.entityTags().contains(Storage.WORK_TAG) || s.is(ModTags.SAPLINGS) || s.is(ModTags.LOG_ITEMS)
+        return Mc.tags(item).contains(Storage.WORK_TAG) || s.is(ModTags.SAPLINGS) || s.is(ModTags.LOG_ITEMS)
                 || s.is(Items.STICK) || s.is(Items.APPLE);
     }
 
@@ -197,7 +198,7 @@ public class LumberWork implements JobWork {
             drops.addAll(Block.getDrops(s, level, log, level.getBlockEntity(log), golem, tool));
             breakQuietly(level, log, s, particles++ < 12);
             cleared.add(log);
-            tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+            Mc.wear(tool, golem);
         }
         if (cleared.size() == tree.logs().size()) {
             for (BlockPos leaf : tree.leaves()) {
@@ -279,7 +280,7 @@ public class LumberWork implements JobWork {
             if (d.isEmpty()) continue;
             ItemStack left = d.copy();
             for (ItemStack o : out) {
-                if (ItemStack.isSameItemSameComponents(o, left) && o.getCount() < o.getMaxStackSize()) {
+                if (Mc.sameItem(o, left) && o.getCount() < o.getMaxStackSize()) {
                     int n = Math.min(left.getCount(), o.getMaxStackSize() - o.getCount());
                     o.grow(n);
                     left.shrink(n);

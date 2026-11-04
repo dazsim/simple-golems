@@ -13,7 +13,11 @@ public final class GolemMesh {
 
     @SuppressWarnings("unused")
     public static LayerDefinition create() {
+        //? if >=1.21.2 {
         MeshDefinition mesh = new MeshDefinition().transformed(p -> p.translated(0.0F, 24.0F, 0.0F));
+        //?} else {
+        /*MeshDefinition mesh = new MeshDefinition();
+        *///?}
         PartDefinition root = mesh.getRoot();
         PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create()
                 .texOffs(0, 28).addBox(-4.5F, -5.0F, -2.0F, 9.0F, 5.0F, 5.0F)

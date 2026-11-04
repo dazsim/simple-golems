@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -57,8 +58,12 @@ public class ShepherdWork implements JobWork {
         if (s == null || tool.isEmpty()) return;
         AABB around = s.getBoundingBox().inflate(4.0);
         Set<ItemEntity> before = new HashSet<>(level.getEntitiesOfClass(ItemEntity.class, around));
+        //? if >=1.21.2 {
         s.shear(level, SoundSource.NEUTRAL, tool);
-        tool.hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        //?} else {
+        /*s.shear(SoundSource.NEUTRAL);
+        *///?}
+        Mc.wear(tool, golem);
         // the wool goes straight into its carry, so none of it lands out of reach over a fence
         for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, around, i -> i.isAlive() && !before.contains(i) && wants(i))) {
             Storage.pickUp(golem, e);

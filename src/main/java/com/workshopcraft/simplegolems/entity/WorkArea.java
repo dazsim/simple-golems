@@ -1,10 +1,13 @@
 package com.workshopcraft.simplegolems.entity;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.Config;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
+//? if >=1.20.5 {
 import net.minecraft.network.codec.StreamCodec;
+//?}
 import net.minecraft.world.phys.AABB;
 import io.netty.buffer.ByteBuf;
 
@@ -16,8 +19,10 @@ public record WorkArea(BlockPos first, BlockPos second) {
     public static final Codec<WorkArea> CODEC = RecordCodecBuilder.create(i -> i.group(
             BlockPos.CODEC.fieldOf("first").forGetter(WorkArea::first),
             BlockPos.CODEC.fieldOf("second").forGetter(WorkArea::second)).apply(i, WorkArea::new));
+    //? if >=1.20.5 {
     public static final StreamCodec<ByteBuf, WorkArea> STREAM_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, WorkArea::first, BlockPos.STREAM_CODEC, WorkArea::second, WorkArea::new);
+    //?}
 
     public WorkArea {
         first = first.immutable();
@@ -29,11 +34,11 @@ public record WorkArea(BlockPos first, BlockPos second) {
     }
 
     public BlockPos min() {
-        return BlockPos.min(first, second);
+        return Mc.minPos(first, second);
     }
 
     public BlockPos max() {
-        return BlockPos.max(first, second);
+        return Mc.maxPos(first, second);
     }
 
     public static WorkArea around(BlockPos home) {

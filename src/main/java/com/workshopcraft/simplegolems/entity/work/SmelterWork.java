@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
 import net.minecraft.core.BlockPos;
@@ -7,7 +8,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
+//? if >=1.21.2 {
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+//?}
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlastFurnaceBlockEntity;
@@ -43,23 +46,36 @@ public class SmelterWork extends StationWork {
         var type = f instanceof BlastFurnaceBlockEntity ? RecipeType.BLASTING : f instanceof SmokerBlockEntity ? RecipeType.SMOKING : RecipeType.SMELTING;
         // with one chest for both, burnable things such as logs count as fuel
         boolean shared = point(golem, 0) != null && point(golem, 0).equals(point(golem, 1));
-        return s -> !s.isEmpty() && (!shared || !level.fuelValues().isFuel(s))
+        //? if >=1.21.2 {
+        return s -> !s.isEmpty() && (!shared || !isFuel(level, s))
                 && level.recipeAccess().getRecipeFor(type, new SingleRecipeInput(s), level).isPresent();
+        //?} else {
+        /*return s -> !s.isEmpty() && (!shared || !isFuel(level, s))
+                && level.getRecipeManager().getRecipeFor(type, new net.minecraft.world.SimpleContainer(s), level).isPresent();
+        *///?}
+    }
+
+    private static boolean isFuel(ServerLevel level, ItemStack s) {
+        //? if >=1.21.2 {
+        return level.fuelValues().isFuel(s);
+        //?} else {
+        /*return AbstractFurnaceBlockEntity.isFuel(s);
+        *///?}
     }
 
     private static Predicate<ItemStack> fuel(ServerLevel level) {
-        return s -> !s.isEmpty() && level.fuelValues().isFuel(s);
+        return s -> !s.isEmpty() && isFuel(level, s);
     }
 
     private static boolean fitsSlot(AbstractFurnaceBlockEntity f, int slot, ItemStack s) {
         ItemStack in = f.getItem(slot);
-        return !s.isEmpty() && (in.isEmpty() || ItemStack.isSameItemSameComponents(in, s) && in.getCount() < in.getMaxStackSize());
+        return !s.isEmpty() && (in.isEmpty() || Mc.sameItem(in, s) && in.getCount() < in.getMaxStackSize());
     }
 
     // the empty bucket a lava bucket leaves behind
     private static boolean spentFuel(ServerLevel level, AbstractFurnaceBlockEntity f) {
         ItemStack s = f.getItem(FUEL);
-        return !s.isEmpty() && !level.fuelValues().isFuel(s);
+        return !s.isEmpty() && !isFuel(level, s);
     }
 
     @Override

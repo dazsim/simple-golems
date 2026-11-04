@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.registry.ModTags;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -29,7 +30,7 @@ public class FarmerWork implements JobWork {
 
     @Override
     public boolean wants(ItemEntity item) {
-        return item.entityTags().contains(Storage.WORK_TAG);
+        return Mc.tags(item).contains(Storage.WORK_TAG);
     }
 
     // CropBlock covers vanilla and most modded crops; anything else in #crops with a plain age property also counts
@@ -89,7 +90,7 @@ public class FarmerWork implements JobWork {
         BlockState replant = state.getBlock() instanceof CropBlock crop ? crop.getStateForAge(0) : state.setValue(age(state), Collections.min(age(state).getPossibleValues()));
         level.levelEvent(2001, pos, Block.getId(state));
         level.setBlockAndUpdate(pos, replant);
-        golem.getTool().hurtAndBreak(1, golem, EquipmentSlot.MAINHAND);
+        Mc.wear(golem.getTool(), golem);
         Vec3 at = Vec3.atBottomCenterOf(pos).add(0, 0.3, 0);
         for (ItemStack d : LumberWork.merge(drops)) Storage.collectOrDrop(golem, level, at, d);
     }

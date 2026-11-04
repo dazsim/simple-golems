@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.client;
 
+//? if >=1.21.2 {
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.Trouble;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -19,3 +20,4 @@ public class GolemRenderState extends LivingEntityRenderState {
     public float bubble;
     public float headTilt;
 }
+//?}

@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.goal;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
 import com.workshopcraft.simplegolems.entity.work.Storage;
@@ -69,7 +70,7 @@ public class FetchToolGoal extends Goal {
         if (slot >= 0) {
             golem.setTool(c.removeItem(slot, 1));
             c.setChanged();
-            golem.playSound(SoundEvents.ARMOR_EQUIP_GENERIC.value(), 0.8F, 1.2F);
+            golem.playSound(Mc.equipSound(), 0.8F, 1.2F);
         }
         chest = null;
     }

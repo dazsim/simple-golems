@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.item;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.Config;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.Job;
@@ -28,7 +29,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+//? if >=1.20.5 {
 import net.minecraft.world.item.component.TooltipDisplay;
+//?}
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
@@ -49,7 +52,7 @@ public class MarkerStickItem extends Item {
     }
 
     public static @Nullable WorkArea area(ItemStack stack) {
-        MarkerCorners m = stack.get(ModContent.MARKER);
+        MarkerCorners m = ItemData.get(stack, ModContent.MARKER);
         return m == null || m.second().isEmpty() ? null : WorkArea.of(m.first(), m.second().get());
     }
 
@@ -66,29 +69,29 @@ public class MarkerStickItem extends Item {
     }
 
     private static InteractionResult click(@Nullable Player player, Level level, ItemStack stack, BlockPos pos, Direction face) {
-        MarkerSetup setup = stack.get(ModContent.MARKER_SETUP);
+        MarkerSetup setup = ItemData.get(stack, ModContent.MARKER_SETUP);
         if (setup == null && player != null && player.isSecondaryUseActive()) return clear(player, stack);
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (setup != null) {
             setupStep(player, (ServerLevel) level, stack, setup, pos, face);
             return InteractionResult.SUCCESS;
         }
-        MarkerCorners m = stack.get(ModContent.MARKER);
+        MarkerCorners m = ItemData.get(stack, ModContent.MARKER);
         if (m == null || m.points().size() >= MarkerCorners.MAX_POINTS) {
-            stack.set(ModContent.MARKER, new MarkerCorners(pos.immutable(), Optional.empty()));
+            ItemData.set(stack, ModContent.MARKER, new MarkerCorners(pos.immutable(), Optional.empty()));
             tell(player, "marker.first", pos.getX(), pos.getY(), pos.getZ());
             ding(level, pos, 1.2F);
         } else if (!WorkArea.fits(m.first(), pos)) {
             tell(player, "marker.too_big", Config.maxAreaWidth);
         } else if (m.second().isEmpty()) {
-            stack.set(ModContent.MARKER, new MarkerCorners(m.first(), Optional.of(pos.immutable())));
+            ItemData.set(stack, ModContent.MARKER, new MarkerCorners(m.first(), Optional.of(pos.immutable())));
             WorkArea a = WorkArea.of(m.first(), pos);
             tell(player, "marker.second", a.sizeX(), a.sizeY(), a.sizeZ());
             ding(level, pos, 1.6F);
         } else {
             List<BlockPos> more = new ArrayList<>(m.more());
             more.add(pos.immutable());
-            stack.set(ModContent.MARKER, new MarkerCorners(m.first(), m.second(), more));
+            ItemData.set(stack, ModContent.MARKER, new MarkerCorners(m.first(), m.second(), more));
             tell(player, "marker.point", more.size() + 2, pos.getX(), pos.getY(), pos.getZ());
             ding(level, pos, 1.8F);
         }
@@ -97,17 +100,17 @@ public class MarkerStickItem extends Item {
 
     // starts a golem's setup: the next clicks are its steps, sneaking or not
     public static void startSetup(Player player, ItemStack stack, GolemEntity golem) {
-        stack.remove(ModContent.MARKER);
-        stack.set(ModContent.MARKER_SETUP, new MarkerSetup(golem.getUUID(), golem.getJob()));
+        ItemData.remove(stack, ModContent.MARKER);
+        ItemData.set(stack, ModContent.MARKER_SETUP, new MarkerSetup(golem.getUUID(), golem.getJob()));
         tellStep(player, golem.getJob(), 0);
     }
 
     private static void setupStep(@Nullable Player player, ServerLevel level, ItemStack stack, MarkerSetup setup, BlockPos pos, Direction face) {
         List<String> steps = setup.job().steps();
-        MarkerCorners m = stack.get(ModContent.MARKER);
+        MarkerCorners m = ItemData.get(stack, ModContent.MARKER);
         List<BlockPos> got = new ArrayList<>(m == null ? List.of() : m.points());
         if (steps.isEmpty() || got.size() >= steps.size()) {
-            stack.remove(ModContent.MARKER_SETUP);
+            ItemData.remove(stack, ModContent.MARKER_SETUP);
             return;
         }
         String step = steps.get(got.size());
@@ -121,17 +124,17 @@ public class MarkerStickItem extends Item {
             return;
         }
         got.add(p.immutable());
-        stack.set(ModContent.MARKER, MarkerCorners.of(got));
+        ItemData.set(stack, ModContent.MARKER, MarkerCorners.of(got));
         if (got.size() < steps.size()) {
             tellStep(player, setup.job(), got.size());
             ding(level, p, 1.2F + 0.2F * got.size());
             return;
         }
-        stack.remove(ModContent.MARKER_SETUP);
+        ItemData.remove(stack, ModContent.MARKER_SETUP);
         Component name = Component.translatable("job.simplegolems." + setup.job().getSerializedName());
         if (level.getEntity(setup.golem()) instanceof GolemEntity g && g.isAlive() && g.getJob() == setup.job() && (player == null || g.canBeChangedBy(player))) {
             g.applySetup(got);
-            stack.remove(ModContent.MARKER);
+            ItemData.remove(stack, ModContent.MARKER);
             tell(player, "setup.done", name);
             level.playSound(null, p, SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.7F, 1.4F);
             if (player instanceof ServerPlayer sp) for (BlockPos b : got) outline(level, sp, WorkArea.of(b, b), DONE_COLOUR);
@@ -158,7 +161,7 @@ public class MarkerStickItem extends Item {
 
     private static void tellStep(@Nullable Player player, Job job, int i) {
         List<String> steps = job.steps();
-        if (player != null) player.sendOverlayMessage(Component.translatable("message.simplegolems.setup.step",
+        if (player != null) Mc.overlay(player, Component.translatable("message.simplegolems.setup.step",
                 Component.translatable("message.simplegolems.setup." + steps.get(i)), i + 1, steps.size()));
     }
 
@@ -167,32 +170,45 @@ public class MarkerStickItem extends Item {
     }
 
     @Override
+    //? if >=1.21.2 {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (player.isSecondaryUseActive()) return clear(player, player.getItemInHand(hand));
         return InteractionResult.PASS;
     }
+    //?} else {
+    /*public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        InteractionResult r = player.isSecondaryUseActive() ? clear(player, stack) : InteractionResult.PASS;
+        return new net.minecraft.world.InteractionResultHolder<>(r, stack);
+    }
+    *///?}
 
     private static InteractionResult clear(Player player, ItemStack stack) {
-        if (!stack.has(ModContent.MARKER) && !stack.has(ModContent.MARKER_SETUP)) return InteractionResult.PASS;
+        if (!ItemData.has(stack, ModContent.MARKER) && !ItemData.has(stack, ModContent.MARKER_SETUP)) return InteractionResult.PASS;
         if (!player.level().isClientSide()) {
-            boolean setup = stack.has(ModContent.MARKER_SETUP);
-            stack.remove(ModContent.MARKER);
-            stack.remove(ModContent.MARKER_SETUP);
+            boolean setup = ItemData.has(stack, ModContent.MARKER_SETUP);
+            ItemData.remove(stack, ModContent.MARKER);
+            ItemData.remove(stack, ModContent.MARKER_SETUP);
             tell(player, setup ? "setup.cancelled" : "marker.cleared");
         }
         return InteractionResult.SUCCESS;
     }
 
     private static void tell(@Nullable Player player, String key, Object... args) {
-        if (player != null) player.sendOverlayMessage(Component.translatable("message.simplegolems." + key, args));
+        if (player != null) Mc.overlay(player, Component.translatable("message.simplegolems." + key, args));
     }
 
     @Override
+    //? if >=1.21.5 {
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity owner, @Nullable EquipmentSlot slot) {
         if (slot != EquipmentSlot.MAINHAND || !(owner instanceof ServerPlayer player) || level.getGameTime() % 10 != 0) return;
-        MarkerCorners m = stack.get(ModContent.MARKER);
+    //?} else {
+    /*public void inventoryTick(ItemStack stack, Level world, Entity owner, int slot, boolean selected) {
+        if (!selected || !(world instanceof ServerLevel level) || !(owner instanceof ServerPlayer player) || level.getGameTime() % 10 != 0) return;
+    *///?}
+        MarkerCorners m = ItemData.get(stack, ModContent.MARKER);
         if (m == null) return;
-        if (stack.has(ModContent.MARKER_SETUP)) {
+        if (ItemData.has(stack, ModContent.MARKER_SETUP)) {
             for (BlockPos p : m.points()) outline(level, player, WorkArea.of(p, p), FIRST_COLOUR);
             return;
         }
@@ -202,7 +218,11 @@ public class MarkerStickItem extends Item {
     }
 
     public static void outline(ServerLevel level, ServerPlayer player, WorkArea a, int colour) {
+        //? if >=1.21.2 {
         DustParticleOptions dust = new DustParticleOptions(colour, 1.0F);
+        //?} else {
+        /*DustParticleOptions dust = new DustParticleOptions(net.minecraft.world.phys.Vec3.fromRGB24(colour).toVector3f(), 1.0F);
+        *///?}
         double x0 = a.min().getX(), y0 = a.min().getY(), z0 = a.min().getZ();
         double x1 = a.max().getX() + 1, y1 = a.max().getY() + 1, z1 = a.max().getZ() + 1;
         double[][] edges = {
@@ -214,15 +234,24 @@ public class MarkerStickItem extends Item {
             int steps = (int) Math.ceil(len * 2);
             for (int i = 0; i <= steps; i++) {
                 double t = steps == 0 ? 0 : (double) i / steps;
+                //? if >=1.21.4 {
                 level.sendParticles(player, dust, true, false, e[0] + (e[3] - e[0]) * t, e[1] + (e[4] - e[1]) * t, e[2] + (e[5] - e[2]) * t, 1, 0, 0, 0, 0);
+                //?} else {
+                /*level.sendParticles(player, dust, true, e[0] + (e[3] - e[0]) * t, e[1] + (e[4] - e[1]) * t, e[2] + (e[5] - e[2]) * t, 1, 0, 0, 0, 0);
+                *///?}
             }
         }
     }
 
     @Override
+    //? if >=1.21.5 {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-        MarkerCorners m = stack.get(ModContent.MARKER);
-        MarkerSetup setup = stack.get(ModContent.MARKER_SETUP);
+    //?} else {
+    /*public void appendHoverText(ItemStack stack, @org.jspecify.annotations.Nullable Level level, List<Component> lines, TooltipFlag flag) {
+        Consumer<Component> out = lines::add;
+    *///?}
+        MarkerCorners m = ItemData.get(stack, ModContent.MARKER);
+        MarkerSetup setup = ItemData.get(stack, ModContent.MARKER_SETUP);
         if (setup != null) {
             out.accept(Component.translatable("tooltip.simplegolems.marker.setup", Component.translatable("job.simplegolems." + setup.job().getSerializedName()),
                     m == null ? 0 : m.points().size(), setup.job().steps().size()).withStyle(ChatFormatting.GRAY));

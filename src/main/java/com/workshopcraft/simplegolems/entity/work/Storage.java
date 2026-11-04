@@ -1,5 +1,6 @@
 package com.workshopcraft.simplegolems.entity.work;
 
+import com.workshopcraft.simplegolems.Mc;
 import com.workshopcraft.simplegolems.SimpleGolems;
 import com.workshopcraft.simplegolems.entity.GolemEntity;
 import com.workshopcraft.simplegolems.entity.WorkArea;
@@ -83,7 +84,7 @@ public final class Storage {
             if (!c.canPlaceItem(i, stack)) continue;
             ItemStack in = c.getItem(i);
             if (in.isEmpty()) return true;
-            if (ItemStack.isSameItemSameComponents(in, stack) && in.getCount() < Math.min(in.getMaxStackSize(), c.getMaxStackSize(in))) return true;
+            if (Mc.sameItem(in, stack) && in.getCount() < Math.min(in.getMaxStackSize(), maxStack(c, in))) return true;
         }
         return false;
     }
@@ -118,5 +119,13 @@ public final class Storage {
         e.setDefaultPickUpDelay();
         e.addTag(WORK_TAG);
         level.addFreshEntity(e);
+    }
+
+    private static int maxStack(Container c, ItemStack s) {
+        //? if >=1.20.5 {
+        return c.getMaxStackSize(s);
+        //?} else {
+        /*return c.getMaxStackSize();
+        *///?}
     }
 }

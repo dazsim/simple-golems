@@ -2,8 +2,10 @@ package com.workshopcraft.simplegolems.entity;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
+//? if >=1.20.5 {
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+//?}
 import com.workshopcraft.simplegolems.registry.ModTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.StringRepresentable;
@@ -32,7 +34,9 @@ public enum Job implements StringRepresentable {
     GUARD("guard", 0x5B6B8C);
 
     public static final Codec<Job> CODEC = StringRepresentable.fromEnum(Job::values);
+    //? if >=1.20.5 {
     public static final StreamCodec<ByteBuf, Job> STREAM_CODEC = ByteBufCodecs.idMapper(i -> values()[i], Job::ordinal);
+    //?}
 
     private final String name;
     public final int colour;
