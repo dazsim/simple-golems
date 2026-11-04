@@ -21,7 +21,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 @Mod(SimpleGolems.MOD_ID)
 public class SimpleGolemsNeoForge {
     public SimpleGolemsNeoForge(IEventBus modBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.COMMON, NeoForgeConfig.SPEC, "simplegolems.toml");
+        container.registerConfig(ModConfig.Type./^? if >=26.3 {^//^LOCAL^//^?} else {^/COMMON/^?}^/, NeoForgeConfig.SPEC, "simplegolems.toml");
         modBus.addListener(NeoForgeConfig::onLoad);
         Storage.external = NeoForgeStore::at;
         //? if <26.3
